@@ -1,3 +1,4 @@
+import datetime as dt
 from typing import Literal
 import threading
 import json
@@ -10,9 +11,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .config import ROOT, CATALOG
-from . import agent, planner, providers, progress, plans, islands
+from . import agent, planner, providers, progress, plans, islands, regions
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.3.0')
+app = FastAPI(title='Marine Travel AI Agent', version='0.4.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -55,7 +56,8 @@ def health():
     result = dict(status='ok', catalog_ready=CATALOG.exists())
     if CATALOG.exists():
         c = providers.catalog()
-        result.update(collected_at=c['collected_at'], places=len(c['places']),
+        result.update(collected_at=c['collected_at'], places=len(c['places']),scope=c.get('scope','incheon'),
+                      forecast_regions=len({r.get('sareaDtlNm') for r in c.get('marine',{}).get('seatrip',{}).get('rows',[])}),
                       marine_counts={k: len(v['rows']) for k, v in c['marine'].items()})
     return result
 
@@ -66,15 +68,26 @@ def public_config():
     from .mobility import capabilities
     from .islands import reviewed
     return dict(mobility=capabilities(), islands=[dict(id=i.id,title=i.title,reviewed_at=i.reviewed_at.isoformat()) for i in reviewed()], ferry_status='reviewed_data_required',tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.3.0')
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.4.0')
 
 
 @app.get('/api/places')
-def places(region: Literal['영종·용유', '강화', '송도·도심'] = '영종·용유', keyword: str = ''):
+def places(region: regions.RegionName = '영종·용유', keyword: str = ''):
     try:
         return planner.tourism_candidates(region, keyword)
+    except ValueError:
+        raise HTTPException(422,'지원하는 여행 권역을 선택하세요.') from None
     except RuntimeError:
         raise HTTPException(503, '먼저 데이터를 수집하세요.') from None
+
+
+@app.get('/api/regions')
+def region_outlooks(date: dt.date | None = None):
+    selected=date or dt.datetime.now(providers.KST).date()
+    try:
+        return regions.overview(selected.isoformat())
+    except RuntimeError:
+        raise HTTPException(503,'먼저 관광정보와 바다여행지수를 수집하세요.') from None
 
 
 @app.post('/api/plan')

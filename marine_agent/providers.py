@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 import time
+from functools import lru_cache
 
 from scripts.check_data_connections import get, load_credentials, marine_schema, summarize
 from .config import DATA, CATALOG
@@ -66,18 +67,33 @@ def atomic_json(path, value):
     temp.replace(path)
 
 
-def sync_catalog():
+def sync_catalog(scope='incheon', all_marine=False):
+    from . import regions
+    if scope not in ('incheon','coastal'):
+        raise ValueError('Unknown collection scope')
     entry = service('KorService2')
     params = dict(serviceKey=entry['key'], MobileOS='ETC', MobileApp='MarineTravelAgent', _type='json', numOfRows=100)
     codes = fetch_pages(entry['endpoint'] + '/areaCode2', params)
     area = next(row['code'] for row in codes if row['name'] == '인천')
-    rows = fetch_pages(entry['endpoint'] + '/areaBasedList2', dict(params, areaCode=area, arrange='A'))
+    selected = [str(area)] if scope == 'incheon' else list(regions.AREA_NAMES)
+    known = {str(row['code']) for row in codes}
+    if not set(selected) <= known:
+        raise RuntimeError('Tourism area metadata incomplete')
+    rows, administrative = [], {}
+    for code in selected:
+        administrative[code] = fetch_pages(entry['endpoint'] + '/areaCode2', dict(params, areaCode=code)) if scope == 'coastal' else []
+        rows.extend(fetch_pages(entry['endpoint'] + '/areaBasedList2', dict(params, areaCode=code, arrange='A')))
     ids = [str(row['contentid']) for row in rows]
     if len(set(ids)) != len(ids):
         raise RuntimeError('Duplicate tourism content IDs')
     marine, errors = {}, {}
+    if scope == 'coastal' and CATALOG.exists():
+        previous = catalog()
+        marine = {k: dict(v, collected_at=v.get('collected_at',previous['collected_at'])) for k,v in previous.get('marine',{}).items()}
     today = dt.datetime.now(KST).strftime('%Y%m%d')
     for activity, (page, suffix) in MARINE.items():
+        if scope == 'coastal' and not all_marine and activity != 'seatrip':
+            continue
         try:
             schema, source = marine_schema(page)
             operation = next(iter(schema['paths']))
@@ -86,7 +102,7 @@ def sync_catalog():
             if activity == 'fishing':
                 query['gubun'] = '갯바위'
             marine[activity] = dict(rows=fetch_pages('https://' + schema['host'] + operation, query),
-                                     source=source, requested_date=today)
+                                     source=source, requested_date=today, collected_at=dt.datetime.now(KST).isoformat())
         except Exception as error:
             errors[activity] = type(error).__name__
     if errors:
@@ -94,7 +110,7 @@ def sync_catalog():
         atomic_json(DATA / 'sync_failure.json', dict(checked_at=dt.datetime.now(KST).isoformat(), errors=errors))
         raise RuntimeError('Marine collection incomplete; previous catalog preserved (see data/sync_failure.json)')
     result = dict(collected_at=dt.datetime.now(KST).isoformat(), tourism_source='https://www.data.go.kr/data/15101578/openapi.do',
-                  area_code=area, places=rows, marine=marine)
+                  scope=scope, area_code=area, area_codes=selected, administrative=administrative, places=rows, marine=marine)
     atomic_json(CATALOG, result)
     return dict(places=len(rows), marine={k: len(v['rows']) for k, v in marine.items()}, collected_at=result['collected_at'])
 
@@ -102,7 +118,13 @@ def sync_catalog():
 def catalog():
     if not CATALOG.exists():
         raise RuntimeError('Catalog is missing. Run python -m marine_agent.sync first.')
-    return json.loads(CATALOG.read_text(encoding='utf-8'))
+    stamp=CATALOG.stat()
+    return _read_catalog(str(CATALOG),stamp.st_mtime_ns,stamp.st_size)
+
+
+@lru_cache(maxsize=2)
+def _read_catalog(path, mtime, size):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
 
 
 def place_detail(content_id):

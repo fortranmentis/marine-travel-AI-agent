@@ -1,24 +1,23 @@
 """TourAPI food categories and source-labelled regional sea-travel outlooks."""
 import datetime as dt
 
-from . import providers
+from . import providers, regions
 
 CUISINES = {'A05020100': ('korean', '한식'), 'A05020200': ('western', '양식'),
             'A05020300': ('japanese', '일식'), 'A05020400': ('chinese', '중식'),
             'A05020700': ('other', '기타')}
 INDEX_ORDER = ['매우좋음', '좋음', '보통', '나쁨', '매우나쁨']
-# These are named forecast regions, not point forecasts for every attraction.
-SEA_AREAS = {'영종·용유': '인천내륙', '강화': '인천내륙', '송도·도심': '인천내륙'}
 
 
 def food_candidates(region, cuisines=(), cafe=False, near=None, radius_km=3):
-    from .planner import coords, in_region, distance
+    from .planner import coords, distance
     result = []
-    for row in providers.catalog()['places']:
+    catalog=providers.catalog()
+    for row in catalog['places']:
         point = coords(row)
         code = str(row.get('cat3', ''))
         category = CUISINES.get(code)
-        if str(row.get('contenttypeid')) != '39' or not point or not in_region(*point, region):
+        if str(row.get('contenttypeid')) != '39' or not point or not regions.matches(row,region,catalog):
             continue
         if cafe and code != 'A05020900' or not cafe and (category is None or cuisines and category[0] not in cuisines):
             continue
@@ -34,10 +33,11 @@ def food_candidates(region, cuisines=(), cafe=False, near=None, radius_km=3):
 
 def sea_outlook(region, date, start, end):
     """Keep official ordinal grades; do not fabricate an official 0–100 score."""
-    area = SEA_AREAS.get(region)
+    area = regions.SPECS.get(region,{}).get('forecast_area')
     c = providers.catalog()
     feed = c.get('marine', {}).get('seatrip', {})
-    stale = dt.datetime.fromisoformat(c['collected_at']).date() != dt.datetime.now(providers.KST).date()
+    feed_collected=feed.get('collected_at',c['collected_at'])
+    stale = dt.datetime.fromisoformat(feed_collected).date() != dt.datetime.now(providers.KST).date()
     rows = [r for r in feed.get('rows', []) if r.get('sareaDtlNm') == area
             and str(r.get('predcYmd', '')).replace('-', '') == date.replace('-', '')]
     # KHOA half-day codes: preserve raw evidence and require both halves when crossing noon.
@@ -45,10 +45,16 @@ def sea_outlook(region, date, start, end):
     selected = [r for r in rows if str(r.get('predcNoonSeCd')) in periods]
     grades = [str(r.get('totalIndex', '')).replace(' ', '') for r in selected]
     complete = periods <= {r.get('predcNoonSeCd') for r in selected} and all(g in INDEX_ORDER for g in grades)
+    resolution='half_day'
+    daily=[r for r in rows if r.get('predcNoonSeCd')=='일']
+    daily_grades=[str(r.get('totalIndex','')).replace(' ','') for r in daily]
+    if not complete and daily and all(g in INDEX_ORDER for g in daily_grades):
+        selected,grades,complete,resolution=daily,daily_grades,True,'daily'
     return dict(status='stale' if stale else 'available' if complete else 'no_forecast',
         grade=max(grades, key=INDEX_ORDER.index) if complete and not stale else None,
-        area=area, source=feed.get('source'), collected_at=c['collected_at'], rows=selected,
-        label='바다여행지수 기반 여행 전망', aggregation='해당 여행 시간대의 가장 낮은 공식 등급',
+        area=area, source=feed.get('source'), collected_at=feed_collected, rows=selected,
+        temporal_resolution=resolution,
+        label='바다여행지수 기반 여행 전망', aggregation='공식 일 단위 등급 · 오전·오후 구분 없음' if resolution=='daily' else '해당 여행 시간대의 가장 낮은 공식 등급',
         note='권역 단위 해상 전망입니다. 육상 관광 적합성·여객선 운항·현장 통제 여부와 다릅니다.')
 
 

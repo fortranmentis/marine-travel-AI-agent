@@ -1,0 +1,17 @@
+.national-overview{padding:30px 0;border-bottom:1px solid var(--line)}
+.national-header{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.national-header h2{margin:5px 0}.national-header label{margin:0;min-width:180px}
+.national-count{color:var(--teal);font-size:13px;margin:10px 0}
+#national-status,#forecast-range,.national-note{font-size:13px;color:var(--muted);line-height:1.8;margin:8px 0}
+.national-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-height:440px;overflow-y:auto;padding:4px 8px 4px 2px;scrollbar-width:thin;overscroll-behavior-y:contain}
+.national-region-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.national-region-title{display:flex;align-items:center;gap:10px;margin-bottom:12px}.national-region-title>span{font-size:12px;color:var(--muted);background:#eff3ee;border-radius:5px;padding:3px 7px}.national-region-title h3{margin:0;font-size:17px}
+.national-region-card .marine-grade{padding:5px 10px}.national-region-card .marine-grade strong{font-size:19px}.national-region-card .marine-grade svg{width:22px;height:22px}
+.national-periods{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;margin:12px 0;color:var(--muted)}
+.national-select{background:var(--mint);border:1px solid #bdd4c9;padding:8px 12px;border-radius:6px;color:var(--teal);font:inherit;font-size:13px;cursor:pointer;width:100%;min-height:40px}
+.national-disabled{font-size:12px;color:#886539;margin:8px 0;line-height:1.8}
+.search-reference{background:#edf3ef;border-radius:7px;padding:12px;font-size:13px;line-height:1.8;margin:12px 0}
+@media(max-width:850px){.national-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.national-cards{grid-template-columns:1fr;max-height:480px}.national-header{align-items:flex-start}.national-header label{width:100%}}
+
+.national-filters{display:flex;gap:12px;flex-wrap:wrap}.national-filters label{min-width:160px}@media(max-width:520px){.national-filters{width:100%}.national-filters label{flex:1 1 100%}}

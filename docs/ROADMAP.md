@@ -32,6 +32,16 @@
 - [ ] Live transit/ferry validation and first real reviewed island
 - [ ] Overnight island stays, vehicle shipping and verified island food
 
+## v0.4 — nationwide sea-travel index focus
+
+- [x] 29 named forecast regions, morning/afternoon comparison and actual date coverage
+- [x] Province/region selection with 24 land-tourism draft regions and 5 forecast-only regions
+- [x] Ten provincial catalogs, source administrative joins and explicit search references
+- [x] Road-access and adjacent-mode routing checks for new national regions
+- [x] Poor-outlook cultural preference and explicit missing/stale coverage
+- [x] Feed-specific collection timestamps, atomic national refresh and catalog read cache
+- [ ] Comprehensive land/island topology, operating calendars and venue suitability
+
 ## Next: verify family travel feasibility
 
 1. Review operators, minimum ages, operating hours, booking requirements, facilities

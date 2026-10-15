@@ -12,30 +12,36 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.3.0](docs/assets/version.svg)
+![Version: 0.4.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![Three travel regions, five typed tools, eight marine feeds, offline regression tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 62 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
-**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional travel itineraries. Its Korean interface, **바다결**, supports **one- to three-day car or walking trips** in **Yeongjong–Yongyu, Ganghwa, and Songdo–urban Incheon**.
+**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional travel itineraries. Its Korean interface, **바다결**, supports **one- to three-day car or walking trips** across **24 land-tourism regions linked to 29 nationwide sea-travel outlooks**, with the existing Incheon presets retained.
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.3 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.4 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
 
-## New in v0.3
+## New in v0.4
+
+Compare morning/afternoon or daily sea-travel grades across **29 forecast regions**, select a province and region, then request a local trip draft. **24 regions support land-tourism planning**; five offshore regions provide forecasts pending ferry verification. The atomic collection covers **10,102 TourAPI records in ten coastal provinces**; only eligible local candidates enter a draft.
+
+Poor sea outlooks prioritize cultural-facility candidates. Source grades, missing coverage, route checks and the actual forecast-date range stay visible. Search regions are application filters, not official forecast polygons. See [coverage, API and collection details](docs/API-v04.md).
+
+## Added in v0.3
 
 Daily time windows, attraction counts, party types and child counts; nearby meals by TourAPI cuisine and cafe breaks; horizontally scrollable weather; daily and whole-trip sea-travel outlooks. Walking uses a separate OSRM foot graph.
 
 **Transit and ferries are connection-ready, not live-verified:** ODsay needs a separate key; island day trips need reviewed round-trip data. No ferry island is enabled by default. See [v0.3 contracts and setup](docs/API-v03.md).
 
-Current captures: [v0.3 full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
+Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
 
 ## Preview
 
@@ -109,7 +115,7 @@ flowchart TD
 
 **Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather` and `build_itinerary` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
 
-**Planning contract.** The initial itinerary uses regional bounding boxes, straight-line candidate filtering and assumed visit durations. OSRM routes are added afterward, so an initial draft can carry travel-gap warnings. Replacing a visit requires available adjacent routes that fit the existing free time.
+**Planning contract.** The itinerary uses source administrative joins and explicit search filters for national regions; legacy Incheon presets retain their rectangles. Visit durations remain assumptions. OSRM routes are added afterward, so an initial draft can carry travel-gap warnings. Replacing a visit requires available adjacent routes that fit the existing free time.
 
 </details>
 
@@ -127,12 +133,14 @@ The pipeline preserves **source grain, collection time and unknowns**. Tourism r
 
 | Layer | Record meaning | Quality controls and boundaries |
 | --- | --- | --- |
-| Tourism catalog | Incheon TourAPI entry, identified by `contentid`. | Unique IDs; planning uses content types `12`, `14`, `28`, coordinates and regional boxes. |
+| Tourism catalog | Ten coastal provincial TourAPI catalogs, identified by `contentid`. | Unique IDs; planning uses source administrative codes, explicit regional filters and road-access screening. |
 | Marine catalog | National forecast record for a source site/date and feed-specific dimensions. | Eight feeds; full-page/count checks; same-Korean-day freshness for marine scheduling. Counts are not unique venue counts. |
 | Weather | KMA grid forecast elements by date and hour. | Coordinate-to-grid conversion; issue time and reference point retained. Warning bulletins are not queried. |
 | Enrichment | Tourism-ID photo metadata and coordinate-pair road routes. | Matching IDs and accepted licenses; unavailable photos/routes stay unavailable. |
 
-**Local snapshot inspected:** October 15, 2026, 16:42:01 KST — **513 tourism records**, **513 distinct IDs**, **511 coordinate pairs within a basic Korea bounding box**, and **3,827 national marine forecast rows**. Two tourism records failed that coordinate screen. These are dated file observations, not a new API collection or a positional-accuracy assessment.
+**Current collection:** October 16, 2026, 00:16 KST — **10,102 tourism records / 10,102 distinct IDs**, **29 sea-travel forecast regions**. See the [national aggregate profile](docs/national-profile.json). Non-sea-travel feeds retain their earlier collection timestamps.
+
+**Historical v0.3 snapshot:** October 15, 2026, 16:42:01 KST — **513 tourism records**, **513 distinct IDs**, **511 coordinate pairs within a basic Korea bounding box**, and **3,827 national marine forecast rows**. Two tourism records failed that coordinate screen. These are dated file observations, not a new API collection or a positional-accuracy assessment.
 
 See [DATA.md](docs/DATA.md) for feed counts, candidate filtering, freshness semantics and what the quality checks cannot prove.
 
@@ -175,7 +183,7 @@ Keep API credentials outside the repository. Each service uses a three-line bloc
 키 : YOUR_SERVICE_KEY
 ```
 
-Add all eight marine services in the same format. Their endpoint suffixes are listed in [`providers.py` → `MARINE`](marine_agent/providers.py). A separate photo-gallery API is not needed for itinerary photos.
+For nationwide sea-travel collection, add the sea-travel service in the same format; refreshing all marine activities requires all eight. Their endpoint suffixes are listed in [`providers.py` → `MARINE`](marine_agent/providers.py). A separate photo-gallery API is not needed for itinerary photos.
 
 ### 3. Collect and launch
 
@@ -196,7 +204,7 @@ If your Windows Python cannot bootstrap pip inside the environment, use `python 
 
 ## Validation
 
-**Re-run on October 15, 2026 (Asia/Seoul): 49 Python tests and 5 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
+**Re-run on October 16, 2026 (Asia/Seoul): 57 Python tests and 5 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
 
 | Evidence | Scope |
 | --- | --- |

@@ -100,6 +100,11 @@ class PlanStore:
         used = {i.get('id') for d in result['days'] for i in d['items']}
         if candidate is None or candidate_id in used or candidate_id in result['trip']['excluded_ids']:
             raise PlanError(422, '현재 선택할 수 없는 대체 관광지입니다.')
+        if result['trip']['region'] not in planner.regions.LEGACY and not result['trip'].get('island_id'):
+            from .mobility import route_between
+            gateway=planner.regions.gateway(result['trip']['region'])
+            if gateway is None or route_between(gateway,candidate,'car')['status'] != 'available':
+                raise PlanError(422,'관광 탐색 기준점에서 도로 접근을 확인하지 못해 교체하지 않았습니다.')
         slot.update(candidate, reason='선택한 대체 관광지로 기존 시간대를 유지해 교체했어요.',
                     checks=['운영시간·휴무', '가족 적합성'])
         new_route = enrichment.day_route(target_day)

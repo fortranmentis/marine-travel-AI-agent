@@ -2,7 +2,9 @@
 
 [English README](../README.md) · [한국어 README](../README.ko.md) · [Validation](../VALIDATION.md) · [Aggregate profile](data-profile.json)
 
-This document describes the inspected implementation and the local catalog collected at **2026-10-15T16:42:01.930293+09:00**. Counts below were recomputed from the existing file during the documentation refresh. No new provider requests were made. The ignored source catalog is not bundled with a fresh clone.
+The tables below retain the historical v0.2/v0.3 snapshot. [v0.4 national coverage and current collection](API-v04.md) supersede its coverage and collection rules.
+
+This historical section describes the inspected implementation and the local catalog collected at **2026-10-15T16:42:01.930293+09:00**. Counts below were recomputed from the existing file during the documentation refresh. No new provider requests were made. The ignored source catalog is not bundled with a fresh clone.
 
 이 문서는 현재 코드와 **2026년 10월 15일 16:42:01 KST** 수집본을 대상으로 합니다. 건수는 이번 작업에서 기존 로컬 파일을 다시 집계했으며 원천 API를 재호출하지 않았습니다. 원본 카탈로그는 Git 제외 대상이므로 새 복제본에 포함되지 않습니다.
 

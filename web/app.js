@@ -1,22 +1,24 @@
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.3.1';
-import {initializeTripForm} from './trip-form.js?v=0.3.1';
-import {$,el,button,plainText} from './ui.js?v=0.3.1';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.3.1';
-import {weatherCard} from './weather.js?v=0.3.1';
-import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.3.1';
+import {initializeNational} from './national.js?v=0.4.2';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.2';
+import {initializeTripForm} from './trip-form.js?v=0.4.2';
+import {$,el,button,plainText} from './ui.js?v=0.4.2';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.2';
+import {weatherCard} from './weather.js?v=0.4.2';
+import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.4.2';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 form.elements.start_date.value=today;form.elements.start_date.min=today;
 const tripForm=initializeTripForm(form);
+const national=initializeNational(form);
 api('/api/config').then(config=>{for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}if(config.mobility?.transit)form.elements.transport.querySelector('[value=transit]').textContent='대중교통 + 도보';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
 function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
 function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
 async function api(path,body){const response=await fetch(path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:'날짜·인원·고정 일정 등 입력 조건을 확인해 주세요.');return data;}
 function edits(){const box=$('#edits');box.replaceChildren();if(state.locked.length||state.excluded.length){box.append(el('div',`고정 ${state.locked.length}개 · 제외 ${state.excluded.length}개`));box.append(button('다음 생성의 고정·제외 조건 초기화',()=>{state.locked=[];state.excluded=[];edits();status('다시 생성하면 초기화한 조건이 반영됩니다.');}));}}
-function syncForm(plan){state.locked=plan.trip.locked;state.excluded=plan.trip.excluded_ids;for(const key of ['region','start_date','days','adults','activity'])form.elements[key].value=plan.trip[key];tripForm.sync(plan.trip);edits();}
+function syncForm(plan){const previousDate=form.elements.start_date.value;national.selectRegion(plan.trip.region);state.locked=plan.trip.locked;state.excluded=plan.trip.excluded_ids;for(const key of ['region','start_date','days','adults','activity'])form.elements[key].value=plan.trip[key];tripForm.sync(plan.trip);if(previousDate!==plan.trip.start_date)national.refresh();edits();}
 function photo(contentId){
   const value=state.plan?.media?.[contentId],figure=el('figure',undefined,'place-photo');
   const empty=()=>{figure.replaceChildren(el('div','사진 준비 중이거나 제공된 사진이 없어요.','photo-empty'));};
@@ -34,6 +36,7 @@ function render(plan){
   for(const day of plan.days){
     const section=el('section',undefined,'day'),title=el('h3',day.date,'day-title');title.append(el('span',day.marine.status==='available'?'해양예보 조회됨':day.marine.status==='stale'?'해양자료 갱신 필요':day.marine.status==='not_requested'?'관광 중심':'해당 날짜·권역 해양예보 없음'));section.append(title,weatherCard(day.weather,day.day_start||plan.trip.day_start,day.day_end||plan.trip.day_end));
     if(day.travel_index)section.append(marineIndexCard(day.travel_index));
+    if(day.search_reference)section.append(el('p',`관광 탐색 기준: ${day.search_reference.title}. 주변 후보를 찾기 위한 기준점이며 숙소·실제 출발지가 아닙니다.`,'search-reference'));
     section.append(el('p',`관광·체험 ${day.actual_visits??'—'} / 요청 ${day.requested_visits??'—'}곳`,'forecast'));
     for(const warning of day.warnings||[])section.append(el('p',warning,'route-warning'));
     for(const item of day.items){
@@ -86,7 +89,7 @@ async function aiRequest(request){
 function displayResult(data){if(data.plan){syncForm(data.plan);render(data.plan);}$('#messages').append(el('div',data.answer,'answer'));$('#chat-panel').hidden=false;$('#trace').textContent=data.trace.map(t=>`${t.tool}: ${t.status}`).join(' → ');status(data.status==='ok'?'초안을 만들었습니다. 미확인 항목을 확인해 주세요.':'AI 처리 상태: '+data.status+' · 데이터 기반 초안을 확인해 주세요.');}
 async function generate(useAI){
   if(state.busy||!form.reportValidity())return;busy(true);status(useAI?'AI가 여행 자료를 확인하고 있습니다.':'데이터와 규칙으로 초안을 만드는 중입니다.');
-  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 인천 여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
+  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 선택한 권역의 바다여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
   catch(error){status(error.message,true);}finally{busy(false);}
 }
 form.onsubmit=e=>{e.preventDefault();generate(true);};$('#rules').onclick=()=>generate(false);
@@ -97,4 +100,4 @@ $('#chat-form').onsubmit=async e=>{
   catch(error){status(error.message,true);}finally{busy(false);}
 };
 initializeMap();
-api('/api/health').then(d=>{$('#health').textContent=d.catalog_ready?`인천 관광 ${d.places}건 연결\n수집: ${d.collected_at}`:'데이터 수집을 먼저 실행해 주세요.';$('#health-dot').style.color=d.catalog_ready?'#308a68':'#a47d39';}).catch(()=>{$('#health').textContent='서버 상태를 확인할 수 없습니다.';});
+api('/api/health').then(d=>{$('#health').textContent=d.catalog_ready?`${d.scope==='coastal'?'전국':'인천'} 관광 ${d.places.toLocaleString('ko-KR')}건 연결 · 바다예보 ${d.forecast_regions||0}권역\n수집: ${d.collected_at}`:'데이터 수집을 먼저 실행해 주세요.';$('#health-dot').style.color=d.catalog_ready?'#308a68':'#a47d39';}).catch(()=>{$('#health').textContent='서버 상태를 확인할 수 없습니다.';});

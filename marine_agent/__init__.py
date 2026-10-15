@@ -1,1 +1,1 @@
-"""Incheon marine family travel agent."""
+"""Nationwide coastal travel agent with source-labelled sea-travel outlooks."""

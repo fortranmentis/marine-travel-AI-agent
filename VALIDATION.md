@@ -1,5 +1,41 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## v0.4 national sea-travel checks — 2026-10-16
+
+- **57 Python + 5 Node tests passed**; Python used
+  `--basetemp=.tmp/pytest-national-final`. Existing Starlette/httpx deprecation warning remains.
+  `git diff --check` and frontend syntax checks passed.
+- New regressions cover source province/municipality joins (including the two 고성군
+  names), unknown regions, marine activity scope, offshore planning gates, exact
+  forecast-name selection, per-feed freshness, cultural preference under poor sea
+  outlooks, missing/ferry road access, revision preservation on rejected replacement,
+  region API readiness/date validation, daily `일` versus half-day source resolution,
+  and atomic national collection with retained old-feed timestamps.
+- Live collection: **10,102 records / 10,102 distinct IDs** from ten coastal provincial
+  TourAPI catalogs, 10,073 coordinate-range passes; **29 sea-travel regions / 232 rows**.
+  Snapshot: `2026-10-16T00:16:24.353847+09:00`. [Aggregate](docs/national-profile.json).
+  October 16–17 provide morning/afternoon rows (58/day), October 18–21 daily rows
+  (`predcNoonSeCd=일`, 29/day). Daily rows are used as daily outlooks with no fabricated
+  morning/afternoon detail. Other marine feeds retain October 15 collection times.
+- Live rule API: Gangneung and northeast Busan each returned HTTP 200, two tourism
+  visits and one nearby meal, with both adjacent road legs available and within their
+  time gaps (5.78s / 5.26s single observations). Missing cafe slots remain omitted.
+- Real Qwen `qwen3.8:27b-mtp-q8_0` request for northeast Busan returned `ok` with
+  `get_marine_conditions: ok`, `build_itinerary: ok`, region preserved and two visits.
+  First stage: 0.07s; final: 33.4s. These are observations, not performance benchmarks.
+- Live October 18 Gangneung daily outlook returned `나쁨` / `daily`. Its draft selected
+  갈골한과체험전시관 and 강릉올림픽뮤지엄 (culture type 14) and a nearby meal, with the poor
+  outlook notice. This does not validate operating hours, indoor status or land-weather suitability.
+- Browser: 29 comparison cards, 24 draft-ready regions, province filters linked to
+  form selection, Gangneung candidate-to-plan flow, half-day/daily labels, actual
+  source dates, existing readable icons, and 1280px / 390px layouts checked.
+  No horizontal page overflow at either viewport. [Desktop](docs/national-desktop.jpg),
+  [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg).
+- Five offshore forecast regions remain forecast-only. Public transit and live ferry
+  operations remain unverified without separate keys and reviewed schedules.
+  Nationwide refers to supported named sea-travel regions, not every municipality.
+  The service remains a local prototype; data is not included in Git.
+
 ## Readability update — 2026-10-15
 
 - Sea-travel outlook cards now use inline SVG grade symbols, explicit grade text,
