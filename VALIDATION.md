@@ -1,5 +1,38 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## v0.2 release checks
+
+- Python regression suite: **37 passed**. Frontend Node tests: **4 passed**.
+- The live browser received task status before Qwen completed the itinerary. Closing
+  the progress dialog did not interrupt generation; the completed draft still rendered.
+- Live photos loaded for tourism visits, with Type3 source/license links. Marine
+  venues without an explicit tourism ID displayed placeholders instead of guessed photos.
+- OSRM returned a real driving route from Geojampo Beach to Mashian: 1,427.7 meters,
+  160.9 seconds. This is one source response, not a traffic-aware accuracy benchmark.
+- A browser replacement changed Geojampo Beach to Geojampo Pier without regenerating
+  the trip. Undo restored the original visit, route and photo. Fixed visits preserve
+  location and image metadata; locked slots reject replacement on the server.
+- A 1280px desktop viewport used side-by-side visit photos. At a 390px mobile viewport,
+  photos moved above content and document width equaled viewport content width (no
+  horizontal page overflow). Browser map tiles, weather cards and photo loading were
+  inspected. This is not a complete accessibility/device matrix audit.
+- Optional media/route failures, ferry routes, time-gap violations, stale revisions,
+  registry expiration/eviction, photo ID/license checks and stream parsing have
+  synthetic regression coverage. Actual provider outages were not induced.
+- Public route requests are throttled and cached. OSM attribution remains visible.
+- Weather summaries describe trip hours at the labeled representative forecast point;
+  warnings remain unchecked. Operating hours, age limits and local restrictions remain
+  unverified. The initial heuristic schedule can still have route-time warnings;
+  replacement rejects new adjacent route violations rather than moving other visits.
+- The status stream contains task descriptions, not internal model reasoning. The
+  model's final prose can still contain inaccurate wording or mixed-language fragments.
+- Screen captures: `docs/progress-v02.jpg`, `docs/preview-v02.jpg`, `docs/mobile-v02.jpg`.
+- Final browser checks confirmed that replacing a day-two visit selects day two on
+  the map, and keyboard selection of a day-one card selects its day-one route.
+  No browser console errors were reported in these checks.
+
+The following sections retain the original v0.1 checks for historical context.
+
 ## Live source checks
 
 - TourAPI resolved Incheon area code `2`; full collection returned 513 distinct

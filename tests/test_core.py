@@ -201,3 +201,10 @@ def test_locked_place_is_not_scheduled_twice(snapshot):
     items = [item for day in plan['days'] for item in day['items']]
     assert sum(item['title'] == '관광지0' for item in items) == 1
     assert not any(item.get('id') == '0' and item['kind'] != 'locked' for item in items)
+
+
+def test_alternatives_exclude_visits_on_other_days(snapshot):
+    _, date = snapshot
+    plan = planner.build_plan(dict(start_date=date))
+    used = {item.get('id') for day in plan['days'] for item in day['items']}
+    assert all(candidate['id'] not in used for day in plan['days'] for candidate in day['alternatives'])

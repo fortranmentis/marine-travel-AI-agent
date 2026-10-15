@@ -229,6 +229,8 @@ def build_plan(trip):
         days.append(dict(date=date.isoformat(), items=sorted(items, key=lambda i: i['start']), marine=conditions,
                          weather=weather, alternatives=alternatives,
                          alternative_note='같은 권역의 대체 후보입니다. 실내 여부·운영시간·가족 적합성은 개별 확인 필요'))
+    for day in days:
+        day['alternatives'] = [p for p in candidates if p['id'] not in used][:6]
     validate_schedule(days)
     progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')
     return dict(status='provisional', trip=trip.model_dump(mode='json'), days=days,
@@ -236,6 +238,6 @@ def build_plan(trip):
                 marine_scheduled=marine_used,
                 notices=['검토용 초안입니다. 특보·현장 통제·체험장 운영·자녀 연령 조건은 미확인입니다.',
                          '차량 여행만 지원합니다. 배편이 필요한 섬은 초기 권역에서 제외합니다.',
-                         '관광지 간 직선거리로 후보를 좁힙니다. 60분 간격은 이동·휴식 가정이며 실제 경로 시간은 아닙니다.',
+                         '초기 방문 배치는 직선거리와 이동·휴식 가정을 사용합니다. 지도에 표시된 도로 경로·시간과 여유 시간 경고를 확인하세요.',
                          '예보 없음·나쁨·폐장·보통 지수는 체험 추천 근거로 사용하지 않습니다.',
                          '해수욕은 개장·연령·현장 조건 검증 전까지 자동 배치하지 않습니다.'])

@@ -12,9 +12,17 @@ The Korean web interface is provisionally named **바다결**.
 <details>
 <summary>View the working Korean interface</summary>
 
-![Incheon itinerary with a fixed visit and a forecast-constrained mudflat candidate](docs/preview.jpg)
+![Incheon itinerary with road routes, weather cards and tourism photos](docs/preview-v02.jpg)
 
 </details>
+
+## v0.2 interface
+
+- Live task-progress modal with elapsed time and completed steps; no private model reasoning.
+- Embedded Leaflet/OSM daily maps, numbered visits, OSRM road geometry, distances and non-traffic driving estimates.
+- Exact-ID TourAPI photos with attribution and license links, preserving image proportions.
+- Weather icons, trip-hour summaries and expandable hourly forecasts.
+- Single-visit replacement with route/time validation, revision conflicts, lock/unlock and undo.
 
 ## Highlights
 
@@ -97,6 +105,11 @@ python -m pip --python .venv/Scripts/python.exe install -r requirements.txt
 | `GET /api/places?region=...` | Regional tourism candidates |
 | `POST /api/plan` | Rule-based provisional itinerary |
 | `POST /api/chat` | Local LLM tool calling and conversation |
+| `POST /api/chat/stream` | NDJSON progress, tool status, final result |
+| `POST /api/plans/{id}/replace` | Replace a tourism slot at the same time |
+| `POST /api/plans/{id}/undo` | Restore the last replacement |
+| `POST /api/plans/{id}/lock` | Lock/unlock a visit, preserving location |
+| `GET /api/config` | Public tile configuration (no API credentials) |
 | `GET /docs` | OpenAPI documentation |
 
 ```powershell
@@ -112,13 +125,24 @@ is an explicitly dated development record.
 ## Validation and limits
 
 See [VALIDATION.md](VALIDATION.md). Site operating hours, age limits, road routes,
-weather warnings, closures and operator availability are unverified. Visit durations
+weather warnings, closures and operator availability are unverified. OSRM routing
+is road-network based and does not account for current traffic or parking access. Visit durations
 and movement/rest gaps are planning assumptions. Culture facilities are alternative
 candidates, not verified indoor venues. Model prose may be inaccurate; review the
 structured itinerary and source evidence. There is no optimal-route guarantee.
 
+Plans are stored in one process for two hours, capped at 128 entries. Restarts expire
+them. Replacement preserves other visits and checks adjacent driving time against
+free gaps excluding preparation and meal blocks. Missing routes reject a replacement;
+they never become a straight-line driving route.
+
+The public OSRM server is for prototype use, rate-limited to one uncached request per
+second; successful routes are cached for 24 hours. Photo metadata is cached seven days.
+Set `OSRM_BASE_URL` and `OSM_TILE_URL` in `.env` to change providers.
+Leaflet 1.9.4 and its BSD license are vendored in `web/vendor/leaflet/`.
+
 Only mudflat marine slots are currently scheduled. Swimming awaits site-level
-opening, age and local-condition checks. Ferry-dependent trips, images, navigation,
+opening, age and local-condition checks. Ferry-dependent trips, turn-by-turn navigation,
 reservations and notifications are future work.
 
 ## Sources
@@ -129,4 +153,6 @@ reservations and notifications are future work.
 - [Ollama tool calling](https://docs.ollama.com/capabilities/tool-calling)
 
 Source text, metadata and images remain subject to their respective terms. Local
-API datasets and tourism photos are not redistributed by this repository.
+API datasets and source image files are not bundled; attributed UI screenshots are included.
+
+Frontend tests require Node.js 18+: `node --test tests/web.test.mjs`. No npm packages are required.
