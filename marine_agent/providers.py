@@ -159,4 +159,5 @@ def weather_for_place(content_id, date):
         by_time.setdefault(r['fcstTime'], {})[r['category']] = r['fcstValue']
     return dict(status='available' if matching else 'no_forecast', date=date, grid=dict(nx=nx, ny=ny),
                 issue_at=issue.isoformat(), checked_at=now.isoformat(), forecasts=by_time,
-                source='KMA short-term forecast', warnings_checked=False)
+                source='KMA short-term forecast', warnings_checked=False,
+                reference_place=dict(id=str(content_id), title=row['title'], lat=lat, lon=lon))

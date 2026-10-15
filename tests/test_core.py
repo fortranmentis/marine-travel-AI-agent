@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from marine_agent import planner, providers, agent
+from marine_agent import planner, providers, agent, enrichment
 from marine_agent.app import app
 
 
@@ -20,6 +20,9 @@ def snapshot(monkeypatch):
                     predcYmd=date, lat=37.43, lot=126.42, totalIndex='좋음', mdftExprnBgngTm='14:00', mdftExprnEndTm='17:00')])})
     monkeypatch.setattr(providers, 'catalog', lambda: data)
     monkeypatch.setattr(providers, 'weather_for_place', lambda *a: dict(status='no_forecast', forecasts={}))
+    monkeypatch.setattr(enrichment, 'photo_for', lambda *a: dict(status='unavailable'))
+    monkeypatch.setattr(enrichment, 'road_route', lambda *a: dict(status='available', duration_s=60, distance_m=500,
+                                                              geometry={'type':'LineString','coordinates':[[126.42,37.43],[126.42,37.43]]}))
     return data, date
 
 
@@ -197,4 +200,4 @@ def test_locked_place_is_not_scheduled_twice(snapshot):
     plan = planner.build_plan(dict(start_date=date, locked=[dict(date=date, start='10:00', end='11:30', title='관광지0')]))
     items = [item for day in plan['days'] for item in day['items']]
     assert sum(item['title'] == '관광지0' for item in items) == 1
-    assert not any(item.get('id') == '0' for item in items)
+    assert not any(item.get('id') == '0' and item['kind'] != 'locked' for item in items)

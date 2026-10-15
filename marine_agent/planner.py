@@ -3,7 +3,7 @@ import math
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from . import providers
+from . import providers, progress
 
 REGIONS = ['영종·용유', '강화', '송도·도심']
 
@@ -14,6 +14,10 @@ class Lock(BaseModel):
     start: str = Field(pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
     end: str = Field(pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
     title: str = Field(min_length=1, max_length=100)
+    id: str | None = Field(default=None, max_length=20)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lon: float | None = Field(default=None, ge=-180, le=180)
+    original_kind: Literal['tourism', 'marine'] | None = None
 
 
 class Trip(BaseModel):
@@ -126,6 +130,7 @@ def validate_schedule(days):
 def build_plan(trip):
     if isinstance(trip, dict):
         trip = Trip.model_validate(trip)
+    progress.emit('data', '인천 관광 후보와 해양예보를 확인하고 있어요.')
     c = providers.catalog()
     candidates = [p for p in tourism_candidates(trip.region, limit=200) if p['id'] not in trip.excluded_ids]
     if not candidates:
@@ -136,16 +141,29 @@ def build_plan(trip):
     source_age = dt.datetime.now(providers.KST) - dt.datetime.fromisoformat(c['collected_at'])
     if source_age > dt.timedelta(days=1):
         raise ValueError('데이터가 24시간 이상 지났습니다. 데이터 수집을 다시 실행하세요.')
+    prepared = {}
     for offset in range(trip.days):
         date = trip.start_date + dt.timedelta(days=offset)
-        items = [dict(kind='locked', title=l.title, start=l.start, end=l.end, source='사용자 고정 일정')
-                 for l in trip.locked if l.date == date]
+        progress.emit('data', f'{date.month}월 {date.day}일 날씨와 해양 활동 시간을 조회하고 있어요.', event='activity')
         conditions = marine_conditions(trip.region, trip.activity, date.isoformat()) if trip.activity != 'none' else dict(status='not_requested', rows=[])
         weather = dict(status='unavailable', warnings_checked=False)
         try:
             weather = providers.weather_for_place(candidates[0]['id'], date.isoformat())
         except Exception:
             pass
+        prepared[offset] = (conditions, weather)
+    progress.emit('data', '예보·관광 자료 조회를 마쳤어요.', state='completed')
+    progress.emit('schedule', '갯벌체험 가능 시간과 점심·고정 일정을 비교하고 있어요.')
+    for offset in range(trip.days):
+        date = trip.start_date + dt.timedelta(days=offset)
+        items = [dict(kind='locked', title=l.title, start=l.start, end=l.end, source='사용자 고정 일정',
+                      id=l.id, lat=l.lat, lon=l.lon, original_kind=l.original_kind)
+                 for l in trip.locked if l.date == date]
+        for item in items:
+            match = next((p for p in candidates if (item.get('id') and p['id'] == item['id']) or p['title'] == item['title']), None)
+            if match:
+                item.update(id=match['id'], lat=match['lat'], lon=match['lon'], original_kind='tourism')
+        conditions, weather = prepared[offset]
         if not marine_used and conditions['status'] == 'available':
             for row in conditions['rows']:
                 if not eligible_marine(row):
@@ -184,7 +202,7 @@ def build_plan(trip):
         # Explicit lunch; skip when a user reservation already occupies the interval.
         if minutes(trip.day_start) <= 720 and minutes(trip.day_end) >= 780 and not any(overlaps(720, 780, minutes(i['start']), minutes(i['end'])) for i in items):
             items.append(dict(kind='break', title='점심·휴식 (장소 미정)', start='12:00', end='13:00'))
-        last_point = next(((i['lat'], i['lon']) for i in items if 'lat' in i), None)
+        last_point = next(((i['lat'], i['lon']) for i in items if i.get('lat') is not None and i.get('lon') is not None), None)
         count = 0
         tourism_budget = max(0, 2 - sum(i['kind'] in ('locked', 'marine') for i in items))
         for start in range(max(600, minutes(trip.day_start) + 60), minutes(trip.day_end) - 89, 30):
@@ -207,11 +225,12 @@ def build_plan(trip):
             count += 1
             if count >= tourism_budget:
                 break
-        alternatives = [p for p in candidates if p['content_type'] == '14' and p['id'] not in used][:3]
+        alternatives = [p for p in candidates if p['id'] not in used][:6]
         days.append(dict(date=date.isoformat(), items=sorted(items, key=lambda i: i['start']), marine=conditions,
                          weather=weather, alternatives=alternatives,
-                         alternative_note='문화시설 후보이며 실내 여부·영업시간은 개별 확인 필요'))
+                         alternative_note='같은 권역의 대체 후보입니다. 실내 여부·운영시간·가족 적합성은 개별 확인 필요'))
     validate_schedule(days)
+    progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')
     return dict(status='provisional', trip=trip.model_dump(mode='json'), days=days,
                 generated_at=dt.datetime.now(providers.KST).isoformat(), collected_at=c['collected_at'],
                 marine_scheduled=marine_used,
