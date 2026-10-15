@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>바다결 · Marine Travel AI Agent</title><link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<header><a class="brand" href="/">≈ <strong>바다결</strong><span>MARINE TRAVEL AI AGENT</span></a><span class="pill">INCHEON · LOCAL AI</span></header>
+<main>
+<section class="hero"><div class="eyebrow">우리 가족의 속도로, 바다의 리듬에 맞춰</div><h1>바다를 읽고,<br>여행을 그리다.</h1><p>인천의 해양예보와 관광정보를 함께 살펴보는<br>가족 여행 AI 플래너.</p><div class="hero-tags"><span>해양예보 기반</span><span>가족 중심 일정</span><span>Qwen 도구 호출</span></div><div class="wave">≈</div></section>
+<div class="workspace">
+<aside>
+<div class="section-number">01 / TRIP DETAILS</div><h2>어떤 여행을 떠날까요?</h2>
+<form id="trip-form">
+<label>인천 여행 권역<select name="region"><option>영종·용유</option><option>강화</option><option>송도·도심</option></select></label>
+<div class="pair"><label>출발일<input type="date" name="start_date" required></label><label>여행 기간<select name="days"><option value="1">당일</option><option value="2" selected>1박 2일</option><option value="3">2박 3일</option></select></label></div>
+<div class="pair"><label>성인 수<input name="adults" type="number" min="1" max="10" value="2" required></label><label>자녀 나이<input name="ages" value="6" placeholder="예: 4, 8" aria-describedby="ages-help"></label></div><small id="ages-help">자녀가 없으면 나이를 비워 주세요.</small>
+<label>하고 싶은 바다 활동<select name="activity"><option value="mudflat">갯벌체험</option><option value="beach">해수욕 (현재 자동 배치 제한)</option><option value="none">관광 중심으로</option></select></label>
+<div class="pair"><label>하루 시작<input type="time" name="day_start" value="09:00" required></label><label>하루 마침<input type="time" name="day_end" value="18:00" required></label></div>
+<div class="note">자차 여행을 기준으로 합니다. 배편이 필요한 섬은 첫 버전에서 지원하지 않습니다.</div>
+<div id="edits" class="edits"></div><button class="primary" id="generate" type="submit">AI로 여행 그리기 <span>↗</span></button>
+<button type="button" id="rules" class="secondary">AI 없이 데이터로 초안 만들기</button>
+</form>
+<div class="data-status"><span id="health-dot">●</span><div id="health">데이터 상태 확인 중…</div></div>
+</aside>
+<section class="results" aria-label="여행 계획">
+<div class="result-header"><div><div class="section-number">02 / YOUR JOURNEY</div><h2 id="result-title">우리 가족의 다음 바다</h2></div><span class="pill muted">검토용 초안</span></div>
+<div id="status" role="status" aria-live="polite"></div>
+<div id="empty"><div class="empty-icon">⌁</div><h3>여행의 조건을 알려주세요.</h3><p>예보에 맞는 바다 활동과 주변 관광 후보를 연결합니다.<br>자료가 부족한 날은 확인할 사항을 함께 알려드려요.</p><div class="steps"><span>01 조건 확인</span><span>02 예보 조회</span><span>03 일정 연결</span></div></div>
+<div id="plan"></div>
+<div id="chat-panel" hidden><h3>일정을 함께 다듬어요</h3><div id="messages" aria-live="polite"></div><form id="chat-form"><label class="sr-only" for="chat-input">수정 요청</label><input id="chat-input" placeholder="예: 강화로 바꾸고 관광 위주로 짜줘" maxlength="4000" required><button class="primary" type="submit">보내기</button></form><div id="trace"></div></div>
+</section></div>
+<footer>TourAPI × 국립해양조사원 × 기상청 × Ollama<br><span>지수는 안전 보장이 아닙니다. 현장 통제·운영·연령 조건과 실제 이동 경로를 확인해 주세요.</span></footer>
+</main><script src="/static/app.js"></script></body></html>
