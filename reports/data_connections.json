@@ -1,0 +1,520 @@
+{
+  "checked_at": "2026-10-15T07:36:13.574141+00:00",
+  "probe_date": "20261015",
+  "schema_errors": [],
+  "services": [
+    {
+      "service": "한국관광공사_국문 관광정보 서비스_GW",
+      "endpoint": "https://apis.data.go.kr/B551011/KorService2",
+      "status": "ok",
+      "result_code": "0000",
+      "total_count": 513,
+      "returned_count": 10,
+      "fields": [
+        "addr1",
+        "addr2",
+        "areacode",
+        "cat1",
+        "cat2",
+        "cat3",
+        "contentid",
+        "contenttypeid",
+        "cpyrhtDivCd",
+        "createdtime",
+        "firstimage",
+        "firstimage2",
+        "lDongRegnCd",
+        "lDongSignguCd",
+        "lclsSystm1",
+        "lclsSystm2",
+        "lclsSystm3",
+        "mapx",
+        "mapy",
+        "mlevel",
+        "modifiedtime",
+        "sigungucode",
+        "tel",
+        "title",
+        "zipcode"
+      ],
+      "incheon_area_code": "2",
+      "sample_places": [
+        "가마솥손두부",
+        "가연식당",
+        "가온칼국수 송도본점",
+        "가족, 연인이 함께 즐길 수 있는 문화 체험 여행 코스",
+        "가현산 잔치국수",
+        "가회동샤브칼국수 송도컨벤시아점",
+        "갈매기배낚시",
+        "감중공원",
+        "갑곶돈대",
+        "강화 사기리 탱자나무"
+      ]
+    },
+    {
+      "service": "한국관광공사_관광사진 정보_GW",
+      "endpoint": "https://apis.data.go.kr/B551011/PhotoGalleryService1",
+      "status": "ok",
+      "result_code": "0000",
+      "total_count": 1006,
+      "returned_count": 10,
+      "fields": [
+        "galContentId",
+        "galContentTypeId",
+        "galCreatedtime",
+        "galModifiedtime",
+        "galPhotographer",
+        "galPhotographyLocation",
+        "galPhotographyMonth",
+        "galSearchKeyword",
+        "galTitle",
+        "galWebImageUrl"
+      ]
+    },
+    {
+      "service": "기상청_단기예보 조회서비스",
+      "endpoint": "https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 944,
+      "returned_count": 10,
+      "fields": [
+        "baseDate",
+        "baseTime",
+        "category",
+        "fcstDate",
+        "fcstTime",
+        "fcstValue",
+        "nx",
+        "ny"
+      ],
+      "probe_grid": {
+        "nx": 55,
+        "ny": 124
+      },
+      "base_date": "20261015",
+      "base_time": "0200"
+    },
+    {
+      "service": "해양수산부 국립해양조사원_해수욕지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstBeachv2",
+      "operation": "/GetFcstBeachApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142484/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 500,
+      "returned_count": 10,
+      "fields": [
+        "avgArtmp",
+        "avgWtem",
+        "bbchNm",
+        "lat",
+        "lot",
+        "maxWspd",
+        "maxWvhgt",
+        "opnStat",
+        "predcNoonSeCd",
+        "predcYmd",
+        "totalIndex"
+      ],
+      "sample_metadata": [
+        {
+          "bbchNm": "대천해수욕장",
+          "lat": 36.30555,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "bbchNm": "대천해수욕장",
+          "lat": 36.30555,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "bbchNm": "대천해수욕장",
+          "lat": 36.30555,
+          "predcYmd": "2026-10-16"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_바다갈라짐 체험지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstSeaSplitv2",
+      "operation": "/GetFcstSeaSplitApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142485/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 59,
+      "returned_count": 10,
+      "fields": [
+        "lat",
+        "lot",
+        "maxArtmp",
+        "maxWspd",
+        "minArtmp",
+        "minWspd",
+        "predcYmd",
+        "splocBgngDt",
+        "splocEndDt",
+        "splocPstnNm",
+        "totalIndex",
+        "weather"
+      ],
+      "sample_metadata": [
+        {
+          "splocPstnNm": "서건도",
+          "lat": 33.23213,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "splocPstnNm": "동섬",
+          "lat": 35.09547,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "splocPstnNm": "상장도",
+          "lat": 34.91452,
+          "predcYmd": "2026-10-15"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_바다낚시지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstFishingv2",
+      "operation": "/GetFcstFishingApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "gubun",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeName"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142486/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 1750,
+      "returned_count": 10,
+      "fields": [
+        "lat",
+        "lot",
+        "maxArtmp",
+        "maxCrsp",
+        "maxWspd",
+        "maxWtem",
+        "maxWvhgt",
+        "minArtmp",
+        "minCrsp",
+        "minWspd",
+        "minWtem",
+        "minWvhgt",
+        "predcNoonSeCd",
+        "predcYmd",
+        "seafsPstnNm",
+        "seafsTgfshNm",
+        "tdlvHrCn",
+        "totalIndex"
+      ],
+      "sample_metadata": [
+        {
+          "seafsPstnNm": "가거도",
+          "lat": 34.07308,
+          "predcYmd": "2026-10-15",
+          "seafsTgfshNm": "감성돔"
+        },
+        {
+          "seafsPstnNm": "가거도",
+          "lat": 34.07308,
+          "predcYmd": "2026-10-15",
+          "seafsTgfshNm": "기타어종"
+        },
+        {
+          "seafsPstnNm": "가거도",
+          "lat": 34.07308,
+          "predcYmd": "2026-10-15",
+          "seafsTgfshNm": "농어"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_뱃멀미지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstSicknessv2",
+      "operation": "/GetFcstSicknessApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "nvgtCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142487/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 382,
+      "returned_count": 10,
+      "fields": [
+        "lat",
+        "lot",
+        "maxWspd",
+        "maxWvhgt",
+        "minWspd",
+        "minWvhgt",
+        "nvgtNm",
+        "predcNoonSeCd",
+        "predcYmd",
+        "totalIndex",
+        "vslNm"
+      ],
+      "sample_metadata": [
+        {
+          "nvgtNm": "여수-연도",
+          "vslNm": "금오고속페리",
+          "lat": 34.45278,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "nvgtNm": "여수-연도",
+          "vslNm": "금오고속페리",
+          "lat": 34.45278,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "nvgtNm": "평택-위해",
+          "vslNm": "뉴그랜드피스",
+          "lat": 37.25875,
+          "predcYmd": "2026-10-15"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_스킨스쿠버지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstSkinScubav2",
+      "operation": "/GetFcstSkinScubaApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142488/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 180,
+      "returned_count": 10,
+      "fields": [
+        "lat",
+        "lot",
+        "maxCrsp",
+        "maxWtem",
+        "maxWvhgt",
+        "minCrsp",
+        "minWtem",
+        "minWvhgt",
+        "predcNoonSeCd",
+        "predcYmd",
+        "skscExpcnRgnNm",
+        "tdlvHrCn",
+        "totalIndex"
+      ],
+      "sample_metadata": [
+        {
+          "skscExpcnRgnNm": "동명항",
+          "lat": 38.2097,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "skscExpcnRgnNm": "동명항",
+          "lat": 38.2097,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "skscExpcnRgnNm": "동명항",
+          "lat": 38.2097,
+          "predcYmd": "2026-10-16"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_갯벌체험지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstMudflatv2",
+      "operation": "/GetFcstMudflatApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142489/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 126,
+      "returned_count": 10,
+      "fields": [
+        "lat",
+        "lot",
+        "maxArtmp",
+        "maxWspd",
+        "mdftExpcnVlgNm",
+        "mdftExprnBgngTm",
+        "mdftExprnEndTm",
+        "minArtmp",
+        "minWspd",
+        "predcYmd",
+        "totalIndex",
+        "weather"
+      ],
+      "sample_metadata": [
+        {
+          "mdftExpcnVlgNm": "문항마을",
+          "lat": 34.91482,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "mdftExpcnVlgNm": "백사마을",
+          "lat": 34.49288,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "mdftExpcnVlgNm": "냉천마을",
+          "lat": 34.9008,
+          "predcYmd": "2026-10-15"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_서핑지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstSurfingv2",
+      "operation": "/GetFcstSurfingApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142490/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 540,
+      "returned_count": 10,
+      "fields": [
+        "avgWspd",
+        "avgWtem",
+        "avgWvhgt",
+        "avgWvpd",
+        "grdCn",
+        "lat",
+        "lot",
+        "predcNoonSeCd",
+        "predcYmd",
+        "surfPlcNm",
+        "totalIndex"
+      ],
+      "sample_metadata": [
+        {
+          "surfPlcNm": "경포해수욕장",
+          "lat": 37.80551,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "surfPlcNm": "경포해수욕장",
+          "lat": 37.80551,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "surfPlcNm": "경포해수욕장",
+          "lat": 37.80551,
+          "predcYmd": "2026-10-15"
+        }
+      ]
+    },
+    {
+      "service": "해양수산부 국립해양조사원_바다여행지수 조회",
+      "endpoint": "https://apis.data.go.kr/1192136/fcstSeaTripv2",
+      "supplied_endpoint": "https://apis.data.go.kr/1192136/fcstSeaTripv",
+      "operation": "/GetFcstSeaTripApiServicev2",
+      "parameters": [
+        "serviceKey",
+        "type",
+        "reqDate",
+        "pageNo",
+        "numOfRows",
+        "include",
+        "exclude",
+        "placeCode"
+      ],
+      "schema_source": "https://www.data.go.kr/data/15142491/openapi.do",
+      "status": "ok",
+      "result_code": "00",
+      "total_count": 290,
+      "returned_count": 10,
+      "fields": [
+        "avgArtmp",
+        "avgCrsp",
+        "avgWspd",
+        "avgWtem",
+        "avgWvhgt",
+        "lat",
+        "lot",
+        "predcNoonSeCd",
+        "predcYmd",
+        "sareaDtlNm",
+        "tdlvHrCn",
+        "totalIndex",
+        "weather"
+      ],
+      "sample_metadata": [
+        {
+          "sareaDtlNm": "부안",
+          "lat": 35.5977,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "sareaDtlNm": "부안",
+          "lat": 35.5977,
+          "predcYmd": "2026-10-15"
+        },
+        {
+          "sareaDtlNm": "부안",
+          "lat": 35.5977,
+          "predcYmd": "2026-10-16"
+        }
+      ]
+    }
+  ]
+}
