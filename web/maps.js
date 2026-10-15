@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.3.0';
+import {el,button} from './ui.js?v=0.3.1';
 let map, markerLayer, routeLayer, selectedDate, activePlan, config;
 const markerBySlot=new Map();
 export async function initializeMap(){try{config=await(await fetch('/api/config')).json();}catch{config={tile_url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png'};}}

@@ -1,0 +1,59 @@
+/* Readable defaults shared by desktop and mobile. */
+body{font-size:16px;line-height:1.6}
+label{font-size:14px}input,select{font-size:16px}
+small,.note,.data-status,.forecast,.edits,.edits button,footer,#trace{font-size:13px}
+.eyebrow,.section-number,.pill,.hero-tags span,.steps{font-size:12px}
+.hero p,#empty p,.answer,.user-message{font-size:15px}
+h2{font-size:23px}.day-title{font-size:21px}.day-title span{font-size:13px}
+.card h4{font-size:18px;line-height:1.6}.card p{font-size:15px}
+.card .checks,.card .actions button,.actions a,.text-button,.time{font-size:13px}
+.compact h4{font-size:14px}.notices,.secondary,.alternative-select{font-size:14px}
+.lock-badge,.food-badge,.photo-empty,.alternative-select small{font-size:12px}
+.place-photo figcaption{font-size:11px}.food-filters label,.food-filters legend,.check-label,.daily-time-row>strong{font-size:13px}
+.daily-time-row .pair{gap:8px}.daily-time-row input{padding:10px 6px}
+.map-tab,#route-info,.map-heading span{font-size:13px}
+.map-heading h3{font-size:19px}.nearby-food,.nearby-food small{font-size:13px}
+.weather-heading,.weather-main{font-size:15px}.weather-stat span{font-size:13px}
+.weather-stat strong{font-size:18px}.weather-badge{font-size:12px}
+.weather-card .forecast,.weather-card details summary,.weather-scroll-controls button{font-size:13px}
+.weather-hour{font-size:13px;flex-basis:62px;min-width:62px}.weather-hour strong{font-size:16px}
+.weather-hour small{font-size:12px}.weather-hour .weather-icon{width:30px;height:30px}
+.weather-summary{gap:14px}.weather-scroll-controls button{min-height:40px}
+.modal-header h2{font-size:22px}.modal-hint,.progress-meta{font-size:13px}
+#progress-steps li{font-size:14px}#progress-message{font-size:15px}
+.progress-inline,#alternative-status,#alternative-target,.explanation-note{font-size:14px}
+.result-header{gap:12px}.card-content,.marine-index-heading>div{overflow-wrap:anywhere}
+
+/* Icons, labels and outlined current steps keep meaning visible without colour. */
+.grade-excellent,.scale-excellent{--grade:#166344;--grade-soft:#e5f3ea}
+.grade-good,.scale-good{--grade:#116c70;--grade-soft:#e4f1f1}
+.grade-moderate,.scale-moderate{--grade:#805300;--grade-soft:#fff4d8}
+.grade-poor,.scale-poor{--grade:#9a461b;--grade-soft:#fff0e5}
+.grade-very-poor,.scale-very-poor{--grade:#a02c38;--grade-soft:#fcebef}
+.grade-unknown{--grade:#53636d;--grade-soft:#edf0f2}
+.marine-index-card{border:1px solid #cbd9d2;border-left:5px solid var(--grade);background:#fff;padding:22px;border-radius:12px;color:var(--ink)}
+.marine-index-heading{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.marine-wave{display:grid;place-items:center;width:48px;height:48px;flex-shrink:0;border-radius:14px;background:var(--grade-soft);color:var(--grade);font:bold 40px Georgia,serif}
+.marine-index-eyebrow{display:block;font-size:12px;color:var(--muted);letter-spacing:.06em}
+.marine-index-heading h4{font-size:17px;line-height:1.5;margin:2px 0 0;font-weight:600}
+.marine-grade{display:inline-flex;align-items:center;gap:9px;padding:8px 15px;border-radius:10px;color:var(--grade);background:var(--grade-soft);border:1px solid currentColor}
+.marine-grade svg{width:26px;height:26px;flex-shrink:0}.marine-grade strong{font-size:23px;line-height:1.4}
+.marine-index-scale{list-style:none;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;padding:0;margin:20px 0 16px}
+.marine-index-scale li{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 3px;border-radius:8px;background:#f3f5f3;border:2px solid transparent;font-size:13px;color:#53645c;line-height:1.5;text-align:center;min-width:0}
+.marine-index-scale svg{width:22px;height:22px;color:var(--grade)}
+.marine-index-scale li.active{border-color:var(--grade);background:var(--grade-soft);color:var(--grade);font-weight:700;box-shadow:0 0 0 2px #fff inset}
+.marine-index-card .index-coverage{font-size:14px;margin:10px 0 6px;color:#445e57}
+.marine-index-card .index-note,.marine-index-card .index-missing{font-size:13px;line-height:1.8;margin:8px 0;color:#586f68}
+.marine-index-card a{display:inline-block;font-size:13px;color:var(--teal);margin-top:6px}
+.activity-index{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0;font-size:14px}
+.activity-index .marine-grade{padding:4px 9px;gap:6px}.activity-index .marine-grade strong{font-size:16px}.activity-index .marine-grade svg{width:20px;height:20px}
+.activity-index p{flex-basis:100%;margin:0}
+@media(max-width:600px){
+  .weather-summary{grid-template-columns:1fr 1fr;gap:18px 12px}
+  .weather-stat strong{font-size:18px}.weather-card{padding:16px}
+  .marine-index-card{padding:18px 14px}.marine-index-scale{gap:4px}
+  .marine-index-scale li{font-size:12px;overflow-wrap:anywhere}.marine-index-heading h4{font-size:16px}
+  .marine-grade strong{font-size:22px}.result-header{flex-wrap:wrap}
+  .card h4{font-size:17px}.food-candidate{align-items:flex-start}.food-candidate p{min-width:0}
+  #chat-form{flex-wrap:wrap}#chat-form input{flex:1 1 200px}
+}

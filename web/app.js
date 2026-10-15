@@ -1,8 +1,9 @@
-import {initializeTripForm} from './trip-form.js?v=0.3.0';
-import {$,el,button,plainText} from './ui.js?v=0.3.0';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.3.0';
-import {weatherCard} from './weather.js?v=0.3.0';
-import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.3.0';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.3.1';
+import {initializeTripForm} from './trip-form.js?v=0.3.1';
+import {$,el,button,plainText} from './ui.js?v=0.3.1';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.3.1';
+import {weatherCard} from './weather.js?v=0.3.1';
+import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.3.1';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
@@ -27,12 +28,12 @@ function photo(contentId){
 function render(plan){
   state.plan=plan;$('#empty').hidden=true;$('#result-title').textContent=`${plan.trip.region} · ${plan.trip.days}일의 바다`;const box=$('#plan');box.replaceChildren();
   const notices=el('details',undefined,'notices');notices.append(el('summary','검토용 초안 · 운영·연령·현장 조건 확인 필요'));plan.notices.forEach(t=>notices.append(el('p',t)));box.append(notices);
-  if(plan.travel_index){const i=plan.travel_index,c=el('div',undefined,'travel-index overall-index');c.append(el('strong',i.label+' · '+(i.grade||'평가 자료 부족')),el('p',`${i.covered_days}/${i.total_days}일 자료 확보`),el('small',i.note));box.append(c);}
+  if(plan.travel_index)box.append(marineIndexCard(plan.travel_index,{overall:true}));
   $('#undo').hidden=!plan.can_undo;$('#messages').classList.toggle('outdated',!!plan.explanation_outdated);
   if(plan.explanation_outdated)box.append(el('p','방문을 교체했습니다. 아래 AI 설명은 변경 전 일정을 기준으로 합니다.','explanation-note'));
   for(const day of plan.days){
     const section=el('section',undefined,'day'),title=el('h3',day.date,'day-title');title.append(el('span',day.marine.status==='available'?'해양예보 조회됨':day.marine.status==='stale'?'해양자료 갱신 필요':day.marine.status==='not_requested'?'관광 중심':'해당 날짜·권역 해양예보 없음'));section.append(title,weatherCard(day.weather,day.day_start||plan.trip.day_start,day.day_end||plan.trip.day_end));
-    if(day.travel_index){const index=day.travel_index,card=el('div',undefined,'travel-index');card.append(el('strong',index.label+' · '+(index.grade||'자료 없음')),el('p',(index.area?index.area+' 권역 · ':'')+index.aggregation),el('small',index.note));if(index.source){const link=el('a','국립해양조사원 자료');link.href=index.source;link.target='_blank';link.rel='noopener noreferrer';card.append(link);}section.append(card);}
+    if(day.travel_index)section.append(marineIndexCard(day.travel_index));
     section.append(el('p',`관광·체험 ${day.actual_visits??'—'} / 요청 ${day.requested_visits??'—'}곳`,'forecast'));
     for(const warning of day.warnings||[])section.append(el('p',warning,'route-warning'));
     for(const item of day.items){
@@ -45,7 +46,7 @@ function render(plan){
       if(item.food_details?.rest_days)info.append(el('p','안내 휴무: '+plainText(item.food_details.rest_days)));
       if(item.vessel)info.append(el('p',item.vessel));
       if(item.reason)info.append(el('p',item.reason));if(item.address)info.append(el('p',item.address));
-      if(item.forecast)info.append(el('p',`예보 지수: ${item.forecast.totalIndex} · 체험 가능 ${item.forecast.mdftExprnBgngTm}~${item.forecast.mdftExprnEndTm}`));
+      if(item.forecast){const forecast=el('div',undefined,'activity-index');forecast.append(el('span','갯벌체험지수'),indexBadge(item.forecast.totalIndex),el('p',`체험 가능 시간 ${item.forecast.mdftExprnBgngTm} ~ ${item.forecast.mdftExprnEndTm}`));info.append(forecast);}
       if(item.checks)info.append(el('p','확인 필요: '+item.checks.join(' · '),'checks'));
       const actions=el('div',undefined,'actions');
       if(item.lat!=null&&item.lon!=null){

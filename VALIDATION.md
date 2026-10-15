@@ -1,5 +1,19 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## Readability update — 2026-10-15
+
+- Sea-travel outlook cards now use inline SVG grade symbols, explicit grade text,
+  a five-step legend and outlined current step. Unknown/stale grades have a
+  separate neutral presentation. Mudflat activity cards share the grade badge.
+- Computed browser fonts: body 16px, card body 15px, form labels 14px;
+  prominent grade 23px on desktop / 22px on mobile. Supporting text was enlarged.
+- Browser validation at 1280px and 390px: no horizontal page overflow, all five
+  grades visible, current grade matched the actual returned outlook. Screenshot:
+  [desktop](docs/readability-desktop.jpg), [mobile](docs/readability-mobile.jpg).
+- Existing five Node tests passed; new frontend modules passed syntax checks;
+  `git diff --check` passed. This presentation-only update does not revalidate
+  provider availability or change forecast/scheduling rules.
+
 ## v0.3 implementation checks — current work
 
 - Python **49 passed** (`--basetemp=.tmp/pytest-v03-final`); Node **5 passed**.
