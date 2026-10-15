@@ -1,0 +1,92 @@
+{
+  "profile_version": 1,
+  "inspected_at": "2026-10-15T18:03:17.962490+09:00",
+  "source_file": "data/catalog.json",
+  "source_collected_at": "2026-10-15T16:42:01.930293+09:00",
+  "live_refetch_performed": false,
+  "tourism": {
+    "area_code": "2",
+    "records": 513,
+    "distinct_ids": 513,
+    "empty_ids": 0,
+    "duplicate_ids": 0,
+    "basic_coordinate_range_pass": 511,
+    "basic_coordinate_range_fail": 2,
+    "coordinate_screen": "Finite numeric coordinates; 33 < lat < 39 and 124 < lon < 132. Not positional verification.",
+    "planning_content_type_rows": 185,
+    "content_type_counts": {
+      "39": 284,
+      "25": 7,
+      "28": 55,
+      "12": 119,
+      "38": 15,
+      "15": 2,
+      "32": 20,
+      "14": 11
+    },
+    "regional_candidates": {
+      "영종·용유": 29,
+      "강화": 57,
+      "송도·도심": 60
+    }
+  },
+  "marine": {
+    "grain": "National feed-specific forecast rows, not unique venue counts",
+    "total_records": 3827,
+    "feeds": {
+      "beach": {
+        "records": 500,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "seasplit": {
+        "records": 59,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "fishing": {
+        "records": 1750,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "sickness": {
+        "records": 382,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "scuba": {
+        "records": 180,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "mudflat": {
+        "records": 126,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "surfing": {
+        "records": 540,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      },
+      "seatrip": {
+        "records": 290,
+        "requested_date": "20261015",
+        "forecast_min": "2026-10-15",
+        "forecast_max": "2026-10-21"
+      }
+    }
+  },
+  "limitations": [
+    "Existing local file only; no live availability check",
+    "Region boxes are heuristics",
+    "Family suitability, source positional accuracy and operator availability unverified"
+  ]
+}

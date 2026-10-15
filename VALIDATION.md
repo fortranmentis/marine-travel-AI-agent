@@ -1,6 +1,75 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
-## v0.2 release checks
+## Documentation refresh checks — re-run in this work
+
+On October 15, 2026 (Asia/Seoul), the current checkout passed:
+
+- `.venv/Scripts/python.exe -m pytest -q --basetemp=.tmp/pytest-readme-refresh`: **37 passed**.
+- `node --test tests/web.test.mjs`: **4 passed**.
+- Pytest reported one `StarletteDeprecationWarning` about its TestClient HTTP backend.
+- Documentation verification and local visual checks are described below. GitHub page
+  rendering was not verified remotely.
+
+### Local data profile — inspected in this refresh
+
+The existing `data/catalog.json`, collected at `2026-10-15T16:42:01.930293+09:00`,
+was inspected without refreshing the source APIs:
+
+| Measure | Observed result |
+| --- | ---: |
+| Tourism records / distinct content IDs | 513 / 513 |
+| Empty IDs / duplicate IDs | 0 / 0 |
+| Basic coordinate-range pass / fail | 511 / 2 |
+| Planning content types before regional filtering | 185 |
+| Regional candidates: Yeongjong–Yongyu / Ganghwa / Songdo–urban | 29 / 57 / 60 |
+| National marine forecast rows across eight feeds | 3,827 |
+
+The coordinate screen checks finite numeric values and `33 < lat < 39`, `124 < lon < 132`;
+it is not positional verification. Candidate counts use `tourism_candidates(limit=200)`.
+Forecast rows are not unique site counts. Feed-level counts and forecast-date ranges
+are documented in [DATA.md](docs/DATA.md) and the [aggregate profile](docs/data-profile.json).
+
+이번 작업에서 기존 수집 파일의 ID·좌표 범위·유형·권역별 후보·해양 행 수를 재집계했습니다.
+원천 API 재수집, 지오코딩 정확도, 가족 적합성을 확인한 결과는 아닙니다.
+
+### Documentation and visual checks — performed in this refresh
+
+- Seven Markdown documents passed checks for local link targets, anchors and balanced
+  code fences. Seven SVG assets parsed without active content or external resources.
+- The aggregate profile passed total/count arithmetic checks; `git diff --check` passed.
+- The hero, overview strip and workflow SVGs were rasterized with Sharp and visually
+  inspected. Both READMEs were rendered locally with Marked and headless Chrome using
+  a GitHub-like stylesheet: no missing images or horizontal page overflow at 1280px.
+- English top/feature views and Korean feature views were visually inspected. This is
+  a local documentation preview, not verification of GitHub's sanitizer, Mermaid renderer,
+  dark mode or mobile README behavior. Remote GitHub rendering and CI remain unchecked.
+
+The test runs above use synthetic data and mocked dependencies. No live source
+collection, Ollama inference, route request or live application browser session was
+performed during this documentation refresh. The earlier live observations below
+are inherited development records, not freshly verified service status.
+
+이번 문서 작업에서는 Python 37개·프런트엔드 4개 오프라인 테스트, 로컬 카탈로그 프로파일,
+문서 링크·SVG 검사, 1280px 로컬 README 렌더링을 확인했습니다. 아래 실제 API·모델·앱
+브라우저 관찰은 기존 개발 기록이며 이번 작업에서 재검증하지 않았습니다.
+
+## Current limitations — v0.2
+
+- Operators, age restrictions, hours, bookings, warning bulletins and on-site access are unverified.
+- OSRM road routes and exact-ID TourAPI photos are implemented. Driving estimates exclude traffic;
+  ferry routes and parking access remain unsupported or unverified.
+- Initial scheduling uses straight-line candidate filtering and duration assumptions; subsequent
+  enrichment may report travel-gap warnings. Replacement checks adjacent road-route feasibility.
+- Marine slots require favorable, current marine forecasts. Missing weather remains unknown;
+  it does not independently block every index-based provisional marine candidate.
+- Weather is for a representative tourism point, not every visit. The 8 m/s wind cutoff and
+  visit/buffer durations are prototype heuristics, not validated safety thresholds.
+- Plans live in one process for two hours, capped at 128 entries. There is no authentication,
+  shared multi-worker registry, stream reconnect endpoint or production/load evaluation.
+- No comprehensive family-suitability, accessibility, device-matrix or Korean LLM evaluation
+  establishes reliability. Model prose can diverge from the structured evidence.
+
+## Existing v0.2 release checks — historical development record
 
 - Python regression suite: **37 passed**. Frontend Node tests: **4 passed**.
 - The live browser received task status before Qwen completed the itinerary. Closing
@@ -33,7 +102,7 @@
 
 The following sections retain the original v0.1 checks for historical context.
 
-## Live source checks
+## Historical v0.1: live source checks
 
 - TourAPI resolved Incheon area code `2`; full collection returned 513 distinct
   content IDs. These are mixed tourism entries, not 513 family-approved attractions.
@@ -48,7 +117,7 @@ The following sections retain the original v0.1 checks for historical context.
 - The original sea-travel endpoint lacked the final `2`; the official schema's
   `fcstSeaTripv2` endpoint was used without changing the supplied credential file.
 
-## Local LLM and application
+## Historical v0.1: local LLM and application
 
 - Server reported Ollama `0.33.1`; the supplied Qwen model is installed.
 - Synthetic tool selection and response round trip passed.
@@ -66,7 +135,7 @@ The following sections retain the original v0.1 checks for historical context.
 - `.env`, local snapshots and live conversation reports are excluded from Git.
   Known supplied key values were checked against staged contents before publication.
 
-## Automated checks
+## Historical v0.1: automated checks
 
 Offline pytest scenarios cover forecast windows, lunch adjustment, time bounds,
 unfavorable/missing/closed forecasts, adverse rain, stale snapshots, reservation and
@@ -79,7 +148,10 @@ recommends a future TestClient HTTP backend change; it did not fail the checks.
 JavaScript syntax and Python compilation were checked. GitHub Actions is configured;
 a local passing test run does not by itself establish remote CI success.
 
-## Material limitations
+## Historical v0.1: limitations at that version
+
+This section preserves the earlier version's boundaries. Its statements about absent
+road routes and unused photos were superseded by v0.2; see the current limitations above.
 
 - No verified operator age restrictions, booking availability, hours or closures.
 - No warning-bulletin integration, real driving routes, ferry routes or capacity tests.

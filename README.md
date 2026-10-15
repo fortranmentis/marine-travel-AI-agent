@@ -1,62 +1,138 @@
+<div align="center">
+
+<img src="docs/assets/banner.svg" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+
 # Marine Travel AI Agent
 
-**Forecast-aware family coastal travel planning, powered by a local tool-calling LLM.**
+### Public data → Bounded tools → A journey you can inspect
 
-[한국어 안내](README.ko.md) · [Validation](VALIDATION.md) · [Roadmap](docs/ROADMAP.md)
+**바다결** brings tourism, marine forecasts and weather into one family travel draft.
 
-Marine Travel AI Agent combines Korean tourism data, marine activity indices and
-location-specific weather forecasts to produce **provisional family itineraries in
-Incheon**. FastAPI runs a bounded Ollama tool loop; Python validates the schedule.
-The Korean web interface is provisionally named **바다결**.
+[English](README.md) | [한국어](README.ko.md)
+
+[Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
+
+![Version: 0.2.0](docs/assets/version.svg)
+![Python: 3.11+](docs/assets/python.svg)
+![Backend: FastAPI](docs/assets/fastapi.svg)
+![LLM runtime: Ollama](docs/assets/ollama.svg)
+
+</div>
+
+![Three travel regions, five typed tools, eight marine feeds, forty-one offline tests](docs/assets/at-a-glance.svg)
+
+## About
+
+**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional family itineraries. Its Korean interface, **바다결**, supports **one- to three-day car trips** in **Yeongjong–Yongyu, Ganghwa, and Songdo–urban Incheon**.
+
+The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
+
+> **v0.2 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## Preview
+
+<table>
+<tr>
+<td width="68%" valign="top">
+<img src="docs/interface-v02.jpg" alt="Korean trip form and day-specific OSRM road route">
+<p><strong>Plan with context.</strong> Choose a region, dates and family composition; inspect the route alongside the draft.</p>
+</td>
+<td width="32%" valign="top">
+<img src="docs/mobile-v02.jpg" alt="Mobile view of the itinerary">
+<p><strong>Review on the move.</strong> A compact mobile view keeps the itinerary and its checks together.</p>
+</td>
+</tr>
+</table>
 
 <details>
-<summary>View the working Korean interface</summary>
+<summary><strong>Open the full itinerary, task-progress dialog and alternative visits</strong></summary>
 
-![Incheon itinerary with road routes, weather cards and tourism photos](docs/preview-v02.jpg)
+![Full itinerary with tourism photos and weather cards](docs/preview-v02.jpg)
+
+| Task progress | Alternative visits |
+| --- | --- |
+| ![Task progress dialog](docs/progress-v02.jpg) | ![Alternative tourism candidates](docs/alternatives-v02.jpg) |
 
 </details>
 
-## v0.2 interface
-
-- Live task-progress modal with elapsed time and completed steps; no private model reasoning.
-- Embedded Leaflet/OSM daily maps, numbered visits, OSRM road geometry, distances and non-traffic driving estimates.
-- Exact-ID TourAPI photos with attribution and license links, preserving image proportions.
-- Weather icons, trip-hour summaries and expandable hourly forecasts.
-- Single-visit replacement with route/time validation, revision conflicts, lock/unlock and undo.
+<sub>Existing development captures. Displayed dates, photos and forecasts are illustrative records, not live service status.</sub>
 
 ## Highlights
 
-- Local Ollama / `qwen3.8:27b-mtp-q8_0`, typed arguments, bounded tool calls.
-- Fully paginated Incheon TourAPI collection and eight national marine index feeds.
-- Yeongjong–Yongyu, Ganghwa, and Songdo–urban Incheon planning areas.
-- One- to three-day car trips, family composition, daily time bounds, fixed bookings
-  and excluded places.
-- Mudflat candidates constrained by favorable indices and forecast experience windows,
-  with preparation, changing and rest blocks.
-- Missing, stale, unfavorable or closed-site forecasts do not enable marine slots.
-- Rule-based fallback when Ollama is unavailable; visible provenance and tool traces.
+<table>
+<tr>
+<td width="33%" valign="top"><strong>01 / Bounded tool use</strong><p>Five allowlisted tools, Pydantic arguments, six model rounds and ten tool executions maximum per request.</p></td>
+<td width="33%" valign="top"><strong>02 / Data integrity</strong><p>Complete pagination, stable-total and duplicate checks, atomic snapshots, and explicit freshness gates.</p></td>
+<td width="34%" valign="top"><strong>03 / Forecast windows</strong><p>Mudflat experience windows are combined with favorable indices, preparation, changing and fixed visits.</p></td>
+</tr>
+<tr>
+<td valign="top"><strong>04 / Visible evidence</strong><p>NDJSON task status, source timestamps, hourly weather, exact-ID photos and daily OSRM route maps.</p></td>
+<td valign="top"><strong>05 / Precise edits</strong><p>Replace one tourism visit without another LLM call. Check adjacent driving gaps, lock visits and undo the last replacement.</p></td>
+<td valign="top"><strong>06 / Degraded operation</strong><p>With usable trip inputs and source data, a model failure can return a Python-generated draft with fallback status.</p></td>
+</tr>
+</table>
+
+Eight marine feeds are collected, but **only mudflat experiences are automatically scheduled**. Swimming and the other marine activities are not implemented as automatic itinerary slots.
 
 ## Architecture
 
+![Collect and check source data, build through bounded tools and Python rules, review and revise the draft](docs/assets/workflow.svg)
+
+<details>
+<summary><strong>Component diagram and execution contracts</strong></summary>
+
 ```mermaid
 flowchart TD
-    UI[Korean web UI] --> API[FastAPI]
+    Sources[TourAPI and eight marine index feeds] --> Sync[Paginated collector]
+    Sync --> Catalog[Atomic local JSON catalog]
+    UI[Korean web interface] --> API[FastAPI]
     API --> Agent[Bounded Ollama tool loop]
-    Agent --> Tools[Typed read-only tools]
+    Agent --> Tools[Allowlisted typed tools]
     Tools --> Planner[Python itinerary engine]
-    Tools --> Weather[KMA forecast by place coordinates]
-    Tools --> Details[TourAPI details]
-    Planner --> Snapshot[Validated local JSON snapshot]
-    Sync[Paginated collector] --> Snapshot
-    Tour[TourAPI] --> Sync
-    Marine[Eight marine index services] --> Sync
+    Tools --> Detail[TourAPI details and KMA weather]
+    Catalog --> Planner
+    API -->|direct planning| Planner
+    Planner --> Plan[Structured provisional itinerary]
+    Plan --> Enrich[Photos and OSRM road routes]
+    Enrich --> Store[Revisioned in-memory plan registry]
+    Store --> UI
+    API -->|NDJSON task status| UI
 ```
 
-The first version uses an atomic JSON snapshot before introducing a database.
+**Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather` and `build_itinerary` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
+
+**Planning contract.** The initial itinerary uses regional bounding boxes, straight-line candidate filtering and assumed visit durations. OSRM routes are added afterward, so an initial draft can carry travel-gap warnings. Replacing a visit requires available adjacent routes that fit the existing free time.
+
+</details>
+
+| Tool | Responsibility |
+| --- | --- |
+| `find_family_places` | Retrieve regional tourism candidates; family suitability is unverified. |
+| `get_marine_conditions` | Retrieve a date/activity-specific regional marine forecast slice. |
+| `get_place_details` | Fetch TourAPI details for a known tourism content ID. |
+| `get_weather` | Fetch KMA grid forecasts from a known place's coordinates. |
+| `build_itinerary` | Apply trip constraints and return a structured provisional schedule. |
+
+## Data foundation
+
+The pipeline preserves **source grain, collection time and unknowns**. Tourism records, marine forecast rows and weather forecast elements are different entities; joining them does not establish that an operator is open or an activity is suitable for a child.
+
+| Layer | Record meaning | Quality controls and boundaries |
+| --- | --- | --- |
+| Tourism catalog | Incheon TourAPI entry, identified by `contentid`. | Unique IDs; planning uses content types `12`, `14`, `28`, coordinates and regional boxes. |
+| Marine catalog | National forecast record for a source site/date and feed-specific dimensions. | Eight feeds; full-page/count checks; same-Korean-day freshness for marine scheduling. Counts are not unique venue counts. |
+| Weather | KMA grid forecast elements by date and hour. | Coordinate-to-grid conversion; issue time and reference point retained. Warning bulletins are not queried. |
+| Enrichment | Tourism-ID photo metadata and coordinate-pair road routes. | Matching IDs and accepted licenses; unavailable photos/routes stay unavailable. |
+
+**Local snapshot inspected:** October 15, 2026, 16:42:01 KST — **513 tourism records**, **513 distinct IDs**, **511 coordinate pairs within a basic Korea bounding box**, and **3,827 national marine forecast rows**. Two tourism records failed that coordinate screen. These are dated file observations, not a new API collection or a positional-accuracy assessment.
+
+See [DATA.md](docs/DATA.md) for feed counts, candidate filtering, freshness semantics and what the quality checks cannot prove.
 
 ## Quick start
 
-Python **3.11+**, Windows PowerShell:
+### 1. Install
+
+Use **Python 3.11+**. Windows PowerShell:
 
 ```powershell
 python -m venv .venv
@@ -64,9 +140,22 @@ python -m venv .venv
 Copy-Item .env.example .env
 ```
 
-Edit `.env` with your Ollama URL and `MARINE_CREDENTIALS_FILE`. The key document
-stays outside the repository. Format each service as three lines, separated by a
-blank line:
+### 2. Configure services
+
+Set the following values in `.env` using [`.env.example`](.env.example):
+
+| Variable | Purpose / default |
+| --- | --- |
+| `MARINE_CREDENTIALS_FILE` | Absolute path to an external public-API credential document; required for collection and source calls. |
+| `OLLAMA_BASE_URL` | Ollama server URL; default `http://localhost:11434`. |
+| `OLLAMA_MODEL` | Default `qwen3.8:27b-mtp-q8_0`. Install a compatible tool-calling model on your server. |
+| `OLLAMA_NUM_CTX` | Model context setting; default `16384`. |
+| `OSRM_BASE_URL` | Routing URL; default `https://router.project-osrm.org`. |
+| `OSM_TILE_URL` | Map tile template; default `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. |
+
+The default model name is a configuration value, not a bundled model or a hardware requirement validated by this repository. Ollama may run locally or on a separately configured server. Public data, routing and map services still require network access.
+
+Keep API credentials outside the repository. Each service uses a three-line block separated by a blank line:
 
 ```text
 한국관광공사_국문 관광정보 서비스_GW
@@ -78,81 +167,90 @@ blank line:
 키 : YOUR_SERVICE_KEY
 ```
 
-Also include all eight marine services in the same format. See `MARINE` in
-[`providers.py`](marine_agent/providers.py) for endpoint suffixes. The photo
-service is optional for the checker and is not used by the planner.
+Add all eight marine services in the same format. Their endpoint suffixes are listed in [`providers.py` → `MARINE`](marine_agent/providers.py). A separate photo-gallery API is not needed for itinerary photos.
+
+### 3. Collect and launch
 
 ```powershell
 .\.venv\Scripts\python.exe -m marine_agent.sync
 .\run.ps1
 ```
 
-Open **http://127.0.0.1:8001**. On Linux/macOS use `.venv/bin/python` and
-`python -m uvicorn marine_agent.app:app --host 127.0.0.1 --port 8001`.
-Refresh the snapshot daily. Keep this unauthenticated prototype on loopback.
+Open [http://127.0.0.1:8001](http://127.0.0.1:8001); API documentation is at [/docs](http://127.0.0.1:8001/docs). Refresh the catalog before daily use. A fresh clone does not include credentials, collected data or model weights.
 
-If a Windows Python distribution cannot bootstrap pip into the virtual environment:
+For Linux/macOS, use `.venv/bin/python` and start the server with:
 
-```powershell
-python -m pip --python .venv/Scripts/python.exe install -r requirements.txt
+```bash
+.venv/bin/python -m uvicorn marine_agent.app:app --host 127.0.0.1 --port 8001
 ```
 
-## API and tests
+If your Windows Python cannot bootstrap pip inside the environment, use `python -m pip --python .venv/Scripts/python.exe install -r requirements.txt`.
 
-| Endpoint | Purpose |
+## Validation
+
+**Re-run on October 15, 2026 (Asia/Seoul): 37 Python tests and 4 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
+
+| Evidence | Scope |
 | --- | --- |
-| `GET /api/health` | Snapshot availability, counts, timestamp |
-| `GET /api/places?region=...` | Regional tourism candidates |
-| `POST /api/plan` | Rule-based provisional itinerary |
-| `POST /api/chat` | Local LLM tool calling and conversation |
-| `POST /api/chat/stream` | NDJSON progress, tool status, final result |
-| `POST /api/plans/{id}/replace` | Replace a tourism slot at the same time |
-| `POST /api/plans/{id}/undo` | Restore the last replacement |
-| `POST /api/plans/{id}/lock` | Lock/unlock a visit, preserving location |
-| `GET /api/config` | Public tile configuration (no API credentials) |
-| `GET /docs` | OpenAPI documentation |
+| Python regression tests | Forecast windows, missing/stale/closed conditions, fixed visits, pagination, atomic refresh, fallback, HTTP validation, enrichment and revisioned edits. |
+| Node.js tests | Weather display rules, Korean local time, split UTF-8 NDJSON parsing and truncated-stream failure. |
+| Existing development record | Earlier source, Ollama, route, photo and browser observations are retained separately in [VALIDATION.md](VALIDATION.md). |
+| Local documentation/data audit | Existing catalog profiled; README previews rendered locally at 1280px with no missing images or horizontal overflow. |
+| CI configuration | Python 3.11 and Node.js 22 are configured in [GitHub Actions](.github/workflows/ci.yml); remote CI status was not checked in this refresh. |
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest -q --basetemp=.tmp/pytest
+node --test tests/web.test.mjs
 ```
 
-Offline tests require neither API keys nor Ollama. The connection checker samples
-rows; `marine_agent.sync` validates pagination to reported totals. Live snapshots,
-keys, and conversations are ignored by Git. The original connection-check report
-is an explicitly dated development record.
+Frontend tests need **Node.js 18+**, with no npm dependencies. See the [validation record](VALIDATION.md) for evidence boundaries and untested areas.
 
-## Validation and limits
+## API
 
-See [VALIDATION.md](VALIDATION.md). Site operating hours, age limits, road routes,
-weather warnings, closures and operator availability are unverified. OSRM routing
-is road-network based and does not account for current traffic or parking access. Visit durations
-and movement/rest gaps are planning assumptions. Culture facilities are alternative
-candidates, not verified indoor venues. Model prose may be inaccurate; review the
-structured itinerary and source evidence. There is no optimal-route guarantee.
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Catalog availability, collection time and counts. |
+| GET | `/api/places` | Regional tourism candidates. |
+| POST | `/api/plan` | Python-generated provisional itinerary. |
+| POST | `/api/chat` | Ollama tool orchestration and explanation. |
+| POST | `/api/chat/stream` | NDJSON task status and final result. |
+| POST | `/api/plans/{plan_id}/replace` | Replace one eligible tourism visit. |
+| POST | `/api/plans/{plan_id}/undo` | Restore the last replacement. |
+| POST | `/api/plans/{plan_id}/lock` | Lock/unlock a visit. |
+| GET | `/api/config` | Public map configuration. |
 
-Plans are stored in one process for two hours, capped at 128 entries. Restarts expire
-them. Replacement preserves other visits and checks adjacent driving time against
-free gaps excluding preparation and meal blocks. Missing routes reject a replacement;
-they never become a straight-line driving route.
+See [API-v02.md](docs/API-v02.md) for payloads, stream events, revisions and error codes.
 
-The public OSRM server is for prototype use, rate-limited to one uncached request per
-second; successful routes are cached for 24 hours. Photo metadata is cached seven days.
-Set `OSRM_BASE_URL` and `OSM_TILE_URL` in `.env` to change providers.
-Leaflet 1.9.4 and its BSD license are vendored in `web/vendor/leaflet/`.
+## Notes
 
-Only mudflat marine slots are currently scheduled. Swimming awaits site-level
-opening, age and local-condition checks. Ferry-dependent trips, turn-by-turn navigation,
-reservations and notifications are future work.
+- **Travel feasibility:** operating hours, bookings, child age limits, warning bulletins, closures and parking access are unverified. Favorable indices do not establish safe access or family suitability.
+- **Forecast interpretation:** missing or stale marine forecasts do not enable marine slots. Missing weather remains unknown; a favorable marine index can still produce a provisional candidate with unchecked weather notices. Weather is queried at a labeled representative tourism point, not every visit.
+- **Planning assumptions:** 60-minute mudflat experiences, 30-minute preparation/changing blocks and 90-minute tourism visits are heuristics. Initial scheduling is not a route optimizer. Driving estimates exclude current traffic; ferry routes are unsupported.
+- **Runtime limits:** use one Uvicorn worker. Plans remain in one process for two hours, capped at 128 entries; restarts lose them. One chat generation runs at a time. The prototype has no authentication; use loopback for local development.
+- **Data and assets:** `.env`, `data/`, virtual environments and live conversation reports are ignored. Photos require matching tourism IDs and accepted license metadata. Source text, images, Leaflet and map data retain their respective terms.
 
-## Sources
+See [operational notes and GitHub metadata](docs/NOTES.md) for caching, troubleshooting and suggested repository About text.
 
-- [TourAPI](https://www.data.go.kr/data/15101578/openapi.do)
-- [KHOA mudflat index](https://www.data.go.kr/data/15142489/openapi.do)
-- [KMA API Hub](https://apihub.kma.go.kr/)
-- [Ollama tool calling](https://docs.ollama.com/capabilities/tool-calling)
+## Repository guide
 
-Source text, metadata and images remain subject to their respective terms. Local
-API datasets and source image files are not bundled; attributed UI screenshots are included.
+| Path | Responsibility |
+| --- | --- |
+| [`marine_agent/agent.py`](marine_agent/agent.py) | Tool schemas, execution budget and model fallback. |
+| [`marine_agent/planner.py`](marine_agent/planner.py) | Trip constraints and deterministic schedule construction. |
+| [`marine_agent/providers.py`](marine_agent/providers.py) | Pagination, catalog refresh, tourism details and weather. |
+| [`marine_agent/plans.py`](marine_agent/plans.py) / [`enrichment.py`](marine_agent/enrichment.py) | Revisions, locks, undo, photos and routes. |
+| [`marine_agent/app.py`](marine_agent/app.py) / [`web/`](web/) | HTTP/stream interfaces and Korean frontend. |
+| [`scripts/`](scripts/) / [`tests/`](tests/) | Connection/secret checks and offline regression tests. |
+| [`docs/`](docs/) / [`reports/data_connections.json`](reports/data_connections.json) | Interface documentation, screenshots and dated connection evidence. |
+| [`docs/DATA.md`](docs/DATA.md) / [`data-profile.json`](docs/data-profile.json) | Source grain, filtering, freshness rules and a dated aggregate profile. |
 
-Frontend tests require Node.js 18+: `node --test tests/web.test.mjs`. No npm packages are required.
+## Roadmap
+
+Next priorities are operator/age verification, warning and access-restriction integration, parking/traffic feasibility, and a larger Korean tool-use evaluation set. Shared persistence, authentication and deployment monitoring are later work. See the [full roadmap](docs/ROADMAP.md).
+
+## Data sources and credits
+
+Source references recorded by the project: [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [KHOA mudflat forecast index](https://www.data.go.kr/data/15142489/openapi.do), and [KMA API Hub](https://apihub.kma.go.kr/). Runtime integrations also use Ollama, OSRM and Leaflet/OpenStreetMap. Leaflet 1.9.4 is vendored with its [BSD license](web/vendor/leaflet/LICENSE).
+
+No project-wide license file is currently included. Dependency licenses and public-data/image terms apply independently.
