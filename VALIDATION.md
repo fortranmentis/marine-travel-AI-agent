@@ -1,5 +1,42 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## v0.3 implementation checks — current work
+
+- Python **49 passed** (`--basetemp=.tmp/pytest-v03-final`); Node **5 passed**.
+  One existing Starlette/httpx deprecation warning remains. Default sandbox temp
+  permissions initially blocked three fixtures; an explicit workspace basetemp resolved this.
+- Regression coverage includes daily time/lock bounds, child count/age consistency,
+  major visit counts and shortages, exact TourAPI food categories and radius filters,
+  unavailable meal routes, foot-graph isolation, missing transit keys, ODsay section
+  parsing and redacted failures, ordinal sea-index missing coverage, dated ferry
+  round trips/check-in/cancellations/expired reviews, and KOMSA filter/success parsing.
+- Live TourAPI `categoryCode2` returned the food/cafe codes documented in
+  [API-v03.md](docs/API-v03.md). Existing local catalog includes 284 content-type-39
+  records. Source classification can disagree with actual menus; the UI explicitly
+  labels it and displays available `detailIntro2` menu/hours without claiming calendar validation.
+- A real foot route returned `available`, 433.8m / 347.1s from the separate FOSSGIS
+  foot graph. A live couple/walk/Chinese-food request to `/api/chat/stream` using
+  `qwen3.8:27b-mtp-q8_0` returned `ok` with `build_itinerary: ok`, 2 tourism visits,
+  one cafe and one meal. First stage arrived after **0.11s**, final result after
+  **33.31s** (single observation, not a performance benchmark). All 3 adjacent
+  walking legs were available and fit their time gaps; total 1,291.1m / 1,032.9s.
+- Browser checks covered solo defaults, group defaults, 2 child age fields,
+  different daily time inputs, generated foot routes/markers, food/cafe photos and
+  menu/hours, 24-hour weather arrows and horizontal scroll. At 1280px the hourly
+  strip was 740px wide with 1,618px content; at 390px it was 308px wide. Page width
+  did not exceed viewport width. [PC](docs/weather-v03.jpg), [mobile](docs/mobile-v03.jpg),
+  [full interface](docs/interface-v03.jpg). A stale browser-module export during
+  development was resolved by consistent versioned module/style URLs.
+- ODsay and KOMSA keys are **not configured**. Adapter tests use synthetic responses;
+  no live public-transport trip or ferry island has been verified or enabled.
+  Ferry support is reviewed passenger day-trip scheduling and connection preparation,
+  not overnight trips, car shipping, ticket availability or live cancellation monitoring.
+- Food hours, cuisine accuracy, group capacity, warning bulletins, venue age suitability
+  and mainland-to-port access remain unverified. Car scheduling still uses heuristic
+  insertion with subsequent actual-route warnings. This is a local prototype.
+
+Earlier sections below are historical v0.2 validation records.
+
 ## Documentation refresh checks — re-run in this work
 
 On October 15, 2026 (Asia/Seoul), the current checkout passed:
@@ -53,7 +90,7 @@ are inherited development records, not freshly verified service status.
 문서 링크·SVG 검사, 1280px 로컬 README 렌더링을 확인했습니다. 아래 실제 API·모델·앱
 브라우저 관찰은 기존 개발 기록이며 이번 작업에서 재검증하지 않았습니다.
 
-## Current limitations — v0.2
+## Historical limitations — v0.2
 
 - Operators, age restrictions, hours, bookings, warning bulletins and on-site access are unverified.
 - OSRM road routes and exact-ID TourAPI photos are implemented. Driving estimates exclude traffic;

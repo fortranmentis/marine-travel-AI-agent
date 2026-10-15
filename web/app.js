@@ -1,18 +1,21 @@
-import {$,el,button} from './ui.js';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js';
-import {weatherCard} from './weather.js';
-import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js';
+import {initializeTripForm} from './trip-form.js?v=0.3.0';
+import {$,el,button,plainText} from './ui.js?v=0.3.0';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.3.0';
+import {weatherCard} from './weather.js?v=0.3.0';
+import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.3.0';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 form.elements.start_date.value=today;form.elements.start_date.min=today;
+const tripForm=initializeTripForm(form);
+api('/api/config').then(config=>{for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}if(config.mobility?.transit)form.elements.transport.querySelector('[value=transit]').textContent='대중교통 + 도보';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
 function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
-function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),adults:Number(f.get('adults')),child_ages:String(f.get('ages')).split(',').filter(v=>v.trim()).map(Number),activity:f.get('activity'),transport:'car',day_start:f.get('day_start'),day_end:f.get('day_end'),excluded_ids:state.excluded,locked:state.locked};}
+function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
 async function api(path,body){const response=await fetch(path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:'날짜·인원·고정 일정 등 입력 조건을 확인해 주세요.');return data;}
 function edits(){const box=$('#edits');box.replaceChildren();if(state.locked.length||state.excluded.length){box.append(el('div',`고정 ${state.locked.length}개 · 제외 ${state.excluded.length}개`));box.append(button('다음 생성의 고정·제외 조건 초기화',()=>{state.locked=[];state.excluded=[];edits();status('다시 생성하면 초기화한 조건이 반영됩니다.');}));}}
-function syncForm(plan){state.locked=plan.trip.locked;state.excluded=plan.trip.excluded_ids;for(const key of ['region','start_date','days','adults','activity','day_start','day_end'])form.elements[key].value=plan.trip[key];form.elements.ages.value=plan.trip.child_ages.join(', ');edits();}
+function syncForm(plan){state.locked=plan.trip.locked;state.excluded=plan.trip.excluded_ids;for(const key of ['region','start_date','days','adults','activity'])form.elements[key].value=plan.trip[key];tripForm.sync(plan.trip);edits();}
 function photo(contentId){
   const value=state.plan?.media?.[contentId],figure=el('figure',undefined,'place-photo');
   const empty=()=>{figure.replaceChildren(el('div','사진 준비 중이거나 제공된 사진이 없어요.','photo-empty'));};
@@ -24,14 +27,23 @@ function photo(contentId){
 function render(plan){
   state.plan=plan;$('#empty').hidden=true;$('#result-title').textContent=`${plan.trip.region} · ${plan.trip.days}일의 바다`;const box=$('#plan');box.replaceChildren();
   const notices=el('details',undefined,'notices');notices.append(el('summary','검토용 초안 · 운영·연령·현장 조건 확인 필요'));plan.notices.forEach(t=>notices.append(el('p',t)));box.append(notices);
+  if(plan.travel_index){const i=plan.travel_index,c=el('div',undefined,'travel-index overall-index');c.append(el('strong',i.label+' · '+(i.grade||'평가 자료 부족')),el('p',`${i.covered_days}/${i.total_days}일 자료 확보`),el('small',i.note));box.append(c);}
   $('#undo').hidden=!plan.can_undo;$('#messages').classList.toggle('outdated',!!plan.explanation_outdated);
   if(plan.explanation_outdated)box.append(el('p','방문을 교체했습니다. 아래 AI 설명은 변경 전 일정을 기준으로 합니다.','explanation-note'));
   for(const day of plan.days){
-    const section=el('section',undefined,'day'),title=el('h3',day.date,'day-title');title.append(el('span',day.marine.status==='available'?'해양예보 조회됨':day.marine.status==='stale'?'해양자료 갱신 필요':day.marine.status==='not_requested'?'관광 중심':'해당 날짜·권역 해양예보 없음'));section.append(title,weatherCard(day.weather,plan.trip.day_start,plan.trip.day_end));
+    const section=el('section',undefined,'day'),title=el('h3',day.date,'day-title');title.append(el('span',day.marine.status==='available'?'해양예보 조회됨':day.marine.status==='stale'?'해양자료 갱신 필요':day.marine.status==='not_requested'?'관광 중심':'해당 날짜·권역 해양예보 없음'));section.append(title,weatherCard(day.weather,day.day_start||plan.trip.day_start,day.day_end||plan.trip.day_end));
+    if(day.travel_index){const index=day.travel_index,card=el('div',undefined,'travel-index');card.append(el('strong',index.label+' · '+(index.grade||'자료 없음')),el('p',(index.area?index.area+' 권역 · ':'')+index.aggregation),el('small',index.note));if(index.source){const link=el('a','국립해양조사원 자료');link.href=index.source;link.target='_blank';link.rel='noopener noreferrer';card.append(link);}section.append(card);}
+    section.append(el('p',`관광·체험 ${day.actual_visits??'—'} / 요청 ${day.requested_visits??'—'}곳`,'forecast'));
+    for(const warning of day.warnings||[])section.append(el('p',warning,'route-warning'));
     for(const item of day.items){
       const compact=['break','buffer'].includes(item.kind),slot=el('div',undefined,'slot'+(compact?' compact':''));slot.append(el('div',item.start+'\n'+item.end,'time'));
       const card=el('article',undefined,'card slot-card '+item.kind);card.dataset.slot=item.slot_id;const info=el('div',undefined,'card-content');info.append(el('h4',item.title));
       if(item.kind==='locked')info.append(el('span','시간 고정됨','lock-badge'));
+      if(item.cuisine_label)info.append(el('span','TourAPI 분류: '+item.cuisine_label,'food-badge'));
+      if(item.food_details?.menu)info.append(el('p','대표 메뉴: '+plainText(item.food_details.menu)));
+      if(item.food_details?.hours)info.append(el('p','안내 영업시간: '+plainText(item.food_details.hours)));
+      if(item.food_details?.rest_days)info.append(el('p','안내 휴무: '+plainText(item.food_details.rest_days)));
+      if(item.vessel)info.append(el('p',item.vessel));
       if(item.reason)info.append(el('p',item.reason));if(item.address)info.append(el('p',item.address));
       if(item.forecast)info.append(el('p',`예보 지수: ${item.forecast.totalIndex} · 체험 가능 ${item.forecast.mdftExprnBgngTm}~${item.forecast.mdftExprnEndTm}`));
       if(item.checks)info.append(el('p','확인 필요: '+item.checks.join(' · '),'checks'));
@@ -49,6 +61,7 @@ function render(plan){
       if(actions.childNodes.length)info.append(actions);card.append(info);
       if(!compact)card.append(photo(item.id));slot.append(card);section.append(slot);
     }
+    for(const recommendation of day.food_recommendations||[]){if(!recommendation.candidates.length)continue;const details=el('details',undefined,'nearby-food');details.append(el('summary',`${recommendation.start} ${recommendation.kind==='cafe'?'주변 카페':'주변 식당'} 후보`));for(const candidate of recommendation.candidates){const row=el('div',undefined,'food-candidate');row.append(photo(candidate.id),el('p',candidate.title+' · '+candidate.cuisine_label+' · '+candidate.distance_km+'km (직선거리)'));details.append(row);}details.append(el('small','TourAPI 분류 기준 후보입니다. 실제 메뉴·영업시간·이동 경로·단체 수용 여부를 확인하세요.'));section.append(details);}
     box.append(section);
   }
   box.append(el('p','자료 수집: '+plan.collected_at,'forecast'));$('#chat-panel').hidden=false;setMapPlan(plan);
@@ -72,7 +85,7 @@ async function aiRequest(request){
 function displayResult(data){if(data.plan){syncForm(data.plan);render(data.plan);}$('#messages').append(el('div',data.answer,'answer'));$('#chat-panel').hidden=false;$('#trace').textContent=data.trace.map(t=>`${t.tool}: ${t.status}`).join(' → ');status(data.status==='ok'?'초안을 만들었습니다. 미확인 항목을 확인해 주세요.':'AI 처리 상태: '+data.status+' · 데이터 기반 초안을 확인해 주세요.');}
 async function generate(useAI){
   if(state.busy||!form.reportValidity())return;busy(true);status(useAI?'AI가 여행 자료를 확인하고 있습니다.':'데이터와 규칙으로 초안을 만드는 중입니다.');
-  try{const input=trip();if(useAI){const message='입력한 가족 조건으로 인천 여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
+  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 인천 여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
   catch(error){status(error.message,true);}finally{busy(false);}
 }
 form.onsubmit=e=>{e.preventDefault();generate(true);};$('#rules').onclick=()=>generate(false);

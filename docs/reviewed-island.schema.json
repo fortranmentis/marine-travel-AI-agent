@@ -1,0 +1,145 @@
+{
+  "$defs": {
+    "Crossing": {
+      "additionalProperties": false,
+      "properties": {
+        "date": {
+          "format": "date",
+          "title": "Date",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "outbound",
+            "return"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "departure": {
+          "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+          "title": "Departure",
+          "type": "string"
+        },
+        "arrival": {
+          "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$",
+          "title": "Arrival",
+          "type": "string"
+        },
+        "vessel": {
+          "minLength": 1,
+          "title": "Vessel",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "scheduled",
+            "cancelled",
+            "unknown"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "source_url": {
+          "title": "Source Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "date",
+        "direction",
+        "departure",
+        "arrival",
+        "vessel",
+        "status",
+        "source_url"
+      ],
+      "title": "Crossing",
+      "type": "object"
+    },
+    "Point": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "lat": {
+          "maximum": 39,
+          "minimum": 33,
+          "title": "Lat",
+          "type": "number"
+        },
+        "lon": {
+          "maximum": 132,
+          "minimum": 124,
+          "title": "Lon",
+          "type": "number"
+        }
+      },
+      "required": [
+        "title",
+        "lat",
+        "lon"
+      ],
+      "title": "Point",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "pattern": "^[a-z0-9-]{1,60}$",
+      "title": "Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "reviewed_at": {
+      "format": "date-time",
+      "title": "Reviewed At",
+      "type": "string"
+    },
+    "mainland_port": {
+      "$ref": "#/$defs/Point"
+    },
+    "island_port": {
+      "$ref": "#/$defs/Point"
+    },
+    "place_ids": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Place Ids",
+      "type": "array"
+    },
+    "checkin_minutes": {
+      "default": 40,
+      "maximum": 120,
+      "minimum": 30,
+      "title": "Checkin Minutes",
+      "type": "integer"
+    },
+    "crossings": {
+      "items": {
+        "$ref": "#/$defs/Crossing"
+      },
+      "title": "Crossings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "reviewed_at",
+    "mainland_port",
+    "island_port",
+    "place_ids",
+    "crossings"
+  ],
+  "title": "Island",
+  "type": "object"
+}

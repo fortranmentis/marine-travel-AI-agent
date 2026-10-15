@@ -6,28 +6,36 @@
 
 ### Public data → Bounded tools → A journey you can inspect
 
-**바다결** brings tourism, marine forecasts and weather into one family travel draft.
+**바다결** brings tourism, marine forecasts and weather into a travel draft for solo travelers, couples, families and groups.
 
 [English](README.md) | [한국어](README.ko.md)
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.2.0](docs/assets/version.svg)
+![Version: 0.3.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![Three travel regions, five typed tools, eight marine feeds, forty-one offline tests](docs/assets/at-a-glance.svg)
+![Three travel regions, five typed tools, eight marine feeds, offline regression tests](docs/assets/at-a-glance.svg)
 
 ## About
 
-**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional family itineraries. Its Korean interface, **바다결**, supports **one- to three-day car trips** in **Yeongjong–Yongyu, Ganghwa, and Songdo–urban Incheon**.
+**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional travel itineraries. Its Korean interface, **바다결**, supports **one- to three-day car or walking trips** in **Yeongjong–Yongyu, Ganghwa, and Songdo–urban Incheon**.
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.2 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.3 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## New in v0.3
+
+Daily time windows, attraction counts, party types and child counts; nearby meals by TourAPI cuisine and cafe breaks; horizontally scrollable weather; daily and whole-trip sea-travel outlooks. Walking uses a separate OSRM foot graph.
+
+**Transit and ferries are connection-ready, not live-verified:** ODsay needs a separate key; island day trips need reviewed round-trip data. No ferry island is enabled by default. See [v0.3 contracts and setup](docs/API-v03.md).
+
+Current captures: [v0.3 full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
 
 ## Preview
 
@@ -67,7 +75,7 @@ The engineering focus is **a traceable path from source records to a structured 
 </tr>
 <tr>
 <td valign="top"><strong>04 / Visible evidence</strong><p>NDJSON task status, source timestamps, hourly weather, exact-ID photos and daily OSRM route maps.</p></td>
-<td valign="top"><strong>05 / Precise edits</strong><p>Replace one tourism visit without another LLM call. Check adjacent driving gaps, lock visits and undo the last replacement.</p></td>
+<td valign="top"><strong>05 / Precise edits</strong><p>Replace one tourism visit without another LLM call. Check adjacent mode-specific route gaps, lock visits and undo the last replacement.</p></td>
 <td valign="top"><strong>06 / Degraded operation</strong><p>With usable trip inputs and source data, a model failure can return a Python-generated draft with fallback status.</p></td>
 </tr>
 </table>
@@ -188,7 +196,7 @@ If your Windows Python cannot bootstrap pip inside the environment, use `python 
 
 ## Validation
 
-**Re-run on October 15, 2026 (Asia/Seoul): 37 Python tests and 4 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
+**Re-run on October 15, 2026 (Asia/Seoul): 49 Python tests and 5 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
 
 | Evidence | Scope |
 | --- | --- |
@@ -226,7 +234,7 @@ See [API-v02.md](docs/API-v02.md) for payloads, stream events, revisions and err
 
 - **Travel feasibility:** operating hours, bookings, child age limits, warning bulletins, closures and parking access are unverified. Favorable indices do not establish safe access or family suitability.
 - **Forecast interpretation:** missing or stale marine forecasts do not enable marine slots. Missing weather remains unknown; a favorable marine index can still produce a provisional candidate with unchecked weather notices. Weather is queried at a labeled representative tourism point, not every visit.
-- **Planning assumptions:** 60-minute mudflat experiences, 30-minute preparation/changing blocks and 90-minute tourism visits are heuristics. Initial scheduling is not a route optimizer. Driving estimates exclude current traffic; ferry routes are unsupported.
+- **Planning assumptions:** 60-minute mudflat experiences, 30-minute preparation/changing blocks and 90-minute tourism visits are heuristics. Initial scheduling is not a route optimizer. Driving estimates exclude current traffic; reviewed passenger-ferry day trips require separate data and do not include vehicle shipping or mainland-to-port access.
 - **Runtime limits:** use one Uvicorn worker. Plans remain in one process for two hours, capped at 128 entries; restarts lose them. One chat generation runs at a time. The prototype has no authentication; use loopback for local development.
 - **Data and assets:** `.env`, `data/`, virtual environments and live conversation reports are ignored. Photos require matching tourism IDs and accepted license metadata. Source text, images, Leaflet and map data retain their respective terms.
 

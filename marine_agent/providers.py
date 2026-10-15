@@ -30,11 +30,11 @@ def service(suffix):
     raise RuntimeError('Required API credential is missing')
 
 
-def fetch_pages(url, params, *, limit=20000):
+def fetch_pages(url, params, *, limit=20000, success_codes=()):
     rows, seen, expected = [], set(), None
     for page in range(1, 201):
         summary, batch = summarize(get(url, dict(params, pageNo=page)))
-        if summary['status'] not in ('ok', 'no_data'):
+        if summary['status'] not in ('ok', 'no_data') and summary.get('result_code') not in success_codes:
             raise RuntimeError('Public API did not return a success code')
         total = int(summary.get('total_count') or 0)
         if expected is None:

@@ -19,6 +19,19 @@
 - [x] Revisioned single-slot replacement, undo, location-preserving lock/unlock
 - [x] Bounded two-hour plan registry and one-request-per-second routing
 
+## v0.3 — preferences and transport readiness
+
+- [x] Solo/couple/family/group, child count and per-child ages
+- [x] Per-day hours and requested attraction/experience counts
+- [x] Nearby TourAPI meals by source cuisine and optional cafe breaks
+- [x] Foot-graph routing, mode-specific route checks and map labels
+- [x] Daily and whole-trip sea-travel outlooks with missing-coverage handling
+- [x] Weather arrow controls, mouse dragging, touch and keyboard scrolling
+- [x] ODsay adapter and KOMSA raw-schedule collector (keys not yet configured)
+- [x] Reviewed, expiring passenger-ferry day-trip scheduler and cancellation guards
+- [ ] Live transit/ferry validation and first real reviewed island
+- [ ] Overnight island stays, vehicle shipping and verified island food
+
 ## Next: verify family travel feasibility
 
 1. Review operators, minimum ages, operating hours, booking requirements, facilities
@@ -34,7 +47,7 @@
 ## Later
 
 - PostGIS, scheduled collection and source-specific freshness policies
-- Ferry schedules and cancellation handling
+- Live ferry cancellations and operator/arrival-time reconciliation
 - Forecast-change comparison and user-controlled replanning
 - Broader image availability and verified operator-specific photo associations
 - Authentication, deployment and operational monitoring

@@ -88,7 +88,14 @@ class PlanStore:
         if slot['kind'] != 'tourism' or any(l['date'] == target_day['date'] and l['start'] == slot['start'] and l['end'] == slot['end'] for l in locks):
             raise PlanError(409, '고정 일정·해양 체험은 교체할 수 없습니다. 고정을 먼저 해제해 주세요.')
         valid_ids = {p['id'] for p in target_day['alternatives']}
-        candidates = planner.tourism_candidates(result['trip']['region'], limit=200)
+        if result['trip'].get('island_id'):
+            from . import islands
+            try:
+                candidates = islands.candidates(islands.resolve(result['trip']['island_id']), result['trip']['excluded_ids'])
+            except islands.IslandUnavailable as error:
+                raise PlanError(422, str(error)) from None
+        else:
+            candidates = planner.tourism_candidates(result['trip']['region'], limit=200)
         candidate = next((p for p in candidates if p['id'] == candidate_id and p['id'] in valid_ids), None)
         used = {i.get('id') for d in result['days'] for i in d['items']}
         if candidate is None or candidate_id in used or candidate_id in result['trip']['excluded_ids']:

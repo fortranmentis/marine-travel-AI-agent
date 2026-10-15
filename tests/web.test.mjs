@@ -28,3 +28,6 @@ test('NDJSON parser handles split Korean bytes and emits stages before result',a
 test('truncated streams fail explicitly',async()=>{
  await assert.rejects(()=>readNDJSON(new Response('{"type":"stage"}\n'),()=>{}),/결과를 받지/);
 });
+
+import {datesFor} from '../web/trip-form.js';
+test('daily dates cross month and year without local timezone drift',()=>{assert.deepEqual(datesFor('2026-12-31',3),['2026-12-31','2027-01-01','2027-01-02']);assert.deepEqual(datesFor('',2),[]);});

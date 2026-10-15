@@ -10,9 +10,9 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .config import ROOT, CATALOG
-from . import agent, planner, providers, progress, plans
+from . import agent, planner, providers, progress, plans, islands
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.2.0')
+app = FastAPI(title='Marine Travel AI Agent', version='0.3.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -63,8 +63,10 @@ def health():
 @app.get('/api/config')
 def public_config():
     import os
-    return dict(tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.2.0')
+    from .mobility import capabilities
+    from .islands import reviewed
+    return dict(mobility=capabilities(), islands=[dict(id=i.id,title=i.title,reviewed_at=i.reviewed_at.isoformat()) for i in reviewed()], ferry_status='reviewed_data_required',tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.3.0')
 
 
 @app.get('/api/places')
@@ -79,6 +81,8 @@ def places(region: Literal['영종·용유', '강화', '송도·도심'] = '영�
 def plan(trip: planner.Trip):
     try:
         return plans.store.register(planner.build_plan(trip))
+    except islands.IslandUnavailable as error:
+        raise HTTPException(422, str(error)) from None
     except (ValueError, RuntimeError):
         raise HTTPException(503, '일정 생성에 필요한 최신 데이터·후보를 확인하세요.') from None
 
@@ -126,6 +130,8 @@ def chat_stream(request: ChatRequest):
                     progress.emit('enrich', '일정 생성 전에 필요한 추가 질문을 준비했어요.', state='skipped')
                 progress.emit('result', '결과를 화면에 준비했어요.', state='completed')
                 send(dict(type='result', result=result))
+        except islands.IslandUnavailable as error:
+            send(dict(type='error', message=str(error)))
         except Exception:
             send(dict(type='error', message='자료 또는 연결을 확인하지 못했습니다. 다시 시도하거나 데이터 초안을 선택해 주세요.'))
         finally:

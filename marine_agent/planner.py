@@ -1,5 +1,6 @@
 import datetime as dt
 import math
+import os
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -25,10 +26,17 @@ class Trip(BaseModel):
     region: Literal['영종·용유', '강화', '송도·도심'] = '영종·용유'
     start_date: dt.date
     days: int = Field(default=2, ge=1, le=3)
-    adults: int = Field(default=2, ge=1, le=10)
+    adults: int = Field(default=2, ge=1, le=50)
+    party_type: Literal['family', 'solo', 'couple', 'group'] = 'family'
+    child_count: int | None = Field(default=None, ge=0, le=8)
     child_ages: list[int] = Field(default_factory=list, max_length=8)
     activity: Literal['mudflat', 'beach', 'none'] = 'mudflat'
-    transport: Literal['car'] = 'car'
+    transport: Literal['car', 'walk', 'transit'] = 'car'
+    visits_per_day: int = Field(default=2, ge=1, le=6)
+    cuisines: list[Literal['korean', 'chinese', 'japanese', 'western', 'other']] = Field(default_factory=list, max_length=5)
+    cafes: bool = True
+    daily_times: list['DayTime'] = Field(default_factory=list, max_length=3)
+    island_id: str | None = Field(default=None, max_length=60)
     day_start: str = Field(default='09:00', pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
     day_end: str = Field(default='18:00', pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
     excluded_ids: list[str] = Field(default_factory=list, max_length=100)
@@ -40,18 +48,42 @@ class Trip(BaseModel):
             raise ValueError('여행 시작일은 오늘 이후여야 합니다.')
         if any(age < 0 or age > 17 for age in self.child_ages):
             raise ValueError('자녀 나이는 0~17세로 입력하세요.')
-        if minutes(self.day_end) - minutes(self.day_start) < 240:
-            raise ValueError('하루에 최소 4시간의 여행 시간을 지정하세요.')
+        if self.island_id and self.days != 1:
+            raise ValueError('섬 여행은 검증된 당일 왕복부터 지원합니다.')
+        if self.child_count is None:
+            self.child_count = len(self.child_ages)
+        if self.child_count != len(self.child_ages):
+            raise ValueError('자녀 인원수와 나이 입력 개수가 다릅니다.')
+        if len({t.date for t in self.daily_times}) != len(self.daily_times):
+            raise ValueError('일별 시간 날짜가 중복됩니다.')
+        if any(not self.start_date <= t.date < self.start_date + dt.timedelta(days=self.days) for t in self.daily_times):
+            raise ValueError('일별 시간 날짜가 여행 기간 밖입니다.')
+        for offset in range(self.days):
+            start, end = self.hours(self.start_date + dt.timedelta(days=offset))
+            if minutes(end) <= minutes(start):
+                raise ValueError('하루 마침은 시작보다 늦어야 합니다. 자정 넘김은 지원하지 않습니다.')
         for lock in self.locked:
             if not self.start_date <= lock.date < self.start_date + dt.timedelta(days=self.days):
                 raise ValueError('고정 일정 날짜가 여행 기간 밖입니다.')
-            if not minutes(self.day_start) <= minutes(lock.start) < minutes(lock.end) <= minutes(self.day_end):
+            start, end = self.hours(lock.date)
+            if not minutes(start) <= minutes(lock.start) < minutes(lock.end) <= minutes(end):
                 raise ValueError('고정 일정이 하루 여행 시간 밖이거나 역전되어 있습니다.')
         for i, lock in enumerate(self.locked):
             if any(other.date == lock.date and overlaps(minutes(lock.start), minutes(lock.end), minutes(other.start), minutes(other.end))
                    for other in self.locked[i + 1:]):
                 raise ValueError('고정 일정 시간이 겹칩니다.')
         return self
+
+    def hours(self, date):
+        value = next((t for t in self.daily_times if t.date == date), None)
+        return (value.start, value.end) if value else (self.day_start, self.day_end)
+
+
+class DayTime(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    date: dt.date
+    start: str = Field(pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
+    end: str = Field(pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
 
 
 def minutes(value):
@@ -127,16 +159,25 @@ def validate_schedule(days):
     return True
 
 
+def major_visit(item):
+    return item['kind'] in ('tourism', 'marine') or item['kind'] == 'locked' and item.get('original_kind') in ('tourism', 'marine')
+
+
 def build_plan(trip):
     if isinstance(trip, dict):
         trip = Trip.model_validate(trip)
+    from . import travel, islands
+    from .mobility import route_between
+    island = islands.resolve(trip.island_id) if trip.island_id else None
     progress.emit('data', '인천 관광 후보와 해양예보를 확인하고 있어요.')
     c = providers.catalog()
     candidates = [p for p in tourism_candidates(trip.region, limit=200) if p['id'] not in trip.excluded_ids]
+    if island:
+        candidates = islands.candidates(island, trip.excluded_ids)
     if not candidates:
         raise ValueError('해당 권역에 사용할 관광 후보가 없습니다. 먼저 데이터를 수집하세요.')
     locked_titles = {lock.title for lock in trip.locked}
-    used = {p['id'] for p in candidates if p['title'] in locked_titles}
+    used = {p['id'] for p in candidates if p['title'] in locked_titles or p['id'] in {l.id for l in trip.locked}}
     days, marine_used = [], False
     source_age = dt.datetime.now(providers.KST) - dt.datetime.fromisoformat(c['collected_at'])
     if source_age > dt.timedelta(days=1):
@@ -156,6 +197,11 @@ def build_plan(trip):
     progress.emit('schedule', '갯벌체험 가능 시간과 점심·고정 일정을 비교하고 있어요.')
     for offset in range(trip.days):
         date = trip.start_date + dt.timedelta(days=offset)
+        day_start, day_end = trip.hours(date)
+        ferry = islands.day_crossings(island, date.isoformat(), day_start, day_end) if island else None
+        if ferry:
+            day_start, day_end = ferry['island_start'], ferry['island_end']
+        ground_mode = 'walk' if island else trip.transport
         items = [dict(kind='locked', title=l.title, start=l.start, end=l.end, source='사용자 고정 일정',
                       id=l.id, lat=l.lat, lon=l.lon, original_kind=l.original_kind)
                  for l in trip.locked if l.date == date]
@@ -164,6 +210,10 @@ def build_plan(trip):
             if match:
                 item.update(id=match['id'], lat=match['lat'], lon=match['lon'], original_kind='tourism')
         conditions, weather = prepared[offset]
+        if island:
+            conditions = dict(status='not_requested', rows=[])
+            if any(i['start'] < day_start or i['end'] > day_end for i in items):
+                raise ValueError('고정 일정이 왕복 여객선의 섬 체류시간 밖입니다.')
         if not marine_used and conditions['status'] == 'available':
             for row in conditions['rows']:
                 if not eligible_marine(row):
@@ -172,8 +222,8 @@ def build_plan(trip):
                     # No swimming slot without site-level operating and age checks.
                     continue
                 try:
-                    begin = max(minutes(row['mdftExprnBgngTm']) + 30, minutes(trip.day_start) + 30)
-                    latest_end = min(minutes(row['mdftExprnEndTm']) - 30, minutes(trip.day_end) - 30)
+                    begin = max(minutes(row['mdftExprnBgngTm']) + 30, minutes(day_start) + 30)
+                    latest_end = min(minutes(row['mdftExprnEndTm']) - 30, minutes(day_end) - 30)
                 except (KeyError, ValueError):
                     continue
                 # Preserve lunch and one-hour buffers around fixed reservations.
@@ -200,12 +250,16 @@ def build_plan(trip):
                 marine_used = True
                 break
         # Explicit lunch; skip when a user reservation already occupies the interval.
-        if minutes(trip.day_start) <= 720 and minutes(trip.day_end) >= 780 and not any(overlaps(720, 780, minutes(i['start']), minutes(i['end'])) for i in items):
-            items.append(dict(kind='break', title='점심·휴식 (장소 미정)', start='12:00', end='13:00'))
+        lunch = max(720, minutes(day_start))
+        if lunch + 60 <= min(840, minutes(day_end)) and not any(overlaps(lunch, lunch + 60, minutes(i['start']), minutes(i['end'])) for i in items):
+            items.append(dict(kind='break', title='점심·휴식 (장소 미정)', start=hhmm(lunch), end=hhmm(lunch + 60)))
+        dinner = max(1080, minutes(day_start))
+        if dinner + 60 <= min(1200, minutes(day_end)) and not any(overlaps(dinner, dinner + 60, minutes(i['start']), minutes(i['end'])) for i in items):
+            items.append(dict(kind='break', title='저녁·휴식 (장소 미정)', start=hhmm(dinner), end=hhmm(dinner + 60)))
         last_point = next(((i['lat'], i['lon']) for i in items if i.get('lat') is not None and i.get('lon') is not None), None)
         count = 0
-        tourism_budget = max(0, 2 - sum(i['kind'] in ('locked', 'marine') for i in items))
-        for start in range(max(600, minutes(trip.day_start) + 60), minutes(trip.day_end) - 89, 30):
+        tourism_budget = max(0, trip.visits_per_day - sum(major_visit(i) for i in items))
+        for start in range(max(minutes(day_start), minutes(day_start) + (60 if ground_mode == 'car' else 15)), minutes(day_end) - 89, 30):
             if count >= tourism_budget:
                 break
             end = start + 90
@@ -213,11 +267,38 @@ def build_plan(trip):
                 continue
             if any(overlaps(start, end, minutes(i['start']), minutes(i['end'])) for i in items):
                 continue
-            available = [p for p in candidates if p['id'] not in used and (last_point is None or distance(last_point, (p['lat'], p['lon'])) <= 12)]
+            available = [p for p in candidates if p['id'] not in used and (last_point is None or distance(last_point, (p['lat'], p['lon'])) <= (2 if ground_mode == 'walk' else 12))]
             if not available:
                 continue
             available.sort(key=lambda p: (distance(last_point, (p['lat'], p['lon'])) if last_point else 0, p['title']))
-            place = available[0]
+            place = None
+            for proposed in available[:3]:
+                if ground_mode == 'car':
+                    place = proposed
+                    break
+                ordered = sorted([i for i in items if i.get('lat') is not None], key=lambda i: i['start'])
+                neighbors = [(i, proposed, start - minutes(i['end'])) for i in ordered if minutes(i['end']) <= start][-1:]
+                neighbors += [(proposed, i, minutes(i['start']) - end) for i in ordered if minutes(i['start']) >= end][:1]
+                if ferry:
+                    if not [i for i in ordered if minutes(i['end']) <= start]:
+                        neighbors.append((ferry['port'], proposed, start - minutes(day_start)))
+                    if not [i for i in ordered if minutes(i['start']) >= end]:
+                        neighbors.append((proposed, ferry['port'], minutes(day_end) - end))
+                feasible = True
+                for a, b, gap in neighbors:
+                    lower = end if a is proposed else minutes(a.get('end', day_start))
+                    upper = start if b is proposed else minutes(b.get('start', day_end))
+                    gap -= sum(max(0, min(upper, minutes(i['end'])) - max(lower, minutes(i['start'])))
+                               for i in items if i is not a and i is not b)
+                    route = route_between(a, b, ground_mode)
+                    if route['status'] != 'available' or route['duration_s'] > gap * 60:
+                        feasible = False
+                        break
+                if feasible:
+                    place = proposed
+                    break
+            if place is None:
+                continue
             used.add(place['id'])
             last_point = (place['lat'], place['lon'])
             items.append(dict(place, kind='tourism', start=hhmm(start), end=hhmm(end), source=c['tourism_source'],
@@ -225,19 +306,32 @@ def build_plan(trip):
             count += 1
             if count >= tourism_budget:
                 break
+        if ferry:
+            items.extend(ferry['items'])
         alternatives = [p for p in candidates if p['id'] not in used][:6]
         days.append(dict(date=date.isoformat(), items=sorted(items, key=lambda i: i['start']), marine=conditions,
                          weather=weather, alternatives=alternatives,
+                         day_start=trip.hours(date)[0], day_end=trip.hours(date)[1], transport='walk' if island else trip.transport,
+                         travel_index=travel.sea_outlook('island' if island else trip.region, date.isoformat(), *trip.hours(date)),
+                         requested_visits=trip.visits_per_day,
+                         actual_visits=sum(major_visit(i) for i in items),
+                         warnings=[],
                          alternative_note='같은 권역의 대체 후보입니다. 실내 여부·운영시간·가족 적합성은 개별 확인 필요'))
     for day in days:
+        if not island:
+            travel.add_food(day, trip)
+        if day['actual_visits'] < day['requested_visits']:
+            day['warnings'].append(f"요청한 {day['requested_visits']}곳 중 {day['actual_visits']}곳을 배치했습니다. 시간·경로·후보가 부족한 방문은 억지로 추가하지 않았습니다.")
+        if trip.transport == 'transit':
+            day['warnings'].append('대중교통은 일반 경로 예상 시간이며, 여행일 출발·막차·배차는 미확인입니다.' if os.environ.get('ODSAY_API_KEY') else '대중교통 API 미연결: 장소 후보만 표시하며 이동 가능한 일정으로 확정할 수 없습니다.')
         day['alternatives'] = [p for p in candidates if p['id'] not in used][:6]
     validate_schedule(days)
     progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')
-    return dict(status='provisional', trip=trip.model_dump(mode='json'), days=days,
+    return dict(status='provisional', trip=trip.model_dump(mode='json'), days=days, travel_index=travel.overall_outlook(days),
                 generated_at=dt.datetime.now(providers.KST).isoformat(), collected_at=c['collected_at'],
                 marine_scheduled=marine_used,
                 notices=['검토용 초안입니다. 특보·현장 통제·체험장 운영·자녀 연령 조건은 미확인입니다.',
-                         '차량 여행만 지원합니다. 배편이 필요한 섬은 초기 권역에서 제외합니다.',
+                         '이동수단별 조회 결과를 확인하세요. 대중교통·여객선은 별도 데이터 연결과 운항 확인이 필요합니다.',
                          '초기 방문 배치는 직선거리와 이동·휴식 가정을 사용합니다. 지도에 표시된 도로 경로·시간과 여유 시간 경고를 확인하세요.',
                          '예보 없음·나쁨·폐장·보통 지수는 체험 추천 근거로 사용하지 않습니다.',
                          '해수욕은 개장·연령·현장 조건 검증 전까지 자동 배치하지 않습니다.'])

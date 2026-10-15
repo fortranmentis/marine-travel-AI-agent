@@ -1,4 +1,4 @@
-import {el} from './ui.js';
+import {el,button} from './ui.js?v=0.3.0';
 
 export function weatherKind(row) {
   const pty=String(row?.PTY??'');
@@ -35,6 +35,16 @@ export function weatherCard(weather,start,end){
   const strip=el('div',undefined,'weather-summary');const main=el('div',undefined,'weather-main');main.append(weatherIcon(summary.kind),el('strong',labels[summary.kind]));strip.append(main);
   for(const [label,value] of [['기온 범위',summary.temperature?summary.temperature.join(' ~ ')+'°C':'자료 없음'],['최대 강수확률',summary.pop===null?'자료 없음':summary.pop+'%'],['최대 바람',summary.wind===null?'자료 없음':summary.wind+'m/s']]){const item=el('div',undefined,'weather-stat');item.append(el('span',label),el('strong',value));strip.append(item);}box.append(strip);
   box.append(el('p',formatIssue(weather.issue_at)+' · 대표 지점: '+(weather.reference_place?.title||'조회 지점 미확인'),'forecast'));
-  const details=el('details'),toggle=el('summary','시간별 예보 보기'),hours=el('div',undefined,'weather-hours');details.append(toggle,hours);
+  const details=el('details'),toggle=el('summary','시간별 예보 · 좌우로 넘겨 보기'),hours=el('div',undefined,'weather-hours');details.open=true;
+  hours.tabIndex=0;hours.setAttribute('role','region');hours.setAttribute('aria-label','시간별 날씨 · 좌우 방향키로 이동');
+  const controls=el('div',undefined,'weather-scroll-controls');
+  const scroll=direction=>hours.scrollBy({left:direction*Math.max(150,hours.clientWidth*.7),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  const left=button('← 이전',()=>scroll(-1)),right=button('다음 →',()=>scroll(1));
+  left.setAttribute('aria-label','이전 시간대');right.setAttribute('aria-label','다음 시간대');controls.append(left,right);details.append(toggle,controls,hours);
+  hours.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();scroll(e.key==='ArrowLeft'?-1:1);}});
+  let dragging=null;
+  hours.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;dragging={x:e.clientX,left:hours.scrollLeft};hours.setPointerCapture(e.pointerId);hours.classList.add('dragging');});
+  hours.addEventListener('pointermove',e=>{if(dragging)hours.scrollLeft=dragging.left+dragging.x-e.clientX;});
+  const stop=()=>{dragging=null;hours.classList.remove('dragging');};hours.addEventListener('pointerup',stop);hours.addEventListener('pointercancel',stop);hours.addEventListener('lostpointercapture',stop);
   for(const [time,row] of summary.hourly){const h=el('div',undefined,'weather-hour');h.append(el('span',time.slice(0,2)+':'+time.slice(2)),weatherIcon(weatherKind(row)),el('strong',number(row.TMP)===null?'—':row.TMP+'°'),el('small',number(row.POP)===null?'강수 —':row.POP+'%'));hours.append(h);}box.append(details);return box;
 }
