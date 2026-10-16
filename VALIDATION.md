@@ -1,5 +1,39 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## Playwright transit checks — 2026-10-16
+
+- **77 Python + 6 Node tests passed** with `--basetemp=.tmp/pytest-transit-walk`.
+  Existing Starlette/httpx deprecation warning remains. No transit API calls are
+  allowed in the new browser-provider regression fixtures.
+- Offline coverage includes bus/subway transfers, missing distance/fare, later-day
+  exclusion, unsupported modes/layouts, directional memory cache and clone isolation,
+  future departure metadata, coordinate validation, request count/deadline limits,
+  explicit failure, rejected replacement preserving revision, progress events and
+  short-leg selection of a walking graph before browser lookup.
+- Real Playwright Chromium read the public Naver Map UI for four public-coordinate
+  pairs: Incheon Station–Wolmi Park, Busan Station–Haeundae Beach,
+  Gangneung Station–Gyeongpo Beach, and Seoul Station–Jamsil Station.
+  Three returned bus sections; the last returned subway lines 4 and 2 with one transfer.
+  These are individual observations, not nationwide availability or timetable validation.
+- The live `/api/transit/route` result preserved the requested October 18 departure,
+  reported lookup-time data separately, and returned `departure_time_applied=false`,
+  `schedule_verified=false`, no distance/geometry, and a source-map link.
+- Final real Qwen `qwen3.8:27b-mtp-q8_0` NDJSON request returned `ok`,
+  `build_itinerary: ok`, two tourism visits and one restaurant in Songdo/downtown.
+  Both adjacent legs were short walking routes from FOSSGIS, explicitly labelled.
+  Progress arrived before the final response (17.42s for this single observation).
+- Desktop 1280px and mobile 390px views displayed the mixed-mode planner, actual
+  walking map and reference-time caveats without horizontal overflow
+  (document widths 1265px / 375px). See [desktop](docs/browser-transit-desktop.jpg)
+  and [mobile](docs/browser-transit-mobile.jpg). Those screenshots show walking legs,
+  not a claim that bus line geometry was obtained.
+- Installed Playwright/Chromium locally. The live check is rerunnable with
+  `python scripts/check_browser_transit.py --ai` against a running local server;
+  its report stays under ignored `.tmp/`. Offline CI does not require Chromium.
+- Travel-date timetable selection, source collection/reuse permission, accessibility,
+  seats, ferry schedules and production capacity remain unverified. See
+  [adapter contract and limitations](docs/BROWSER_TRANSIT.md).
+
 ## v0.4 national sea-travel checks — 2026-10-16
 
 - **57 Python + 5 Node tests passed**; Python used

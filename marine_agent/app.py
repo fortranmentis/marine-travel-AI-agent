@@ -8,10 +8,11 @@ import time
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, Field
 
 from .config import ROOT, CATALOG
 from . import agent, planner, providers, progress, plans, islands, regions
+from .browser_transit import budgeted
 
 app = FastAPI(title='Marine Travel AI Agent', version='0.4.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
@@ -44,6 +45,26 @@ class Revision(BaseModel):
 class LockUpdate(Revision):
     slot_id: str = Field(min_length=1, max_length=64)
     locked: bool
+
+
+class TransitPoint(BaseModel):
+    lat: float = Field(ge=32, le=40, allow_inf_nan=False)
+    lon: float = Field(ge=124, le=132, allow_inf_nan=False)
+    title: str = Field(min_length=1, max_length=100)
+
+
+class TransitLookup(BaseModel):
+    origin: TransitPoint
+    destination: TransitPoint
+    departure_at: AwareDatetime | None = None
+
+
+@app.post('/api/transit/route')
+@budgeted
+def transit_lookup(request: TransitLookup):
+    from .mobility import transit_route
+    return transit_route(request.origin.model_dump(), request.destination.model_dump(),
+                         request.departure_at.isoformat() if request.departure_at else None)
 
 
 @app.get('/')
@@ -91,6 +112,7 @@ def region_outlooks(date: dt.date | None = None):
 
 
 @app.post('/api/plan')
+@budgeted
 def plan(trip: planner.Trip):
     try:
         return plans.store.register(planner.build_plan(trip))
@@ -101,6 +123,7 @@ def plan(trip: planner.Trip):
 
 
 @app.post('/api/chat')
+@budgeted
 def chat(request: ChatRequest):
     if not CATALOG.exists():
         raise HTTPException(503, 'python -m marine_agent.sync를 먼저 실행하세요.')
@@ -130,6 +153,7 @@ def chat_stream(request: ChatRequest):
     def send(event):
         events.put(dict(event, elapsed_seconds=round(time.monotonic() - started, 1)))
 
+    @budgeted
     def work():
         try:
             with progress.reporting(send):

@@ -57,3 +57,5 @@ h2{font-size:23px}.day-title{font-size:21px}.day-title span{font-size:13px}
   .card h4{font-size:17px}.food-candidate{align-items:flex-start}.food-candidate p{min-width:0}
   #chat-form{flex-wrap:wrap}#chat-form input{flex:1 1 200px}
 }
+
+.route-leg{border-top:1px solid #dce7e5;margin-top:14px;padding-top:14px;overflow-wrap:anywhere}.route-leg p{margin:8px 0}.route-leg small{display:block}

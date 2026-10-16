@@ -30,4 +30,12 @@ test('truncated streams fail explicitly',async()=>{
 });
 
 import {datesFor} from '../web/trip-form.js';
+import {transitSummary,transitSourceUrl} from '../web/transit.js';
+test('transit display preserves missing values and links only to the source map',()=>{
+ const summary=transitSummary({sections:[{mode:'bus',lines:['2'],minutes:5,start:'인천역',end:'GS칼텍스'}],fare:1500,transfers:0,walking_minutes:7,observed_at:'2026-10-16T00:51:00Z'});
+ assert.match(summary.sections,/인천역 → GS칼텍스/);assert.match(summary.metrics,/1,500원/);assert.match(summary.metrics,/환승 0회/);
+ assert.match(summary.observed,/9:51/);assert.equal(transitSummary({}).metrics,'');
+ assert.equal(transitSourceUrl('javascript:alert(1)'),null);assert.equal(transitSourceUrl('https://evil.example/p/directions/x'),null);
+ assert.equal(transitSourceUrl('https://map.naver.com/p/directions/a/b/-/transit'),'https://map.naver.com/p/directions/a/b/-/transit');
+});
 test('daily dates cross month and year without local timezone drift',()=>{assert.deepEqual(datesFor('2026-12-31',3),['2026-12-31','2027-01-01','2027-01-02']);assert.deepEqual(datesFor('',2),[]);});

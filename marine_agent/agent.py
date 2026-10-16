@@ -36,7 +36,7 @@ TOOLS = {
     'get_marine_conditions': (Marine, '활동·날짜별 공식 해양지수 조회. 예보 없음은 활동 가능을 뜻하지 않음.', planner.marine_conditions),
     'get_place_details': (Detail, 'TourAPI 장소 상세정보·이용정보 조회.', providers.place_detail),
     'get_weather': (Weather, '관광지 좌표에 해당하는 기상청 예보 조회. 특보 조회는 아님.', providers.weather_for_place),
-    'build_itinerary': (planner.Trip, '날짜별 검토용 일정을 생성. 일정 요청에는 반드시 이 도구를 사용. car·walk·transit 지원. transit은 별도 API 연결 필요. 일별 시간·인원·방문 수를 보존.', planner.build_plan),
+    'build_itinerary': (planner.Trip, '날짜별 검토용 일정을 생성. 일정 요청에는 반드시 이 도구를 사용. car·walk·transit 지원. transit은 Playwright 지도 화면의 조회 시점 참고 경로이며 여행일 시간표는 미확인. 일별 시간·인원·방문 수를 보존.', planner.build_plan),
 }
 
 
@@ -48,7 +48,7 @@ def tool_schemas():
 def chat(message, history=None, trip=None, locked=None, excluded_ids=None):
     today = dt.datetime.now(providers.KST).date().isoformat()
     system = f'''당신은 전국 해안의 개인·커플·가족·단체 바다여행 도우미입니다. 오늘은 한국시간 {today}입니다.
-한국어로 답하세요. 지원 권역은 {', '.join(regions.SPECS)}입니다. 도서 예보 권역의 일정은 별도 검증 없이는 생성하지 마세요. 전국 권역은 activity=seatrip 또는 none을 사용하세요. 자차·도보·대중교통+도보를 지원하며 대중교통은 API 연결이 필요합니다. 섬은 검증 자료가 있는 당일 왕복만 지원합니다.
+한국어로 답하세요. 지원 권역은 {', '.join(regions.SPECS)}입니다. 도서 예보 권역의 일정은 별도 검증 없이는 생성하지 마세요. 전국 권역은 activity=seatrip 또는 none을 사용하세요. 자차·도보·대중교통+도보를 지원하며 대중교통은 Playwright 지도 화면의 조회 시점 참고 경로입니다. 여행일 출발시각·막차·배차는 미확인입니다. 섬은 검증 자료가 있는 당일 왕복만 지원합니다.
 고성 권역은 경남 고성군입니다. 강원 고성군 등 지원 명칭에 없는 지역을 이름 유사도로 연결하지 말고 지원 범위를 안내하세요.
 목적지·정확한 날짜·인원 구성이 부족하면 질문하세요. 상대 날짜는 오늘을 기준으로 해석하세요.
 일정은 반드시 build_itinerary 도구로 생성하고 도구 결과에 없는 장소·수치·운영시간을 만들지 마세요.

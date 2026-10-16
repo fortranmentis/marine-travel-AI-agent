@@ -79,6 +79,7 @@ def test_walk_route_failure_never_falls_back_to_car(snapshot, monkeypatch):
 
 
 def test_transit_without_key_is_explicit(monkeypatch):
+    monkeypatch.setenv('TRANSIT_PROVIDER','odsay')
     monkeypatch.delenv('ODSAY_API_KEY',raising=False)
     assert not mobility.capabilities()['transit']
     assert mobility.transit_route({}, {})['status']=='not_configured'
@@ -139,6 +140,7 @@ def test_unreviewed_or_expired_island_is_unavailable(snapshot,monkeypatch,tmp_pa
 
 
 def test_odsay_sections_and_errors_never_expose_key(monkeypatch):
+    monkeypatch.setenv('TRANSIT_PROVIDER','odsay')
     monkeypatch.setenv('ODSAY_API_KEY','synthetic-test-key')
     monkeypatch.setattr(enrichment,'cached',lambda *a:None)
     monkeypatch.setattr(enrichment,'remember',lambda key,value,seconds:value)

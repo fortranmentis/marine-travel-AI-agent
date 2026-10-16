@@ -6,6 +6,7 @@ import time
 from uuid import uuid4
 
 from . import enrichment, planner
+from .browser_transit import budgeted
 
 
 class PlanError(Exception):
@@ -34,6 +35,7 @@ class PlanStore:
                 raise PlanError(409, '이미 변경된 일정입니다. 최신 일정으로 다시 시도해 주세요.')
             return copy.deepcopy(entry['plan'])
 
+    @budgeted
     def register(self, plan):
         result = copy.deepcopy(plan)
         result.update(plan_id=uuid4().hex, revision=1, can_undo=False)
@@ -77,6 +79,7 @@ class PlanStore:
         item['original_kind'] = original
         return self.commit(result, revision, None)
 
+    @budgeted
     def replace(self, plan_id, revision, slot_id, candidate_id):
         current = self.get(plan_id, revision)
         result = copy.deepcopy(current)

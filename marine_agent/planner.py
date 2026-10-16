@@ -5,6 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from . import providers, progress, regions
+from .browser_transit import budgeted
 
 REGIONS = list(regions.SPECS)
 
@@ -180,6 +181,7 @@ def major_visit(item):
     return item['kind'] in ('tourism', 'marine') or item['kind'] == 'locked' and item.get('original_kind') in ('tourism', 'marine')
 
 
+@budgeted
 def build_plan(trip):
     if isinstance(trip, dict):
         trip = Trip.model_validate(trip)
@@ -355,7 +357,7 @@ def build_plan(trip):
             elif not grade:
                 day['warnings'].append('여행 시간대 바다여행지수를 확보하지 못했습니다. 해양 활동 가능 여부를 판단하지 않고 관광 초안만 제공합니다.')
         if trip.transport == 'transit':
-            day['warnings'].append('대중교통은 일반 경로 예상 시간이며, 여행일 출발·막차·배차는 미확인입니다.' if os.environ.get('ODSAY_API_KEY') else '대중교통 API 미연결: 장소 후보만 표시하며 이동 가능한 일정으로 확정할 수 없습니다.')
+            day['warnings'].append('대중교통은 조회 시점의 참고 경로입니다. 여행일 출발시각·막차·배차는 미확인입니다. 경로 미확보 구간은 원본 지도에서 확인하세요.')
         day['alternatives'] = [p for p in candidates if p['id'] not in used][:6]
     validate_schedule(days)
     progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')

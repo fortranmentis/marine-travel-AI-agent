@@ -19,7 +19,7 @@
 
 </div>
 
-![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 62 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 83 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -39,7 +39,7 @@ Poor sea outlooks prioritize cultural-facility candidates. Source grades, missin
 
 Daily time windows, attraction counts, party types and child counts; nearby meals by TourAPI cuisine and cafe breaks; horizontally scrollable weather; daily and whole-trip sea-travel outlooks. Walking uses a separate OSRM foot graph.
 
-**Transit and ferries are connection-ready, not live-verified:** ODsay needs a separate key; island day trips need reviewed round-trip data. No ferry island is enabled by default. See [v0.3 contracts and setup](docs/API-v03.md).
+**Transit now uses Playwright and the rendered Naver Map UI without a transit API key.** It shows lookup-time reference routes, not travel-date timetable verification. Install Chromium with `python -m playwright install chromium`. See [browser setup and limits](docs/BROWSER_TRANSIT.md). Ferry islands still require reviewed round-trip data; none is enabled by default.
 
 Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
 
@@ -167,6 +167,7 @@ Set the following values in `.env` using [`.env.example`](.env.example):
 | `OLLAMA_MODEL` | Default `qwen3.8:27b-mtp-q8_0`. Install a compatible tool-calling model on your server. |
 | `OLLAMA_NUM_CTX` | Model context setting; default `16384`. |
 | `OSRM_BASE_URL` | Routing URL; default `https://router.project-osrm.org`. |
+| `TRANSIT_PROVIDER` | Default `playwright`: Naver Map UI reference routes; `disabled` turns off transit lookup. [Setup and limits](docs/BROWSER_TRANSIT.md). |
 | `OSM_TILE_URL` | Map tile template; default `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. |
 
 The default model name is a configuration value, not a bundled model or a hardware requirement validated by this repository. Ollama may run locally or on a separately configured server. Public data, routing and map services still require network access.
@@ -204,7 +205,7 @@ If your Windows Python cannot bootstrap pip inside the environment, use `python 
 
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 57 Python tests and 5 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality.
+**Re-run on October 16, 2026 (Asia/Seoul): 77 Python tests and 6 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

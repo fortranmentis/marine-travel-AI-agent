@@ -150,7 +150,10 @@ def day_route(day, mode=None):
              and i['kind'] in ('tourism', 'marine', 'locked', 'meal', 'cafe', 'port')]
     legs = []
     for a, b in zip(stops, stops[1:]):
-        route = dict(route_between(a, b, mode))
+        if mode == 'transit':
+            route = dict(route_between(a, b, mode, departure_at=f"{day['date']}T{a['end']}:00+09:00"))
+        else:
+            route = dict(route_between(a, b, mode))
         available = minutes(b['start']) - minutes(a['end'])
         # Preparation, lunch and changing blocks cannot be spent driving.
         for item in day['items']:
@@ -161,7 +164,8 @@ def day_route(day, mode=None):
         legs.append(route)
     return dict(waypoints=[dict(slot_id=i['slot_id'], title=i['title'], lat=i['lat'], lon=i['lon'], number=n + 1) for n, i in enumerate(stops)],
                 legs=legs, source='© OpenStreetMap contributors · OSRM',
-                total_distance_m=sum(r.get('distance_m', 0) for r in legs),
+                total_distance_m=sum(r.get('distance_m') or 0 for r in legs),
+                distance_complete=all(r.get('distance_m') is not None for r in legs),
                 total_duration_s=sum(r.get('duration_s', 0) for r in legs),
                 mode=mode, complete=all(r['status'] == 'available' for r in legs))
 

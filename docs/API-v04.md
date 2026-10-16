@@ -76,7 +76,8 @@ operator or venue verification.
 The default CLI scope is `coastal`. `--scope incheon` is an explicit legacy mode
 that replaces tourism coverage with Incheon and refreshes all eight feeds.
 Existing approved TourAPI / KHOA / KMA credentials are reused. No new key is needed
-for this rollout; ODsay/KOMSA access remains separate.
+for that rollout. Transit now defaults to the [Playwright UI adapter](BROWSER_TRANSIT.md)
+without a transit API key; KOMSA/reviewed ferry access remains separate.
 
 Ten complete provincial catalogs and administrative metadata are fetched before
 atomic publication. Count drift, missing pages, duplicate IDs or sea-travel failure

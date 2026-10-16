@@ -1,10 +1,10 @@
-import {initializeNational} from './national.js?v=0.4.2';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.2';
-import {initializeTripForm} from './trip-form.js?v=0.4.2';
-import {$,el,button,plainText} from './ui.js?v=0.4.2';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.2';
-import {weatherCard} from './weather.js?v=0.4.2';
-import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.4.2';
+import {initializeNational} from './national.js?v=0.4.3';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.3';
+import {initializeTripForm} from './trip-form.js?v=0.4.3';
+import {$,el,button,plainText} from './ui.js?v=0.4.3';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.3';
+import {weatherCard} from './weather.js?v=0.4.3';
+import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.4.3';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
@@ -12,7 +12,7 @@ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric
 form.elements.start_date.value=today;form.elements.start_date.min=today;
 const tripForm=initializeTripForm(form);
 const national=initializeNational(form);
-api('/api/config').then(config=>{for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}if(config.mobility?.transit)form.elements.transport.querySelector('[value=transit]').textContent='대중교통 + 도보';}).catch(()=>{});
+api('/api/config').then(config=>{for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
 function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
 function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
