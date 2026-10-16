@@ -1,5 +1,7 @@
 # v0.5.1 — Island tourism drafts / 도서 관광 초안
 
+> v0.6 adds dated KOMSA + TAGO reference timetables when transport credentials are configured. The today-only observations described below refer to the browser adapter. Round-trip arrival/access verification remains incomplete.
+
 All 29 named forecast regions can now request a tourism draft when their pilot
 catalog scope is loaded: 25 ground/bridge scopes and four conditional ferry-island
 scopes. This changes the previous forecast-only UI gate. It does **not** turn a

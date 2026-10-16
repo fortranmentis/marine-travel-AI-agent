@@ -1,5 +1,7 @@
 # v0.5 — PDF export, attraction selection and live ferry observations
 
+> For dated ferry and public transport API endpoints, see the [v0.6 contract](TRANSPORT_API.md). The browser ferry adapter below remains today-only.
+
 **v0.5.1 update:** [Conditional island tourism drafts](ISLAND_DRAFTS.md) now
 enable the five former forecast-only UI selections. Full round-trip access is
 still unverified; the today-only adapter contract below is unchanged.

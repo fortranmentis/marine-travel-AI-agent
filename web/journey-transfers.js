@@ -1,5 +1,5 @@
-import {el,button} from './ui.js?v=0.5.1';
-import {transitSummary,transitSourceUrl} from './transit.js?v=0.5.1';
+import {el,button} from './ui.js?v=0.6.0';
+import {transitSummary,transitSourceUrl} from './transit.js?v=0.6.0';
 
 const stopKinds=new Set(['tourism','marine','locked','meal','cafe','port']);
 const modes={car:'자차',walk:'도보',bus:'버스',subway:'지하철',transit:'대중교통',ferry:'여객선'};
@@ -25,7 +25,7 @@ export function transfersFor(day,route){
   return result;
 }
 
-export function transferCard(transfer,date,onMap){
+export function transferCard(transfer,date,onMap,onTransit){
   const {from,to,leg,available,mode}=transfer;
   const row=el('div',undefined,'slot transfer-slot');
   row.dataset.fromSlot=from.slot_id;row.dataset.toSlot=to.slot_id;
@@ -42,6 +42,7 @@ export function transferCard(transfer,date,onMap){
   if(available&&leg?.mode==='transit')card.append(el('small','조회 시점 참고 경로 · 여행일 배차·막차 미확인'));
   const actions=el('div',undefined,'actions');
   if(transfer.coordinates)actions.append(button('지도에서 이동 구간 보기 ↗',()=>onMap(date,from.slot_id,to.slot_id)));
+  if(transfer.coordinates&&onTransit)actions.append(button('출발지 정류소·도착정보(API)',()=>onTransit(from)));
   const url=transitSourceUrl(leg?.source_url);
   if(url){const link=el('a','네이버 지도 상세 ↗');link.href=url;link.target='_blank';link.rel='noopener noreferrer';actions.append(link);}
   if(actions.childNodes.length)card.append(actions);

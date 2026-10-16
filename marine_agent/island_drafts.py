@@ -39,6 +39,14 @@ def access_info(region, date, *, lookup=True):
         note='교량 연결 관광 범위입니다. 지도는 관광지 사이 경로이며 숙소·실제 출발지 접근은 별도 확인합니다.')
     if profile['access']=='bridge': return result
     result['note']='왕복 배편 미확정 · 섬 내 관광 초안입니다. 일별 시작·마침은 섬에 머무를 계획 시간이며 입출도 시간은 포함하지 않습니다. 출발항 접근·도착시각·예약·차량 선적은 미확인입니다.'
+    from .transport_api import availability
+    if lookup and availability()['ship'] and availability()['komsa']:
+        from .ferry_api import timetables
+        reference=timetables(region,date)
+        result.update(timetable=reference,operation_status=reference['status'],
+                      observed_at=reference.get('observed_at'),operation_note=reference.get('note') or reference.get('reason'),
+                      provider='KOMSA + TAGO API')
+        return result
     if date!=dt.datetime.now(providers.KST).date().isoformat():
         result['operation_status']='date_unsupported'
         result['operation_note']='미래 여행일 배편은 현재 당일 운항정보로 확인할 수 없습니다.'

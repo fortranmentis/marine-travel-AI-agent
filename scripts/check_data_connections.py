@@ -32,8 +32,8 @@ def load_credentials(path):
     blocks = re.split(r'\n\s*\n', text)
     result = []
     for block in blocks:
-        endpoint = re.search(r'엔드포인트\s*:\s*(https?://\S+)', block)
-        key = re.search(r'^키\s*:\s*(\S+)', block, re.M)
+        endpoint = re.search(r'(?:엔드포인트|End\s*Point)\s*[:：]\s*(https?://\S+)', block,re.I)
+        key = re.search(r'^\s*(?:인증키|키)\s*[:：]\s*(\S+)', block, re.M)
         if not endpoint or not key:
             continue
         parsed = urllib.parse.urlsplit(endpoint[1])

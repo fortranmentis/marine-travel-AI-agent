@@ -1,5 +1,15 @@
 # Implementation roadmap
 
+## v0.6 — official transport APIs
+
+- [x] Seven server-side authenticated services, bounded pagination, caches and sanitized errors
+- [x] Nearby stops, current arrivals, route stops/positions and weekday-type subway references
+- [x] Dated pilot ferry references with exact departure reconciliation and source-quality flags
+- [x] Two additional Qwen tools; real provider/model checks and desktop/mobile UI evidence
+- [ ] Independently verified arrivals, terminal access, seats and bookable round trips
+- [ ] Complete transfer-aware multimodal route engine
+
+
 ## v0.5.1 — conditional island tourism
 
 - [x] Five explicit island/bridge scopes with exact-ID tourism boundaries

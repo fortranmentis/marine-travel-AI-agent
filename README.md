@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.5.1](docs/assets/version.svg)
+![Version: 0.6.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, six typed tools, eight retained marine feeds, 122 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 135 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,7 +27,17 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.5.1 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.6.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## New in v0.6 — Official transport API evidence
+
+Seven authenticated services now provide nearby stops, current bus arrivals, route stops and vehicle positions, subway reference timetables, and dated ferry references. Open **교통 API · 정류소·지하철 조회**, a visit’s **주변 교통(API)**, or **여행일 배편 시간표** in the Korean UI. Qwen can call two additional typed tools.
+
+Ferry departures are reconciled by date, vessel, port and departure minute. Arrival inconsistencies are flagged; reference round trips are **not automatically applied**. Seats, bookings, terminal access and arrival accuracy remain unverified. General transit routing continues through the existing browser provider.
+
+[API setup, quality gates and endpoints](docs/TRANSPORT_API.md) · [Live validation evidence](reports/transport-connections.json)
+
+![Dated ferry API references with explicit verification limits](docs/transport-api-ferry.jpg)
 
 ## New in v0.5.1 — Island tourism drafts
 
@@ -103,7 +113,7 @@ Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile
 
 <table>
 <tr>
-<td width="33%" valign="top"><strong>01 / Bounded tool use</strong><p>Six allowlisted tools, Pydantic arguments, six model rounds and ten tool executions maximum per request.</p></td>
+<td width="33%" valign="top"><strong>01 / Bounded tool use</strong><p>Eight allowlisted tools, Pydantic arguments, six model rounds and ten tool executions maximum per request.</p></td>
 <td width="33%" valign="top"><strong>02 / Data integrity</strong><p>Complete pagination, stable-total and duplicate checks, atomic snapshots, and explicit freshness gates.</p></td>
 <td width="34%" valign="top"><strong>03 / Forecast windows</strong><p>Mudflat experience windows are combined with favorable indices, preparation, changing and fixed visits.</p></td>
 </tr>
@@ -140,10 +150,12 @@ flowchart TD
     Store --> UI
     Store --> PDF[Korean PDF export]
     Tools --> Ferry[KOMSA public screen via Playwright]
+    Tools --> Transport[KOMSA + TAGO official APIs]
+    API --> Transport
     API -->|NDJSON task status| UI
 ```
 
-**Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary` and `get_ferry_operations` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
+**Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary`, `get_ferry_operations`, `get_ferry_timetable` and `get_nearby_transport` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
 
 **Planning contract.** The itinerary uses source administrative joins and explicit search filters for national regions; legacy Incheon presets retain their rectangles. Visit durations remain assumptions. OSRM routes are added afterward, so an initial draft can carry travel-gap warnings. Replacing a visit requires available adjacent routes that fit the existing free time.
 
@@ -156,6 +168,8 @@ flowchart TD
 | `get_place_details` | Fetch TourAPI details for a known tourism content ID. |
 | `get_weather` | Fetch KMA grid forecasts from a known place's coordinates. |
 | `build_itinerary` | Apply trip constraints and return a structured provisional schedule. |
+| `get_ferry_timetable` | Retrieve dated pilot ferry references with departure reconciliation and explicit arrival/access limits. |
+| `get_nearby_transport` | Retrieve nearby source bus stops for public place coordinates. |
 | `get_ferry_operations` | Read today’s KOMSA public departure/operation screen; no verified arrivals or bookings. |
 
 ## Data foundation
@@ -196,6 +210,7 @@ Set the following values in `.env` using [`.env.example`](.env.example):
 | Variable | Purpose / default |
 | --- | --- |
 | `MARINE_CREDENTIALS_FILE` | Absolute path to an external public-API credential document; required for collection and source calls. |
+| `TRANSPORT_CREDENTIALS_FILE` | Optional external credential document for the seven official transport services. [Setup](docs/TRANSPORT_API.md). |
 | `OLLAMA_BASE_URL` | Ollama server URL; default `http://localhost:11434`. |
 | `OLLAMA_MODEL` | Default `qwen3.8:27b-mtp-q8_0`. Install a compatible tool-calling model on your server. |
 | `OLLAMA_NUM_CTX` | Model context setting; default `16384`. |
@@ -243,7 +258,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 111 Python tests and 11 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on October 16, 2026 (Asia/Seoul): 123 Python tests and 12 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {weatherKind,summarizeWeather,formatIssue} from '../web/weather.js';
 import {readNDJSON} from '../web/progress.js';
+import {clockLabel,minutesLabel} from '../web/public-transport.js';
+import {dateClock} from '../web/ferry-timetable.js';
+
+test('transport missing times stay unknown, live zero arrival and service-day times are preserved',()=>{
+ assert.equal(clockLabel(null),'미확인');assert.equal(clockLabel(''),'미확인');assert.equal(clockLabel('2501'),'25:01');
+ assert.equal(minutesLabel(0),'0분');assert.equal(minutesLabel(null),'미확인');assert.equal(dateClock('bad'),'미확인');
+ assert.match(dateClock('2026-10-17T00:00:00Z'),/09:00/);
+});
 
 test('precipitation overrides sky and missing values stay missing',()=>{
  assert.equal(weatherKind({PTY:'1',SKY:'1'}),'rain');

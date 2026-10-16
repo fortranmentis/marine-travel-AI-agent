@@ -1,0 +1,120 @@
+{
+  "checked_at": "2026-10-16T18:16:07.593241+09:00",
+  "services": [
+    {
+      "service": "komsa",
+      "operation": "get-oprt-schd-info-v2",
+      "status": "available",
+      "result_code": "200",
+      "count": 4,
+      "returned_count": 4,
+      "source_url": "https://www.data.go.kr/data/15142302/openapi.do"
+    },
+    {
+      "service": "ship",
+      "operation": "GetPsnshipTrminlList",
+      "status": "available",
+      "result_code": "00",
+      "count": 27,
+      "returned_count": 27,
+      "source_url": "https://www.data.go.kr/data/15098523/openapi.do"
+    },
+    {
+      "service": "stops",
+      "operation": "getCrdntPrxmtSttnList",
+      "status": "available",
+      "result_code": "00",
+      "count": 10,
+      "returned_count": 10,
+      "source_url": "https://www.data.go.kr/data/15098534/openapi.do"
+    },
+    {
+      "service": "bus_arrivals",
+      "operation": "getSttnAcctoArvlPrearngeInfoList",
+      "status": "available",
+      "result_code": "00",
+      "count": 8,
+      "returned_count": 8,
+      "source_url": "https://www.data.go.kr/data/15098530/openapi.do"
+    },
+    {
+      "service": "bus_routes",
+      "operation": "getRouteInfoIem",
+      "status": "available",
+      "result_code": "00",
+      "count": 1,
+      "returned_count": 1,
+      "source_url": "https://www.data.go.kr/data/15098529/openapi.do"
+    },
+    {
+      "service": "bus_routes",
+      "operation": "getRouteAcctoThrghSttnList",
+      "status": "available",
+      "result_code": "00",
+      "count": 132,
+      "returned_count": 132,
+      "source_url": "https://www.data.go.kr/data/15098529/openapi.do"
+    },
+    {
+      "service": "bus_positions",
+      "operation": "getRouteAcctoBusLcList",
+      "status": "available",
+      "result_code": "00",
+      "count": 26,
+      "returned_count": 26,
+      "source_url": "https://www.data.go.kr/data/15098533/openapi.do"
+    },
+    {
+      "service": "subway",
+      "operation": "GetKwrdFndSubwaySttnList",
+      "status": "available",
+      "result_code": "00",
+      "count": 13,
+      "returned_count": 13,
+      "source_url": "https://www.data.go.kr/data/15098554/openapi.do"
+    },
+    {
+      "service": "subway",
+      "operation": "GetSubwaySttnAcctoSchdulList",
+      "status": "available",
+      "result_code": "00",
+      "count": 113,
+      "returned_count": 113,
+      "source_url": "https://www.data.go.kr/data/15098554/openapi.do"
+    },
+    {
+      "service": "subway",
+      "operation": "GetSubwaySttnExitAcctoBusRouteList",
+      "status": "available",
+      "result_code": "00",
+      "count": 7,
+      "returned_count": 7,
+      "source_url": "https://www.data.go.kr/data/15098554/openapi.do"
+    }
+  ],
+  "ferry_reference": {
+    "date": "2026-10-17",
+    "status": "available",
+    "rows": 8,
+    "pairs": 4,
+    "departure_matches": 8,
+    "arrival_quality_flags": 2,
+    "roundtrip_verified": false
+  },
+  "ai_status": "ok",
+  "ai_trace": [
+    {
+      "tool": "get_ferry_timetable",
+      "status": "ok"
+    },
+    {
+      "tool": "get_nearby_transport",
+      "status": "ok"
+    }
+  ],
+  "notes": [
+    "Counts are one-time live observations, not nationwide availability.",
+    "TAGO arrival and terminal-address issues prevent automatic verified round trips.",
+    "Live positions/arrivals do not verify future journeys."
+  ]
+}

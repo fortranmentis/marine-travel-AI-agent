@@ -12,14 +12,14 @@
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.5.1](docs/assets/version.svg)
+![Version: 0.6.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 6개 도구, 8종 보관 피드, 122개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 8개 도구, 8종 보관 피드, 135개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,9 +27,19 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.5.1 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.6.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
+
+## v0.6 공식 교통 API 연동
+
+제공받은 7종 API를 연결했습니다. **교통 API · 정류소·지하철 조회**, 일정 카드의 **주변 교통(API)**, **여행일 배편 시간표**에서 주변 정류소·현재 버스 도착·노선과 차량 위치·지하철 참고 시간표·날짜별 배편을 확인할 수 있습니다. Qwen에도 배편 시간표와 주변 정류소 도구를 추가했습니다.
+
+배편은 날짜·선박·출도착항·출항 분으로 대조하며 원천 도착시각의 불일치는 경고합니다. 참고 왕복 조합은 **일정에 자동 적용하지 않습니다**. 도착시각 정확성·예약·잔여석·항구 접근은 미확인입니다. 일반 대중교통 길찾기는 기존 브라우저 방식으로 유지합니다.
+
+[설정·품질 검사·API 계약](docs/TRANSPORT_API.md) · [실제 연결 검증 기록](reports/transport-connections.json)
+
+![날짜별 배편 참고 시간표와 검증 범위](docs/transport-api-ferry.jpg)
 
 ## v0.5.1 도서 관광 초안
 
@@ -107,7 +117,7 @@
 
 <table>
 <tr>
-<td width="33%" valign="top"><strong>01 / 제한된 도구 호출</strong><p>도구 6종 허용 목록과 Pydantic 인자 검증. 요청당 모델 라운드 최대 6회·도구 실행 최대 10회.</p></td>
+<td width="33%" valign="top"><strong>01 / 제한된 도구 호출</strong><p>도구 8종 허용 목록과 Pydantic 인자 검증. 요청당 모델 라운드 최대 6회·도구 실행 최대 10회.</p></td>
 <td width="33%" valign="top"><strong>02 / 데이터 무결성</strong><p>전체 페이지 수집, 총건수 변동·중복 검사, 원자적 스냅샷 갱신, 명시적인 최신성 조건.</p></td>
 <td width="34%" valign="top"><strong>03 / 예보 시간 반영</strong><p>갯벌체험 가능 시간·좋은 지수에 준비·환복·고정 방문 조건을 함께 적용.</p></td>
 </tr>
@@ -147,7 +157,7 @@ flowchart TD
     API -->|NDJSON 작업 상태| UI
 ```
 
-**에이전트의 역할:** [`agent.py`](marine_agent/agent.py)에 `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary`, `get_ferry_operations`가 등록되어 있습니다. 도구 이름·인자를 검사한 뒤 실행하며, 폼 여행 입력이 있으면 모델이 만든 여행 인자보다 우선합니다. 도구 실행 상태를 확인할 수 있지만, 최종 AI 설명의 사실 정확성을 보장하지는 않습니다.
+**에이전트의 역할:** [`agent.py`](marine_agent/agent.py)에 `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary`, `get_ferry_operations`, `get_ferry_timetable`, `get_nearby_transport`가 등록되어 있습니다. 도구 이름·인자를 검사한 뒤 실행하며, 폼 여행 입력이 있으면 모델이 만든 여행 인자보다 우선합니다. 도구 실행 상태를 확인할 수 있지만, 최종 AI 설명의 사실 정확성을 보장하지는 않습니다.
 
 **일정 엔진의 역할:** 초기 배치는 권역 좌표 범위, 직선거리 후보 필터, 체류시간 가정을 사용합니다. OSRM 경로는 이후 추가하므로 최초 초안에 이동시간 부족 경고가 남을 수 있습니다. 관광지를 교체할 때는 기존 시간표를 유지한 채 인접 도로 경로와 여유 시간을 검사합니다.
 
@@ -199,6 +209,7 @@ Copy-Item .env.example .env
 | 환경변수 | 용도 / 기본값 |
 | --- | --- |
 | `MARINE_CREDENTIALS_FILE` | 외부 API 키 문서의 절대 경로. 수집·원천 API 호출에 필요. |
+| `TRANSPORT_CREDENTIALS_FILE` | 7종 공식 교통 API의 외부 인증 문서 경로. [설정](docs/TRANSPORT_API.md). |
 | `OLLAMA_BASE_URL` | Ollama 서버 주소. 기본 `http://localhost:11434`. |
 | `OLLAMA_MODEL` | 기본 `qwen3.8:27b-mtp-q8_0`. 도구 호출이 가능한 모델을 서버에 별도 설치. |
 | `OLLAMA_NUM_CTX` | 모델 문맥 설정. 기본 `16384`. |
@@ -242,7 +253,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 10월 16일 한국시간 기준 재실행: Python 111개, 프런트엔드 11개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 10월 16일 한국시간 기준 재실행: Python 123개, 프런트엔드 12개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |

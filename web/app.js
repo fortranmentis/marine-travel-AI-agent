@@ -1,12 +1,14 @@
-import {initializeNational} from './national.js?v=0.5.1';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.5.1';
-import {initializeTripForm} from './trip-form.js?v=0.5.1';
-import {$,el,button,plainText} from './ui.js?v=0.5.1';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.5.1';
-import {weatherCard} from './weather.js?v=0.5.1';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.5.1';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.5.1';
-import {initializeFerries} from './ferries.js?v=0.5.1';
+import {initializeNational} from './national.js?v=0.6.0';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.6.0';
+import {initializeTripForm} from './trip-form.js?v=0.6.0';
+import {$,el,button,plainText} from './ui.js?v=0.6.0';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.6.0';
+import {weatherCard} from './weather.js?v=0.6.0';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.6.0';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.6.0';
+import {initializeFerries} from './ferries.js?v=0.6.0';
+import {initializeTransport} from './public-transport.js?v=0.6.0';
+import {initializeTimetable} from './ferry-timetable.js?v=0.6.0';
 
 const form=$('#trip-form');
 let ferryPanel=null;
@@ -14,6 +16,7 @@ const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:n
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 form.elements.start_date.value=today;form.elements.start_date.min=today;
 const tripForm=initializeTripForm(form);
+const transportUI=initializeTransport(form),timetableUI=initializeTimetable(form);
 const national=initializeNational(form);
 api('/api/config').then(config=>{ferryPanel=initializeFerries(form,config);for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
@@ -36,6 +39,8 @@ function render(plan){
     const a=plan.island_access,card=el('section',undefined,'island-access note');card.setAttribute('aria-label','섬 접근 확인 상태');
     card.append(el('h3',a.island+(a.mode==='ferry'?' · 왕복 배편 미확정':' · 교량 연결 관광')),el('p',a.note));
     if(a.mode==='ferry'){
+      if(a.timetable){card.append(el('p',`KOMSA + TAGO API · ${a.timetable.rows.length}편 · 참고 왕복 조합 ${a.timetable.pair_count||0}개`,'api-summary'),
+        button('여행일 배편 시간표(API) 확인',()=>timetableUI.show(plan.trip.region,plan.trip.start_date,a.timetable),'secondary'));}
       card.append(el('p',a.operation_note||'당일 운항정보 미조회'));
       if(a.as_of)card.append(el('p','공식 운항 기준: '+new Date(a.as_of).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})));
       if(a.rows.length){
@@ -57,7 +62,7 @@ function render(plan){
     for(const warning of day.warnings||[])section.append(el('p',warning,'route-warning'));
     const transfers=transfersFor(day,plan.routes?.[day.date]);
     for(const item of day.items){
-      if(transfers.has(item.slot_id))section.append(transferCard(transfers.get(item.slot_id),day.date,showRouteSegment));
+      if(transfers.has(item.slot_id))section.append(transferCard(transfers.get(item.slot_id),day.date,showRouteSegment,p=>transportUI.nearby(p)));
       const compact=['break','buffer'].includes(item.kind),slot=el('div',undefined,'slot'+(compact?' compact':''));slot.append(el('div',item.start+'\n'+item.end,'time'));
       const card=el('article',undefined,'card slot-card '+item.kind);card.dataset.slot=item.slot_id;const info=el('div',undefined,'card-content');info.append(el('h4',item.title));
       if(item.kind==='locked')info.append(el('span','시간 고정됨','lock-badge'));
@@ -72,6 +77,7 @@ function render(plan){
       const actions=el('div',undefined,'actions');
       if(item.lat!=null&&item.lon!=null){
         actions.append(button('지도에서 보기 ↗',()=>showOnMap(day.date,item.slot_id)));
+        actions.append(button('주변 교통(API)',()=>transportUI.nearby(item)));
         card.tabIndex=0;
         card.addEventListener('mouseenter',()=>highlightSlot(item.slot_id,false));
         card.addEventListener('click',event=>{if(!event.target.closest('button,a'))showOnMap(day.date,item.slot_id);});

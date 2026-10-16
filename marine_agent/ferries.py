@@ -15,7 +15,8 @@ def schedules(date, vessel):
     dt.date.fromisoformat(date)
     if not vessel.strip() or len(vessel) > 100:
         raise ValueError('정확한 여객선명을 입력하세요.')
-    key = os.environ.get('KOMSA_API_KEY')
+    from .transport_api import credentials
+    key = os.environ.get('KOMSA_API_KEY') or credentials().get('komsa')
     if not key:
         raise ValueError('KOMSA_API_KEY를 서버 환경에 설정하세요. 운항 스케줄 API 이용 승인도 필요합니다.')
     rows = providers.fetch_pages(SCHEDULE_URL, dict(serviceKey=key, dataType='JSON',

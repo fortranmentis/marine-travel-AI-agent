@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.5.1';
+import {el,button} from './ui.js?v=0.6.0';
 
 export function ferryState(row){
   return row.operation_status==='reported_normal'?'normal':row.operation_status==='not_operating'?'stopped':'unknown';

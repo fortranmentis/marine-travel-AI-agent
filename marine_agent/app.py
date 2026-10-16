@@ -14,7 +14,7 @@ from .config import ROOT, CATALOG
 from . import agent, planner, providers, progress, plans, islands, regions
 from .browser_transit import budgeted
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.5.1')
+app = FastAPI(title='Marine Travel AI Agent', version='0.6.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -89,11 +89,57 @@ def public_config():
     from .mobility import capabilities
     from .islands import reviewed
     from .browser_ferries import OFFICES
+    from .transport_api import availability
     return dict(mobility=capabilities(), islands=[dict(id=i.id,title=i.title,reviewed_at=i.reviewed_at.isoformat()) for i in reviewed()],
                 ferry_status='live_operations_only_roundtrip_review_required',ferry_offices=list(OFFICES),
                 today=dt.datetime.now(providers.KST).date().isoformat(),
                 tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.5.1')
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.6.0',transport_api=availability())
+
+
+@app.get('/api/transport/nearby')
+def nearby_transport(lat: float = Query(ge=33,le=39,allow_inf_nan=False),lon: float = Query(ge=124,le=132,allow_inf_nan=False)):
+    from .public_transport import nearby
+    return JSONResponse(nearby(lat,lon),headers={'Cache-Control':'no-store'})
+
+
+
+@app.get('/api/transport/stops/{node_id}')
+def stop_transport(node_id: str,city: str = Query(pattern=r'^[0-9]{1,8}$')):
+    from .public_transport import stop,identifier
+    try:identifier(node_id)
+    except ValueError:raise HTTPException(422,'정류소 ID가 올바르지 않습니다.') from None
+    return JSONResponse(stop(city,node_id),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/transport/routes/{route_id}')
+def route_transport(route_id: str,city: str = Query(pattern=r'^[0-9]{1,8}$')):
+    from .public_transport import route,identifier
+    try:identifier(route_id)
+    except ValueError:raise HTTPException(422,'노선 ID가 올바르지 않습니다.') from None
+    return JSONResponse(route(city,route_id),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/transport/subway')
+def subway_search(keyword: str = Query(min_length=1,max_length=40)):
+    from .public_transport import stations
+    if not keyword.strip():raise HTTPException(422,'지하철역 이름을 입력하세요.')
+    return JSONResponse(stations(keyword.strip()),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/transport/subway/{station_id}')
+def subway_transport(station_id: str,date: dt.date,direction: Literal['U','D'] = 'U'):
+    from .public_transport import subway,identifier
+    try:identifier(station_id)
+    except ValueError:raise HTTPException(422,'지하철역 ID가 올바르지 않습니다.') from None
+    return JSONResponse(subway(station_id,date.isoformat(),direction),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/ferries/timetable')
+def ferry_timetable(region: str,date: dt.date):
+    from .ferry_api import timetables,PORTS
+    if region not in PORTS:raise HTTPException(422,'배편 시범 권역을 선택하세요.')
+    return JSONResponse(timetables(region,date.isoformat()),headers={'Cache-Control':'no-store'})
 
 
 @app.get('/api/ferries/live')

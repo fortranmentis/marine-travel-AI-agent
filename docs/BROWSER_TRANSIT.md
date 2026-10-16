@@ -1,5 +1,7 @@
 # Browser transit lookup / 브라우저 대중교통 조회
 
+> v0.6 adds an optional [official TAGO evidence panel](TRANSPORT_API.md) for stops, current arrivals and reference schedules. General route planning below continues through Playwright; TAGO is not an end-to-end route engine.
+
 The default transit provider is **Playwright + Naver Map's rendered public UI**.
 No transit API key, hidden endpoint call, network-response interception, login,
 personal browser profile, or CAPTCHA bypass is used. This is a prototype adapter;

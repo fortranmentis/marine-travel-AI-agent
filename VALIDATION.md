@@ -1,5 +1,18 @@
 # Validation record — updated 2026-10-16 (Asia/Seoul)
 
+## v0.6 official transport APIs — 2026-10-16
+
+- **Offline regression:** 123 Python and 12 Node.js tests passed. Python emits one existing Starlette/httpx deprecation warning. Tests isolate external transport credentials and use mocks; these are not live-provider evidence.
+- **Live providers:** all seven services authenticated successfully. The [sanitized report](reports/transport-connections.json) records operation codes/counts: KOMSA 4 rows; TAGO terminal query 27; nearby stops 10; current arrivals 8; route info 1, ordered stops 132 and positions 26; subway station search 13, weekday departures 113 and exit bus links 7. Counts are time-specific observations.
+- **Live Qwen:** both new typed tools, `get_ferry_timetable` and `get_nearby_transport`, executed successfully. This is a tool-call smoke check, not an accuracy benchmark.
+- **Ferry integration:** October 17 Deokjeokdo references returned 8 rows, 8 exact departure matches, 2 shared-arrival flags and 4 reference pairs. The HTTP island draft retained 2 tourism visits and conditional access; no ferry slots or verified round-trip claims were invented.
+- **Missing data:** a Saturday subway query returned no timetable rows, while the checked weekday returned 113. No data is not evidence of no service. Live arrivals are not applied as future-day schedules.
+- **Source findings:** intermediate-destination arrival times can repeat; some terminal names/addresses conflict. The integration retains flags and excludes affected reference pairs; it does not correct source facts by inference or use unverified terminal addresses for navigation.
+- **Mobile:** at a 390px viewport, the dialog measured 337px wide with 320px scroll width; the page scroll width was 375px. No horizontal overflow was observed. [Mobile evidence](docs/transport-api-mobile.jpg).
+- **UI:** desktop stop → arrivals → route/positions and subway lookup were exercised against the local HTTP service; the dated ferry panel displayed its reference/verification limits. See the screenshots and [API quality contract](docs/TRANSPORT_API.md).
+- **Limits:** full multimodal routing remains browser-backed. Arrival accuracy, terminal transfers, holiday exceptions, booking availability and complete ferry round trips remain unverified. Operating hours and child suitability are unchanged limitations.
+
+
 ## v0.5.1 conditional island tourism — 2026-10-16
 
 - **111 Python + 11 Node tests passed**; frontend syntax and `git diff --check`
