@@ -223,7 +223,7 @@ If your Windows Python cannot bootstrap pip inside the environment, use `python 
 
 ## Between-stop travel cards
 
-Each attraction, restaurant and cafe is connected by an inline travel card with the actual mode, reference duration, known distance and a map-segment button. Transit details expand to show lines and stops; missing routes remain explicit. Photo credits are collected in a collapsed section. Ferry integration is still a [proposal](docs/FERRY_PROPOSAL.md), not a newly enabled service.
+Each attraction, restaurant and cafe is connected by an inline travel card with the actual mode, reference duration, known distance and a map-segment button. Transit details expand to show lines and stops; missing routes remain explicit. Photo credits are collected in a collapsed section. The [v0.5 ferry adapter](docs/API-v05.md) reads today's official operations; automatic island scheduling still requires verified round-trip arrivals and access.
 
 ## Validation
 
