@@ -5,8 +5,8 @@ import json
 import queue
 import time
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -14,7 +14,7 @@ from .config import ROOT, CATALOG
 from . import agent, planner, providers, progress, plans, islands, regions
 from .browser_transit import budgeted
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.4.0')
+app = FastAPI(title='Marine Travel AI Agent', version='0.5.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -88,8 +88,39 @@ def public_config():
     import os
     from .mobility import capabilities
     from .islands import reviewed
-    return dict(mobility=capabilities(), islands=[dict(id=i.id,title=i.title,reviewed_at=i.reviewed_at.isoformat()) for i in reviewed()], ferry_status='reviewed_data_required',tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.4.0')
+    from .browser_ferries import OFFICES
+    return dict(mobility=capabilities(), islands=[dict(id=i.id,title=i.title,reviewed_at=i.reviewed_at.isoformat()) for i in reviewed()],
+                ferry_status='live_operations_only_roundtrip_review_required',ferry_offices=list(OFFICES),
+                today=dt.datetime.now(providers.KST).date().isoformat(),
+                tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.5.0')
+
+
+@app.get('/api/ferries/live')
+def ferry_live(office: str = Query('인천',max_length=10), date: dt.date | None = None):
+    from .browser_ferries import live,OFFICES
+    if office not in OFFICES:
+        raise HTTPException(422,'지원하는 운항관리 지역을 선택하세요.')
+    return JSONResponse(live(office,date.isoformat() if date else None),headers={'Cache-Control':'no-store'})
+
+
+@app.get('/api/plans/{plan_id}/pdf')
+def plan_pdf(plan_id: str, revision: int = Query(ge=1)):
+    from .pdf_export import create_pdf,PdfUnavailable
+    from urllib.parse import quote
+    try:
+        snapshot=plans.store.get(plan_id,revision)
+        content=create_pdf(snapshot)
+    except plans.PlanError as error:
+        raise HTTPException(error.status,error.message) from None
+    except PdfUnavailable as error:
+        raise HTTPException(503,str(error)) from None
+    except Exception:
+        raise HTTPException(503,'PDF 생성에 실패했습니다. 폰트와 일정 내용을 확인해 주세요.') from None
+    filename=f"바다결_{snapshot['trip']['region']}_{snapshot['trip']['start_date']}_r{revision}.pdf"
+    return Response(content,media_type='application/pdf',headers={
+        'Content-Disposition':f"attachment; filename=marine-trip-r{revision}.pdf; filename*=UTF-8''{quote(filename,safe='')}",
+        'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'})
 
 
 @app.get('/api/places')

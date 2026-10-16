@@ -32,6 +32,12 @@ test('truncated streams fail explicitly',async()=>{
 import {datesFor} from '../web/trip-form.js';
 import {transitSummary,transitSourceUrl} from '../web/transit.js';
 import {transfersFor} from '../web/journey-transfers.js';
+import {ferryState,ferryRows} from '../web/ferries.js';
+test('ferry display keeps unknown operations distinct and filters exact route names',()=>{
+ const rows=[{licensed_route:'인천-덕적',operation_status:'reported_normal'},{licensed_route:'인천-백령',operation_status:'not_operating'},{licensed_route:'인천-덕적',operation_status:'unknown'}];
+ assert.equal(ferryState(rows[0]),'normal');assert.equal(ferryState(rows[1]),'stopped');assert.equal(ferryState(rows[2]),'unknown');
+ assert.equal(ferryRows(rows,'인천-덕적').length,2);assert.equal(ferryRows(rows,'덕적').length,0);assert.equal(ferryRows(rows,'').length,3);
+});
 
 const stops=()=>[{slot_id:'beach',kind:'tourism',title:'함덕해수욕장',start:'10:00',end:'11:30',lat:33.54,lon:126.66},{slot_id:'meal',kind:'meal',title:'훈남횟집',start:'12:00',end:'12:45',lat:33.54,lon:126.665},{slot_id:'cafe',kind:'cafe',title:'카페',start:'13:15',end:'13:45',lat:33.54,lon:126.67}];
 test('transfer cards follow slot IDs across tourism, meal and cafe, not route array order',()=>{

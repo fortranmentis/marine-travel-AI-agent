@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.4.0](docs/assets/version.svg)
+![Version: 0.5.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 87 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, six typed tools, eight retained marine feeds, 113 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,13 +27,25 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.4 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.5 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
 
-## New in v0.4
+## New in v0.5
+
+| Feature | Behavior and boundary |
+| --- | --- |
+| **Save itinerary as PDF** | Export the current stored revision with Korean text, daily visits, weather, meals and transfer details. Photos and interactive maps remain in the web view. |
+| **More focused attraction candidates** | Exclude generic culture halls, libraries, public facilities and sports venues from automatic suggestions; retain museums, galleries, memorials and exhibitions. The current catalog excludes 81 of 5,176 tourism-type records before regional/access filtering. This is a selection policy, not a venue-quality assessment. |
+| **Actual ferry operations** | Playwright reads the public KOMSA screen for today's departures, vessels, routes and operation status. Select an operations office and filter by licensed route. A sixth typed tool, `get_ferry_operations`, makes the same observation available to Qwen. |
+
+**Ferry scope:** today's observed departures do not establish arrival times, future timetables, seats or bookings. The adapter leaves these unknown and does not automatically enable offshore itineraries. Five offshore forecast regions remain forecast-only until dated round-trip and access checks are complete. [Setup, endpoints and limits](docs/API-v05.md).
+
+![v0.5 actual ferry operations panel, filtered to a licensed route](docs/v05-ferries.jpg)
+
+## National coverage retained from v0.4
 
 Compare morning/afternoon or daily sea-travel grades across **29 forecast regions**, select a province and region, then request a local trip draft. **24 regions support land-tourism planning**; five offshore regions provide forecasts pending ferry verification. The atomic collection covers **10,102 TourAPI records in ten coastal provinces**; only eligible local candidates enter a draft.
 
-Poor sea outlooks prioritize cultural-facility candidates. Source grades, missing coverage, route checks and the actual forecast-date range stay visible. Search regions are application filters, not official forecast polygons. See [coverage, API and collection details](docs/API-v04.md).
+Poor sea outlooks prioritize eligible cultural-attraction candidates after facility exclusions. Source grades, missing coverage, route checks and the actual forecast-date range stay visible. Search regions are application filters, not official forecast polygons. See [coverage, API and collection details](docs/API-v04.md).
 
 ## Added in v0.3
 
@@ -75,7 +87,7 @@ Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile
 
 <table>
 <tr>
-<td width="33%" valign="top"><strong>01 / Bounded tool use</strong><p>Five allowlisted tools, Pydantic arguments, six model rounds and ten tool executions maximum per request.</p></td>
+<td width="33%" valign="top"><strong>01 / Bounded tool use</strong><p>Six allowlisted tools, Pydantic arguments, six model rounds and ten tool executions maximum per request.</p></td>
 <td width="33%" valign="top"><strong>02 / Data integrity</strong><p>Complete pagination, stable-total and duplicate checks, atomic snapshots, and explicit freshness gates.</p></td>
 <td width="34%" valign="top"><strong>03 / Forecast windows</strong><p>Mudflat experience windows are combined with favorable indices, preparation, changing and fixed visits.</p></td>
 </tr>
@@ -110,10 +122,12 @@ flowchart TD
     Plan --> Enrich[Photos and OSRM road routes]
     Enrich --> Store[Revisioned in-memory plan registry]
     Store --> UI
+    Store --> PDF[Korean PDF export]
+    Tools --> Ferry[KOMSA public screen via Playwright]
     API -->|NDJSON task status| UI
 ```
 
-**Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather` and `build_itinerary` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
+**Agent contract.** `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary` and `get_ferry_operations` are registered in [`agent.py`](marine_agent/agent.py). Tool names and arguments are checked before execution. When a form trip is supplied, its values take precedence over model-generated trip arguments. Tool traces expose execution status; final model prose can still be inaccurate.
 
 **Planning contract.** The itinerary uses source administrative joins and explicit search filters for national regions; legacy Incheon presets retain their rectangles. Visit durations remain assumptions. OSRM routes are added afterward, so an initial draft can carry travel-gap warnings. Replacing a visit requires available adjacent routes that fit the existing free time.
 
@@ -126,6 +140,7 @@ flowchart TD
 | `get_place_details` | Fetch TourAPI details for a known tourism content ID. |
 | `get_weather` | Fetch KMA grid forecasts from a known place's coordinates. |
 | `build_itinerary` | Apply trip constraints and return a structured provisional schedule. |
+| `get_ferry_operations` | Read today’s KOMSA public departure/operation screen; no verified arrivals or bookings. |
 
 ## Data foundation
 
@@ -156,6 +171,8 @@ python -m venv .venv
 Copy-Item .env.example .env
 ```
 
+Install Chromium for transit and live ferry lookups: `python -m playwright install chromium`. PDF export uses ReportLab and embeds an available Korean TTF; on Debian/Ubuntu install `fonts-nanum` or set `PDF_FONT_PATH`.
+
 ### 2. Configure services
 
 Set the following values in `.env` using [`.env.example`](.env.example):
@@ -168,6 +185,7 @@ Set the following values in `.env` using [`.env.example`](.env.example):
 | `OLLAMA_NUM_CTX` | Model context setting; default `16384`. |
 | `OSRM_BASE_URL` | Routing URL; default `https://router.project-osrm.org`. |
 | `TRANSIT_PROVIDER` | Default `playwright`: Naver Map UI reference routes; `disabled` turns off transit lookup. [Setup and limits](docs/BROWSER_TRANSIT.md). |
+| `PDF_FONT_PATH` | Optional Korean TTF override. Windows detects Malgun Gothic; Linux needs `fonts-nanum` or a licensed Korean TTF. |
 | `OSM_TILE_URL` | Map tile template; default `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. |
 
 The default model name is a configuration value, not a bundled model or a hardware requirement validated by this repository. Ollama may run locally or on a separately configured server. Public data, routing and map services still require network access.
@@ -209,7 +227,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 77 Python tests and 10 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on October 16, 2026 (Asia/Seoul): 102 Python tests and 11 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |
@@ -217,7 +235,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 | Node.js tests | Weather display rules, Korean local time, split UTF-8 NDJSON parsing and truncated-stream failure. |
 | Existing development record | Earlier source, Ollama, route, photo and browser observations are retained separately in [VALIDATION.md](VALIDATION.md). |
 | Local documentation/data audit | Existing catalog profiled; README previews rendered locally at 1280px with no missing images or horizontal overflow. |
-| CI configuration | Python 3.11 and Node.js 22 are configured in [GitHub Actions](.github/workflows/ci.yml); remote CI status was not checked in this refresh. |
+| CI configuration | Python 3.11 and Node.js 22 are configured in [GitHub Actions](.github/workflows/ci.yml); offline CI does not query providers or run Chromium. See the linked workflow for remote run status. |
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
@@ -239,9 +257,11 @@ Frontend tests need **Node.js 18+**, with no npm dependencies. See the [validati
 | POST | `/api/plans/{plan_id}/replace` | Replace one eligible tourism visit. |
 | POST | `/api/plans/{plan_id}/undo` | Restore the last replacement. |
 | POST | `/api/plans/{plan_id}/lock` | Lock/unlock a visit. |
-| GET | `/api/config` | Public map configuration. |
+| GET | `/api/config` | Public configuration, version and ferry operations offices. |
+| GET | `/api/plans/{plan_id}/pdf?revision=N` | Download an existing revision as a Korean PDF; conflict/expiry checks apply. |
+| GET | `/api/ferries/live?office=인천&date=YYYY-MM-DD` | Today-only public-screen ferry operations; unknown arrivals remain null. |
 
-See [API-v02.md](docs/API-v02.md) for payloads, stream events, revisions and error codes.
+See [v0.5 export/ferry contracts](docs/API-v05.md) and [v0.2 revision/stream contracts](docs/API-v02.md).
 
 ## Notes
 
@@ -258,6 +278,7 @@ See [operational notes and GitHub metadata](docs/NOTES.md) for caching, troubles
 | Path | Responsibility |
 | --- | --- |
 | [`marine_agent/agent.py`](marine_agent/agent.py) | Tool schemas, execution budget and model fallback. |
+| [`marine_agent/pdf_export.py`](marine_agent/pdf_export.py) / [`browser_ferries.py`](marine_agent/browser_ferries.py) | Stored-plan PDF and today-only official ferry observations. |
 | [`marine_agent/planner.py`](marine_agent/planner.py) | Trip constraints and deterministic schedule construction. |
 | [`marine_agent/providers.py`](marine_agent/providers.py) | Pagination, catalog refresh, tourism details and weather. |
 | [`marine_agent/plans.py`](marine_agent/plans.py) / [`enrichment.py`](marine_agent/enrichment.py) | Revisions, locks, undo, photos and routes. |
@@ -272,6 +293,6 @@ Next priorities are operator/age verification, warning and access-restriction in
 
 ## Data sources and credits
 
-Source references recorded by the project: [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [KHOA mudflat forecast index](https://www.data.go.kr/data/15142489/openapi.do), and [KMA API Hub](https://apihub.kma.go.kr/). Runtime integrations also use Ollama, OSRM and Leaflet/OpenStreetMap. Leaflet 1.9.4 is vendored with its [BSD license](web/vendor/leaflet/LICENSE).
+Source references recorded by the project: [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [KHOA mudflat forecast index](https://www.data.go.kr/data/15142489/openapi.do), and [KMA API Hub](https://apihub.kma.go.kr/). Actual ferry operations come from the [KOMSA public screen](https://www.komsa.or.kr/prog/pssgCurState/kor/sub03_0202/list.do). Runtime integrations also use Playwright, ReportLab, Ollama, OSRM and Leaflet/OpenStreetMap. Leaflet 1.9.4 is vendored with its [BSD license](web/vendor/leaflet/LICENSE).
 
 No project-wide license file is currently included. Dependency licenses and public-data/image terms apply independently.

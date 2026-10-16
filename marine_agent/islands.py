@@ -81,10 +81,11 @@ def resolve(island_id):
 
 def candidates(island, excluded):
     from .planner import coords
+    from .attractions import eligible
     return [dict(id=str(p['contentid']), title=p['title'], address=p.get('addr1'),
                  lat=coords(p)[0], lon=coords(p)[1], source='TourAPI', content_type=str(p['contenttypeid']))
             for p in providers.catalog()['places'] if str(p['contentid']) in island.place_ids
-            and str(p['contentid']) not in excluded and coords(p) and str(p.get('contenttypeid')) in ('12','14','28')]
+            and str(p['contentid']) not in excluded and coords(p) and eligible(p)]
 
 
 def day_crossings(island, date, start, end):

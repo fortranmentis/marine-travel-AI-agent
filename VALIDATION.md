@@ -1,4 +1,48 @@
-# Validation record — 2026-10-15 (Asia/Seoul)
+# Validation record — updated 2026-10-16 (Asia/Seoul)
+
+## v0.5 PDF, attraction filtering and actual ferry operations — 2026-10-16
+
+- **102 Python + 11 Node tests passed** on the final source. Existing
+  Starlette/httpx deprecation warning remains. Frontend syntax and
+  `git diff --check` passed. Offline CI uses synthetic/mocked sources; the PDF
+  unit fixture uses Helvetica for portability and is not Korean-font evidence.
+- New regressions cover generic-facility exclusions and retained museum/gallery
+  categories; initial plans and rejected replacements; ferry table/header/date/
+  freshness failures, malformed rows, operation labels, unknown arrivals/seats,
+  cache clone isolation, API validation and the sixth typed model tool; PDF
+  contents, XML escaping, day-window weather, missing fonts, revision conflict,
+  expiry and no-store headers; exact licensed-route filtering in the UI.
+- Existing tourism catalog profile: 10,102 records, 5,176 tourism-type candidates,
+  **81 exclusions / 5,095 retained before region/access checks**. Category names
+  were checked against the actual TourAPI categoryCode2 response. This is a
+  dated selection-policy audit, not a new collection or venue-quality check.
+  [Aggregate only](docs/v05-profile.json); credentials/raw source data are excluded.
+- Actual Playwright Chromium operated the KOMSA public office selector/search and
+  read **77 Incheon departures**, source time **11:14 KST** on October 16. Earlier
+  native Qwen request to the configured `qwen3.8:27b-mtp-q8_0` returned `ok` and
+  `get_ferry_operations: ok` against the 10:57 source observation. This verifies
+  one office/day and one native tool request, not all jurisdictions or reliability.
+- Source departure time, vessel, route, direction, origin, operation classification
+  and departure status were retained. Arrival, destination, seats and fare remain
+  unknown. No reviewed island route was enabled and no reservation was made.
+  The model receives at most 12 representative rows with an explicit truncation
+  note; the web table can show all returned rows. [Contract](docs/API-v05.md).
+- Actual rule-generated Jeju northeast plan exported through the revision-specific
+  endpoint: **one A4 page, 61,828 bytes**, Korean text and embedded Korean TTF.
+  Poppler-rendered final page was visually inspected: visits, weather, restaurant,
+  adjacent car transfers, caveats and metadata fit without clipping. Browser PDF
+  button also downloaded a Korean-named attachment. That earlier browser sample
+  preceded the final spacing refinement; final layout was checked from the API PDF.
+- Desktop 1280px and mobile 390px views were inspected. The ferry office selector,
+  real rows and exact licensed-route filter worked (선수-주문: 12 rows). The PDF
+  button returned to its enabled state after download. Mobile document width was
+  375px within the 390px viewport, without horizontal page overflow.
+  [Ferry panel](docs/v05-ferries.jpg), [PDF button](docs/v05-desktop.jpg),
+  [mobile](docs/v05-mobile.jpg). Screenshots preserve their observation timestamps.
+- Re-run live checks explicitly with `python scripts/check_v05.py --ai` against
+  a running local server; outputs go to ignored `.tmp/` and `output/pdf/`.
+  Source-page reuse/capacity, future ferry timetables, arrivals, round-trip access,
+  inventory, bookings, operator/child conditions and warnings remain unverified.
 
 ## Inline travel cards — 2026-10-16
 

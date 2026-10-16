@@ -1,11 +1,12 @@
-import {initializeNational} from './national.js?v=0.4.4';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.4';
-import {initializeTripForm} from './trip-form.js?v=0.4.4';
-import {$,el,button,plainText} from './ui.js?v=0.4.4';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.4';
-import {weatherCard} from './weather.js?v=0.4.4';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.4.4';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.4.4';
+import {initializeNational} from './national.js?v=0.5.0';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.5.0';
+import {initializeTripForm} from './trip-form.js?v=0.5.0';
+import {$,el,button,plainText} from './ui.js?v=0.5.0';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.5.0';
+import {weatherCard} from './weather.js?v=0.5.0';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.5.0';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.5.0';
+import {initializeFerries} from './ferries.js?v=0.5.0';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
@@ -13,7 +14,7 @@ const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric
 form.elements.start_date.value=today;form.elements.start_date.min=today;
 const tripForm=initializeTripForm(form);
 const national=initializeNational(form);
-api('/api/config').then(config=>{for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
+api('/api/config').then(config=>{initializeFerries(form,config);for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
 function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
 function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
@@ -28,6 +29,7 @@ function photo(contentId){
   figure.append(image);return figure;
 }
 function render(plan){
+  $('#download-pdf').hidden=false;
   state.plan=plan;$('#empty').hidden=true;$('#result-title').textContent=`${plan.trip.region} · ${plan.trip.days}일의 바다`;const box=$('#plan');box.replaceChildren();
   const notices=el('details',undefined,'notices');notices.append(el('summary','검토용 초안 · 운영·연령·현장 조건 확인 필요'));plan.notices.forEach(t=>notices.append(el('p',t)));box.append(notices);
   if(plan.travel_index)box.append(marineIndexCard(plan.travel_index,{overall:true}));
@@ -88,6 +90,15 @@ function showAlternatives(day,item){
 }
 async function replace(candidateId){if(state.busy)return;busy(true);$('#alternative-status').textContent='인접 도로 경로와 이동 여유 시간을 확인하고 있어요…';try{const p=state.plan;const result=await api(`/api/plans/${p.plan_id}/replace`,{revision:p.revision,slot_id:state.alternative.slot,candidate_id:candidateId});render(result);$('#alternatives-dialog').close();showOnMap(state.alternative.day,state.alternative.slot);status('선택한 방문만 교체했습니다. 지도·사진도 갱신했습니다.');}catch(error){$('#alternative-status').textContent=error.message;}finally{busy(false);}}
 $('#alternatives-close').onclick=()=>$('#alternatives-dialog').close();
+$('#download-pdf').onclick=async()=>{
+  if(state.busy||!state.plan)return;const plan=state.plan;busy(true);status('현재 버전의 일정을 PDF로 준비하고 있어요…');
+  try{
+    const response=await fetch(`/api/plans/${plan.plan_id}/pdf?revision=${plan.revision}`);
+    if(!response.ok){const data=await response.json();throw new Error(typeof data.detail==='string'?data.detail:'PDF를 생성하지 못했습니다.');}
+    const url=URL.createObjectURL(await response.blob()),link=el('a');link.href=url;link.download=`바다결_${plan.trip.region}_${plan.trip.start_date}_r${plan.revision}.pdf`;
+    document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);status('일정 PDF 다운로드를 요청했습니다. 브라우저 다운로드 목록에서 확인하세요.');
+  }catch(error){status(error.message,true);}finally{busy(false);}
+};
 $('#undo').onclick=async()=>{if(state.busy)return;busy(true);try{const p=state.plan;render(await api(`/api/plans/${p.plan_id}/undo`,{revision:p.revision}));status('직전 교체를 되돌렸습니다.');}catch(error){status(error.message,true);}finally{busy(false);}};
 async function aiRequest(request){
   state.lastRequest=request;beginProgress();

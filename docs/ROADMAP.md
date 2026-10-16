@@ -1,5 +1,18 @@
 # Implementation roadmap
 
+## v0.5 — export and source-backed ferry observations
+
+- [x] Revision-checked Korean PDF download with embedded local TTF
+- [x] Generic public/culture/sports-facility exclusions shared by candidate flows
+- [x] Playwright read-only KOMSA office search, actual today-only departures/status
+- [x] Sixth typed Qwen tool, on-demand ferry panel and exact licensed-route filter
+- [x] Local live source/model/PDF observations; desktop/mobile and PDF render checks
+- [ ] Date-specific arrivals, future timetables, terminal access and reviewed round trips
+- [ ] First real reviewed island activation, seats/booking integration and scale review
+
+Today's ferry status is implemented separately from automatic island scheduling.
+Older unchecked items below retain their historical release context.
+
 ## v0.1 — implemented prototype
 
 - [x] Credential-file parsing without executing document contents

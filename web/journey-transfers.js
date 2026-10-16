@@ -1,5 +1,5 @@
-import {el,button} from './ui.js?v=0.4.4';
-import {transitSummary,transitSourceUrl} from './transit.js?v=0.4.4';
+import {el,button} from './ui.js?v=0.5.0';
+import {transitSummary,transitSourceUrl} from './transit.js?v=0.5.0';
 
 const stopKinds=new Set(['tourism','marine','locked','meal','cafe','port']);
 const modes={car:'자차',walk:'도보',bus:'버스',subway:'지하철',transit:'대중교통',ferry:'여객선'};

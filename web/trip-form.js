@@ -1,4 +1,4 @@
-import {el} from './ui.js?v=0.4.4';
+import {el} from './ui.js?v=0.5.0';
 
 export function datesFor(start, days) {
   const date=new Date(start+'T00:00:00Z');

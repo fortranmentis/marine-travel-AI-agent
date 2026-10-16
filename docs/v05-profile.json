@@ -1,0 +1,22 @@
+{
+  "observed_date": "2026-10-16",
+  "catalog_collected_at": "2026-10-16T00:16:24.353847+09:00",
+  "catalog_records": 10102,
+  "tourism_type_records": 5176,
+  "excluded": 81,
+  "eligible_before_region_and_access": 5095,
+  "exclusion_reasons": {
+    "일반 공공·생활·체육시설": 20,
+    "관람·체험 프로그램 미확인 시설: 공연장": 17,
+    "관람·체험 프로그램 미확인 시설: 도서관": 23,
+    "관람·체험 프로그램 미확인 시설: 문화원": 12,
+    "관람·체험 프로그램 미확인 시설: 대형서점": 4,
+    "관람·체험 프로그램 미확인 시설: 학교": 2,
+    "관람·체험 프로그램 미확인 시설: 영화관": 2,
+    "관람·체험 프로그램 미확인 시설: 컨벤션센터": 1
+  },
+  "notes": [
+    "Selection policy, not venue quality or opening-hour validation.",
+    "Counts describe this snapshot, not a new tourism collection."
+  ]
+}

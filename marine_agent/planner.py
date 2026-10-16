@@ -132,10 +132,11 @@ def distance(a, b):
 
 
 def tourism_candidates(region, keyword='', limit=30):
+    from .attractions import eligible
     regions.get(region)
     c = providers.catalog()
     rows = [p for p in c['places'] if regions.matches(p, region, c)
-            and str(p.get('contenttypeid')) in ('12', '14', '28') and keyword.casefold() in p['title'].casefold()]
+            and eligible(p) and keyword.casefold() in p['title'].casefold()]
     if region not in regions.LEGACY:
         rows=[p for p in rows if not any(word in p['title'] for word in
               ('유람선','크루즈','여객선','요트','스쿠버','낚시','서핑','카약','패들보드','수상레저'))]

@@ -6,20 +6,20 @@
 
 ### 공공데이터 → 제한된 도구 호출 → 근거를 확인하는 여행 초안
 
-**바다결**은 관광정보·해양예보·날씨를 하나의 가족 여행 일정으로 연결합니다.
+**바다결**은 관광정보·해양예보·날씨를 동행 유형에 맞는 여행 일정으로 연결합니다.
 
 [English](README.md) | [한국어](README.ko.md)
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.4.0](docs/assets/version.svg)
+![Version: 0.5.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 5개 도구, 8종 보관 피드, 87개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 6개 도구, 8종 보관 피드, 113개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,13 +27,25 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.4 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.5 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
 
-## v0.4 전국 확대
+## v0.5 추가 기능
 
-전국 29개 바다여행 예보를 오전·오후 또는 일 단위로 비교하고 시도·권역을 선택해 관광 초안을 만듭니다. 10개 시도 관광정보 10,102건을 수집했으며 실제 편성 후보는 행정구역과 자체 탐색 범위로 좁힙니다. 지수가 나쁘면 문화시설 후보를 우선합니다.
+| 기능 | 동작과 범위 |
+| --- | --- |
+| **일정 PDF 저장** | 현재 저장된 일정 버전의 방문·날씨·식당·이동정보를 한글 PDF로 내려받습니다. 사진과 인터랙티브 지도는 웹에서 확인합니다. |
+| **관광 후보 정리** | 문화회관·도서관·일반 공공시설·체육시설 등을 자동 추천에서 제외하고 박물관·미술관·기념관·전시관은 유지합니다. 현재 관광 유형 5,176건 중 81건을 제외하며 이후 권역·접근 검사를 적용합니다. 시설 품질·운영 여부 검증을 뜻하지 않습니다. |
+| **실제 배편 운항정보** | Playwright로 KOMSA 공식 화면의 오늘 출항시각·선박·항로·운항상태를 읽습니다. 운항관리 지역과 면허항로로 좁힐 수 있으며 Qwen도 여섯 번째 도구 `get_ferry_operations`로 조회합니다. |
+
+**배편 연동 범위:** 당일 출항 관측만으로 도착시각·미래 시간표·잔여석·예약을 확인할 수 없습니다. 해당 값은 미확인으로 두며 섬 일정을 자동 활성화하지 않습니다. 도서 예보 5개 권역은 날짜별 왕복편과 접근 검증 전까지 예보 전용입니다. [설치·API·제한](docs/API-v05.md).
+
+![v0.5 면허항로로 좁힌 실제 배편 운항정보](docs/v05-ferries.jpg)
+
+## v0.4에서 이어지는 전국 지원
+
+전국 29개 바다여행 예보를 오전·오후 또는 일 단위로 비교하고 시도·권역을 선택해 관광 초안을 만듭니다. 10개 시도 관광정보 10,102건을 수집했으며 실제 편성 후보는 행정구역과 자체 탐색 범위로 좁힙니다. 지수가 나쁘면 일반 시설 제외 후 남은 문화 관광 후보를 우선합니다.
 
 **24개 육상 관광 권역에서 초안을 지원**합니다. 인천북서·인천남서·신안북동·신안남서·여수도서는 배편 검증 전까지 예보만 제공합니다. [지원 범위·인터페이스·수집 방법](docs/API-v04.md)을 참고하세요.
 
@@ -75,7 +87,7 @@
 
 <table>
 <tr>
-<td width="33%" valign="top"><strong>01 / 제한된 도구 호출</strong><p>도구 5종 허용 목록과 Pydantic 인자 검증. 요청당 모델 라운드 최대 6회·도구 실행 최대 10회.</p></td>
+<td width="33%" valign="top"><strong>01 / 제한된 도구 호출</strong><p>도구 6종 허용 목록과 Pydantic 인자 검증. 요청당 모델 라운드 최대 6회·도구 실행 최대 10회.</p></td>
 <td width="33%" valign="top"><strong>02 / 데이터 무결성</strong><p>전체 페이지 수집, 총건수 변동·중복 검사, 원자적 스냅샷 갱신, 명시적인 최신성 조건.</p></td>
 <td width="34%" valign="top"><strong>03 / 예보 시간 반영</strong><p>갯벌체험 가능 시간·좋은 지수에 준비·환복·고정 방문 조건을 함께 적용.</p></td>
 </tr>
@@ -110,10 +122,12 @@ flowchart TD
     Plan --> Enrich[사진 및 OSRM 도로 경로]
     Enrich --> Store[리비전 기반 메모리 일정 저장]
     Store --> UI
+    Store --> PDF[한글 PDF 저장]
+    Tools --> Ferry[Playwright KOMSA 공식 화면 조회]
     API -->|NDJSON 작업 상태| UI
 ```
 
-**에이전트의 역할:** [`agent.py`](marine_agent/agent.py)에 `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary`가 등록되어 있습니다. 도구 이름·인자를 검사한 뒤 실행하며, 폼 여행 입력이 있으면 모델이 만든 여행 인자보다 우선합니다. 도구 실행 상태를 확인할 수 있지만, 최종 AI 설명의 사실 정확성을 보장하지는 않습니다.
+**에이전트의 역할:** [`agent.py`](marine_agent/agent.py)에 `find_family_places`, `get_marine_conditions`, `get_place_details`, `get_weather`, `build_itinerary`, `get_ferry_operations`가 등록되어 있습니다. 도구 이름·인자를 검사한 뒤 실행하며, 폼 여행 입력이 있으면 모델이 만든 여행 인자보다 우선합니다. 도구 실행 상태를 확인할 수 있지만, 최종 AI 설명의 사실 정확성을 보장하지는 않습니다.
 
 **일정 엔진의 역할:** 초기 배치는 권역 좌표 범위, 직선거리 후보 필터, 체류시간 가정을 사용합니다. OSRM 경로는 이후 추가하므로 최초 초안에 이동시간 부족 경고가 남을 수 있습니다. 관광지를 교체할 때는 기존 시간표를 유지한 채 인접 도로 경로와 여유 시간을 검사합니다.
 
@@ -156,6 +170,8 @@ python -m venv .venv
 Copy-Item .env.example .env
 ```
 
+대중교통·실제 배편 조회에는 `python -m playwright install chromium`이 필요합니다. PDF는 ReportLab으로 한글 TTF를 포함합니다. Windows는 맑은 고딕을 자동 감지하고 Linux는 `fonts-nanum` 설치 또는 `PDF_FONT_PATH` 설정이 필요합니다.
+
 ### 2. 서비스 설정
 
 [`.env.example`](.env.example)을 참고해 `.env`를 설정합니다.
@@ -168,6 +184,7 @@ Copy-Item .env.example .env
 | `OLLAMA_NUM_CTX` | 모델 문맥 설정. 기본 `16384`. |
 | `OSRM_BASE_URL` | 도로 경로 제공 주소. 기본 `https://router.project-osrm.org`. |
 | `TRANSIT_PROVIDER` | 기본 `playwright`: 네이버 지도 화면의 참고 경로. `disabled`로 조회 중지. [설치·제한](docs/BROWSER_TRANSIT.md). |
+| `PDF_FONT_PATH` | 한글 TTF 경로 재정의. Windows 맑은 고딕 자동 감지; Linux는 `fonts-nanum` 또는 이용 가능한 한글 TTF 필요. |
 | `OSM_TILE_URL` | 지도 타일 템플릿. 기본 `https://tile.openstreetmap.org/{z}/{x}/{y}.png`. |
 
 기본 모델 이름은 코드의 설정값이며, 모델 파일은 포함하지 않습니다. 하드웨어별 실행 가능 사양을 검증한 프로젝트도 아닙니다. Ollama는 같은 PC 또는 별도 서버를 사용할 수 있으며, 공공 API·도로 경로·지도 타일에는 네트워크 연결이 필요합니다.
@@ -205,7 +222,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 10월 16일 한국시간 기준 재실행: Python 77개, 프런트엔드 10개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 10월 16일 한국시간 기준 재실행: Python 102개, 프런트엔드 11개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |
@@ -213,7 +230,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 | Node.js 테스트 | 날씨 표시 규칙, 한국시간, 한글 UTF-8 분할 NDJSON 파싱, 불완전 스트림 오류. |
 | 기존 개발 기록 | 원천 API·Ollama·사진·도로 경로·브라우저 관찰은 [VALIDATION.md](VALIDATION.md)에 과거 근거로 구분해 보존. |
 | 로컬 문서·데이터 검사 | 기존 카탈로그 집계 및 README 1280px 로컬 렌더링. 이미지 누락·가로 넘침 없음. |
-| CI 설정 | [GitHub Actions](.github/workflows/ci.yml)에 Python 3.11·Node.js 22 설정. 이번 작업에서 원격 CI 성공 여부는 확인하지 않음. |
+| CI 설정 | [GitHub Actions](.github/workflows/ci.yml)에 Python 3.11·Node.js 22 설정. 오프라인 CI는 실제 제공기관 조회나 Chromium 실행을 포함하지 않습니다. 원격 실행 상태는 연결된 워크플로에서 확인합니다. |
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
@@ -235,9 +252,11 @@ node --test tests/web.test.mjs
 | POST | `/api/plans/{plan_id}/replace` | 교체 가능한 관광 방문 하나 변경. |
 | POST | `/api/plans/{plan_id}/undo` | 직전 교체 되돌리기. |
 | POST | `/api/plans/{plan_id}/lock` | 방문 고정·해제. |
-| GET | `/api/config` | 공개 지도 설정. |
+| GET | `/api/config` | 공개 설정·버전·배편 운항관리 지역. |
+| GET | `/api/plans/{plan_id}/pdf?revision=N` | 저장된 버전의 한글 PDF; 충돌·만료 검사. |
+| GET | `/api/ferries/live?office=인천&date=YYYY-MM-DD` | 공식 화면의 오늘 출항·운항정보; 도착 미확인은 null. |
 
-요청 형식·스트림 이벤트·리비전·오류 코드는 [API-v02.md](docs/API-v02.md)에 정리되어 있습니다.
+[v0.5 PDF·배편 계약](docs/API-v05.md)과 [v0.2 리비전·스트림 계약](docs/API-v02.md)을 참고하세요.
 
 ## Notes · 참고
 
@@ -254,6 +273,7 @@ node --test tests/web.test.mjs
 | 경로 | 역할 |
 | --- | --- |
 | [`marine_agent/agent.py`](marine_agent/agent.py) | 도구 스키마·호출 제한·모델 실패 전환. |
+| [`marine_agent/pdf_export.py`](marine_agent/pdf_export.py) / [`browser_ferries.py`](marine_agent/browser_ferries.py) | 저장 일정 PDF와 공식 당일 배편 관측. |
 | [`marine_agent/planner.py`](marine_agent/planner.py) | 여행 제약과 규칙 기반 일정 생성. |
 | [`marine_agent/providers.py`](marine_agent/providers.py) | 페이지 수집·카탈로그 갱신·관광 상세·날씨. |
 | [`marine_agent/plans.py`](marine_agent/plans.py) / [`enrichment.py`](marine_agent/enrichment.py) | 일정 리비전·고정·되돌리기·사진·경로. |
@@ -268,10 +288,10 @@ node --test tests/web.test.mjs
 
 ## Sources · 출처와 이용조건
 
-프로젝트에 기록된 원천 출처는 [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [국립해양조사원 갯벌체험지수](https://www.data.go.kr/data/15142489/openapi.do), [기상청 API Hub](https://apihub.kma.go.kr/)입니다. Ollama·OSRM·Leaflet/OpenStreetMap을 함께 사용합니다. Leaflet 1.9.4와 [BSD 라이선스](web/vendor/leaflet/LICENSE)는 저장소에 포함되어 있습니다.
+프로젝트에 기록된 원천 출처는 [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [국립해양조사원 갯벌체험지수](https://www.data.go.kr/data/15142489/openapi.do), [기상청 API Hub](https://apihub.kma.go.kr/)입니다. 배편은 [KOMSA 공식 운항정보 화면](https://www.komsa.or.kr/prog/pssgCurState/kor/sub03_0202/list.do)을 사용합니다. Playwright·ReportLab·Ollama·OSRM·Leaflet/OpenStreetMap을 함께 사용합니다. Leaflet 1.9.4와 [BSD 라이선스](web/vendor/leaflet/LICENSE)는 저장소에 포함되어 있습니다.
 
 현재 프로젝트 전체에 적용되는 라이선스 파일은 없습니다. 의존성 라이선스와 공공데이터·이미지 이용조건은 별도로 적용됩니다.
 
 ### 방문 사이 이동 카드
 
-관광지·식당·카페 사이에 이동수단·예상 시간·확보된 거리를 표시합니다. 지도 버튼으로 해당 구간을 강조하며, 대중교통은 상세 노선·승하차 지점을 펼쳐볼 수 있습니다. 사진 출처는 사진 아래에서 일정 하단의 접힌 사진 이용정보로 옮겼습니다. 배편은 [별도 제안](docs/FERRY_PROPOSAL.md) 단계이며 이번 변경으로 활성화하지 않았습니다.
+관광지·식당·카페 사이에 이동수단·예상 시간·확보된 거리를 표시합니다. 지도 버튼으로 해당 구간을 강조하며, 대중교통은 상세 노선·승하차 지점을 펼쳐볼 수 있습니다. 사진 출처는 사진 아래에서 일정 하단의 접힌 사진 이용정보로 옮겼습니다. 배편은 [v0.5 당일 공식 화면 조회](docs/API-v05.md)까지 연결했으며, 도착시각·왕복편 검증이 필요한 섬 자동 편성은 아직 활성화하지 않았습니다.

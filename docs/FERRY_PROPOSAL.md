@@ -1,7 +1,9 @@
 # Ferry planning proposal / 배편 제공 제안
 
-This is a proposal, not an enabled live-ferry feature. Existing island planning
-still requires reviewed round-trip data; this UI change does not activate islands.
+Historical planning proposal. **v0.5 now implements today-only KOMSA public-screen
+operations**; see [the implemented contract](API-v05.md). Reviewed date-specific
+round trips and arrivals remain required for automatic island itineraries. The
+proposal below describes that later scheduling scope, not current capabilities.
 
 ## Suggested first release
 

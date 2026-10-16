@@ -8,3 +8,5 @@ data/
 .pytest_cache/
 reports/*live*.json
 .tmp/
+output/
+tmp/
