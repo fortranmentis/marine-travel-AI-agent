@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.6.0" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent · 바다결
 
@@ -90,12 +90,12 @@
 <table>
 <tr>
 <td width="68%" valign="top">
-<img src="docs/interface-v02.jpg" alt="한국어 여행 입력과 날짜별 OSRM 도로 경로">
-<p><strong>조건과 경로를 함께.</strong> 권역·날짜·가족 구성을 입력하고 초안 옆에서 도로 경로를 확인합니다.</p>
+<img src="docs/transport-api-bus.jpg" alt="v0.6 공식 버스 노선과 현재 위치 참고 정보">
+<p><strong>조건과 경로를 함께.</strong> 공식 버스 노선·경유 정류소와 현재 차량 위치 참고 정보를 살펴봅니다.</p>
 </td>
 <td width="32%" valign="top">
-<img src="docs/mobile-v02.jpg" alt="모바일 일정 화면">
-<p><strong>이동 중에도 검토.</strong> 모바일에서 일정과 확인 사항을 함께 살펴봅니다.</p>
+<img src="docs/transport-api-mobile.jpg" alt="v0.6 모바일 교통 API 조회 화면">
+<p><strong>이동 중에도 검토.</strong> 모바일에서 주변 정류소를 조회하고 현재 관측과 미래 일정의 차이를 확인합니다.</p>
 </td>
 </tr>
 </table>
@@ -111,7 +111,7 @@
 
 </details>
 
-<sub>기존 개발 화면입니다. 표시된 날짜·사진·예보는 당시 기록이며 현재 서비스 상태를 뜻하지 않습니다.</sub>
+<sub>대표 화면은 2026년 10월 16일 촬영한 v0.6 교통 API 화면이며, 펼침 영역에는 v0.2 개발 화면을 보관했습니다. 캡처는 당시 기록이며 현재 서비스 상태를 뜻하지 않습니다.</sub>
 
 ## Highlights · 주요 기능
 
@@ -132,7 +132,7 @@
 
 ## Architecture · 구조
 
-![원천 수집과 검증, 제한된 도구와 Python 규칙, 일정 검토와 수정으로 이어지는 흐름](docs/assets/workflow.svg)
+![원천 수집과 검증, 제한된 도구와 Python 규칙, 일정 검토와 수정으로 이어지는 흐름](docs/assets/workflow.svg?v=0.6.0)
 
 <details>
 <summary><strong>컴포넌트 구조도와 실행 원칙</strong></summary>

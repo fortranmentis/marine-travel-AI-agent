@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.6.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent
 
@@ -79,19 +79,19 @@ Daily time windows, attraction counts, party types and child counts; nearby meal
 
 **Transit now uses Playwright and the rendered Naver Map UI without a transit API key.** It shows lookup-time reference routes, not travel-date timetable verification. Install Chromium with `python -m playwright install chromium`. See [browser setup and limits](docs/BROWSER_TRANSIT.md). The separate reviewed round-trip scheduler has no enabled manifest; conditional on-island drafts are available as described above.
 
-Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
+Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The main preview shows v0.6 transport screens; the expandable gallery retains v0.2 development captures.
 
 ## Preview
 
 <table>
 <tr>
 <td width="68%" valign="top">
-<img src="docs/interface-v02.jpg" alt="Korean trip form and day-specific OSRM road route">
-<p><strong>Plan with context.</strong> Choose a region, dates and family composition; inspect the route alongside the draft.</p>
+<img src="docs/transport-api-bus.jpg" alt="v0.6 official bus route and current position references">
+<p><strong>Plan with context.</strong> Inspect official bus route information, ordered stops and current vehicle-position references.</p>
 </td>
 <td width="32%" valign="top">
-<img src="docs/mobile-v02.jpg" alt="Mobile view of the itinerary">
-<p><strong>Review on the move.</strong> A compact mobile view keeps the itinerary and its checks together.</p>
+<img src="docs/transport-api-mobile.jpg" alt="v0.6 mobile transport lookup dialog">
+<p><strong>Review on the move.</strong> The mobile transport dialog shows nearby stops and explains the limits of live and future-day information.</p>
 </td>
 </tr>
 </table>
@@ -107,7 +107,7 @@ Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile
 
 </details>
 
-<sub>Existing development captures. Displayed dates, photos and forecasts are illustrative records, not live service status.</sub>
+<sub>Main preview: v0.6 transport screens, captured October 16, 2026. Expandable gallery: earlier v0.2 screens. Captures are dated observations, not current service status.</sub>
 
 ## Highlights
 
@@ -128,7 +128,7 @@ Eight marine feeds are collected, but **only mudflat experiences are automatical
 
 ## Architecture
 
-![Collect and check source data, build through bounded tools and Python rules, review and revise the draft](docs/assets/workflow.svg)
+![Collect and check source data, build through bounded tools and Python rules, review and revise the draft](docs/assets/workflow.svg?v=0.6.0)
 
 <details>
 <summary><strong>Component diagram and execution contracts</strong></summary>

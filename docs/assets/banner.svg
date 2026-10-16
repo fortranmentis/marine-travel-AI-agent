@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="520" viewBox="0 0 1440 520" role="img" aria-labelledby="title desc">
   <title id="title">바다결 — Marine Travel AI Agent</title>
-  <desc id="desc">Read the coast. Plan the day. A coastal planning prototype combining public data, typed tools and reviewable itineraries. The route and draft cards are illustrative.</desc>
+  <desc id="desc">Read the coast. Plan the day. A nationwide coastal planning prototype combining sea-travel outlooks, tourism, weather and official transport references. The route and draft cards are illustrative.</desc>
   <defs>
     <linearGradient id="ocean" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071b2a"/><stop offset=".65" stop-color="#0a3645"/><stop offset="1" stop-color="#12636b"/></linearGradient>
     <linearGradient id="shore"><stop stop-color="#30b8b5" stop-opacity=".04"/><stop offset="1" stop-color="#9ff2d9" stop-opacity=".2"/></linearGradient>
@@ -24,15 +24,15 @@
       <g transform="translate(66 48)" fill="none" stroke="#7ee2cd" stroke-width="2.5" stroke-linecap="round"><path d="M0 4Q6-3 12 4T24 4M0 13Q6 6 12 13T24 13"/></g>
       <text x="104" y="64" fill="#d8fff4" font-size="18" font-weight="700">바다결</text>
       <text x="182" y="63" fill="#88b4ba" font-size="12" letter-spacing="3">MARINE TRAVEL AI AGENT</text>
-      <rect x="1178" y="38" width="196" height="32" rx="16" fill="#ffffff" fill-opacity=".06" stroke="#a5ebd8" stroke-opacity=".2"/>
-      <circle cx="1198" cy="54" r="3" fill="#7ee2cd"/>
-      <text x="1212" y="59" fill="#bfece2" font-size="11" letter-spacing="1.3">v0.2 / LOCAL PROTOTYPE</text>
+      <rect x="1146" y="38" width="228" height="32" rx="16" fill="#ffffff" fill-opacity=".06" stroke="#a5ebd8" stroke-opacity=".2"/>
+      <circle cx="1166" cy="54" r="3" fill="#7ee2cd"/>
+      <text x="1180" y="59" fill="#bfece2" font-size="11" letter-spacing="1.3">v0.6.0 / LOCAL PROTOTYPE</text>
       <text x="64" y="177" fill="#f3faf7" font-size="66" font-weight="700" letter-spacing="-2">Read the coast.</text>
       <text x="64" y="253" fill="#7ee2cd" font-size="66" font-weight="700" letter-spacing="-2">Plan the day.</text>
       <text x="68" y="307" fill="#e1efec" font-size="22">Nationwide sea outlooks, local travel AI.</text>
-      <text x="68" y="342" fill="#92b8be" font-size="17">Public data. Typed tools. Reviewable itineraries.</text>
+      <text x="68" y="342" fill="#92b8be" font-size="17">Sea outlooks. Transport references. Reviewable trips.</text>
       <path d="M68 390H590" stroke="#c1ede2" stroke-opacity=".18"/>
-      <text x="68" y="424" fill="#accfcf" font-size="12" letter-spacing="1.8">YEONGJONG–YONGYU / GANGHWA / SONGDO</text>
+      <text x="68" y="424" fill="#accfcf" font-size="12" letter-spacing="1.8">29 FORECAST REGIONS / COASTAL KOREA</text>
       <text x="68" y="478" fill="#6d9ba4" font-size="11" letter-spacing="2">COLLECT → CHECK → PLAN → REVIEW</text>
       <path d="M814 333C752 250 942 268 890 170S1100 111 1114 170" fill="none" stroke="#7ee2cd" stroke-width="2.5" stroke-dasharray="5 8"/>
       <g fill="#0c3544" stroke="#7ee2cd" stroke-width="3"><circle cx="814" cy="333" r="9"/><circle cx="890" cy="170" r="9"/></g>
@@ -40,15 +40,15 @@
       <text x="774" y="373" fill="#88b8bd" font-size="11" letter-spacing="1.5">COASTAL ROUTE</text>
       <rect x="1025" y="132" width="332" height="292" rx="18" fill="#00131e" opacity=".2"/>
       <rect x="1017" y="124" width="332" height="292" rx="18" fill="#f3f5ed"/>
-      <text x="1043" y="161" fill="#31646b" font-size="11" letter-spacing="2" font-weight="700">YOUR JOURNEY / DRAFT</text>
+      <text x="1043" y="161" fill="#31646b" font-size="11" letter-spacing="2" font-weight="700">YOUR JOURNEY / AI + DATA</text>
       <text x="1043" y="195" fill="#133d46" font-size="22" font-weight="700">A day by the sea</text>
       <rect x="1041" y="217" width="282" height="42" rx="8" fill="#e4eee7"/>
-      <text x="1056" y="243" fill="#42757a" font-size="13">Tourism · Marine indices · Weather</text>
+      <text x="1056" y="243" fill="#42757a" font-size="13">TourAPI · KHOA · KMA · TAGO · KOMSA</text>
       <path d="M1054 287V345" stroke="#a7c2ba" stroke-width="2"/>
       <circle cx="1054" cy="287" r="5" fill="#1f8a81"/><circle cx="1054" cy="318" r="5" fill="#1f8a81"/><circle cx="1054" cy="349" r="5" fill="#d79364"/>
-      <text x="1070" y="291" fill="#294e55" font-size="13">Find regional candidates</text>
-      <text x="1070" y="322" fill="#294e55" font-size="13">Check forecast windows</text>
-      <text x="1070" y="353" fill="#294e55" font-size="13">Review local conditions</text>
+      <text x="1070" y="291" fill="#294e55" font-size="13">Find coastal tourism candidates</text>
+      <text x="1070" y="322" fill="#294e55" font-size="13">Check forecasts and transport</text>
+      <text x="1070" y="353" fill="#294e55" font-size="13">Review ferry reference times</text>
       <text x="1043" y="392" fill="#8a694d" font-size="11">PROVISIONAL · FIELD CHECKS REQUIRED</text>
     </g>
   </g>

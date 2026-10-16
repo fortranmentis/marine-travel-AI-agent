@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1440" height="282" viewBox="0 0 1440 282" role="img" aria-labelledby="title desc">
-  <title id="title">From source data to a reviewable draft</title><desc id="desc">Collect and check public records, use bounded tools and Python rules, then review itinerary evidence, routes and unresolved conditions.</desc>
+  <title id="title">From source data to a reviewable draft</title><desc id="desc">Collect tourism, marine, weather and official transport records, use bounded tools and Python rules, then review itinerary evidence and unresolved access conditions.</desc>
   <g font-family="Segoe UI,Arial,sans-serif">
     <rect x="1" y="1" width="443" height="280" rx="18" fill="#f4f6f0" stroke="#dce5dc"/>
     <rect x="498" y="1" width="443" height="280" rx="18" fill="#0d3b49"/>
@@ -7,8 +7,8 @@
     <g fill="#2c7779" font-size="12" letter-spacing="2" font-weight="700"><text x="29" y="39">01 / DATA FOUNDATION</text><text x="1024" y="39">03 / REVIEWABLE OUTPUT</text></g>
     <text x="526" y="39" fill="#86dcc9" font-size="12" letter-spacing="2" font-weight="700">02 / AGENT + RULES</text>
     <g font-size="29" font-weight="700"><text x="29" y="89" fill="#163e47">Collect. Check. Preserve.</text><text x="526" y="89" fill="#f1f8f5">Retrieve. Build. Validate.</text><text x="1024" y="89" fill="#163e47">Inspect. Replace. Undo.</text></g>
-    <g font-size="17" fill="#526e72"><text x="29" y="137">TourAPI · Marine indices · KMA</text><text x="29" y="170">Pagination + record-count checks</text><text x="29" y="203">Atomic local catalog updates</text><text x="1024" y="137">Timeline · Photos · Maps · Weather</text><text x="1024" y="170">Sources and visible unknowns</text><text x="1024" y="203">Revisioned single-visit edits</text></g>
-    <g font-size="17" fill="#c0d7d7"><text x="526" y="137">Ollama chooses allowlisted tools</text><text x="526" y="170">Python applies schedule constraints</text><text x="526" y="203">Fallback when trip data is usable</text></g>
+    <g font-size="17" fill="#526e72"><text x="29" y="137">TourAPI · Marine indices · KMA</text><text x="29" y="170">TAGO + KOMSA transport references</text><text x="29" y="203">Pagination, quality flags and caches</text><text x="1024" y="137">Timeline · Photos · Maps · Weather</text><text x="1024" y="170">Bus, subway and ferry references</text><text x="1024" y="203">Revisioned edits · Undo · PDF export</text></g>
+    <g font-size="17" fill="#c0d7d7"><text x="526" y="137">Ollama chooses eight typed tools</text><text x="526" y="170">Python applies schedule constraints</text><text x="526" y="203">Fallback when trip data is usable</text></g>
     <g font-size="12" fill="#8b7763"><text x="29" y="250">No transfer of forecasts between nearby sites</text><text x="1024" y="250">Operator and on-site checks still required</text></g>
     <text x="526" y="250" font-size="12" fill="#92bcb9">6 model rounds / 10 tool executions maximum</text>
     <g fill="none" stroke="#5f9e99" stroke-width="2"><path d="M457 140H484m-7-7 7 7-7 7M954 140H982m-7-7 7 7-7 7"/></g>
