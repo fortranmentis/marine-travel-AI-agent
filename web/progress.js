@@ -1,4 +1,4 @@
-import {$, el} from './ui.js?v=0.4.3';
+import {$, el} from './ui.js?v=0.4.4';
 
 const steps = [['input','조건 확인'],['data','예보·관광정보 조회'],['schedule','일정 구성·검증'],['enrich','지도·사진 준비'],['result','결과 완성']];
 let started = 0, timer, lastMessage = '', running = false;

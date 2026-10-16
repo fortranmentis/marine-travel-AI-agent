@@ -31,6 +31,27 @@ test('truncated streams fail explicitly',async()=>{
 
 import {datesFor} from '../web/trip-form.js';
 import {transitSummary,transitSourceUrl} from '../web/transit.js';
+import {transfersFor} from '../web/journey-transfers.js';
+
+const stops=()=>[{slot_id:'beach',kind:'tourism',title:'함덕해수욕장',start:'10:00',end:'11:30',lat:33.54,lon:126.66},{slot_id:'meal',kind:'meal',title:'훈남횟집',start:'12:00',end:'12:45',lat:33.54,lon:126.665},{slot_id:'cafe',kind:'cafe',title:'카페',start:'13:15',end:'13:45',lat:33.54,lon:126.67}];
+test('transfer cards follow slot IDs across tourism, meal and cafe, not route array order',()=>{
+ const day={transport:'car',items:stops()};const route={legs:[{from_slot:'meal',to_slot:'cafe',mode:'walk',status:'available',duration_s:240,distance_m:300},{from_slot:'beach',to_slot:'meal',mode:'car',status:'available',duration_s:361,distance_m:1500,available_minutes:30,fits_schedule:true}]};
+ const entries=transfersFor(day,route);assert.deepEqual([...entries.keys()],['meal','cafe']);assert.equal(entries.get('meal').mode,'자차');assert.equal(entries.get('meal').duration,'약 7분');assert.equal(entries.get('meal').distance,'1.5km');assert.equal(entries.get('cafe').mode,'도보');
+});
+test('unknown and failed transfers never invent zero minutes or a distance',()=>{
+ const day={transport:'transit',items:stops()};const route={legs:[{from_slot:'beach',to_slot:'meal',status:'unavailable',reason:'경로 미확보'}]};
+ for(const item of transfersFor(day,route).values()){assert.equal(item.available,false);assert.equal(item.duration,'시간 미확인');assert.equal(item.distance,null);assert.ok(item.warning);}
+ day.items[1].lat=null;assert.match(transfersFor(day,route).get('meal').warning,/좌표/);
+});
+test('mixed transit sections, missing distance and insufficient gaps remain distinct',()=>{
+ const day={transport:'transit',items:stops()};const route={legs:[{from_slot:'beach',to_slot:'meal',status:'available',mode:'transit',duration_s:2400,distance_m:null,fits_schedule:false,sections:[{mode:'walk'},{mode:'bus'},{mode:'subway'},{mode:'walk'}]}]};
+ const item=transfersFor(day,route).get('meal');assert.equal(item.mode,'도보 + 버스 + 지하철');assert.equal(item.distance,null);assert.match(item.warning,/여유 시간/);
+});
+test('breaks are not destinations and a scheduled ferry never gets a ground transfer over it',()=>{
+ const day={transport:'walk',items:stops()};day.items.splice(1,0,{slot_id:'rest',kind:'break',start:'11:30',end:'11:45'});
+ assert.deepEqual([...transfersFor(day,{}).keys()],['meal','cafe']);
+ day.items.splice(1,0,{slot_id:'boat',kind:'ferry',start:'11:30',end:'11:45'});assert.deepEqual([...transfersFor(day,{}).keys()],['cafe']);
+});
 test('transit display preserves missing values and links only to the source map',()=>{
  const summary=transitSummary({sections:[{mode:'bus',lines:['2'],minutes:5,start:'인천역',end:'GS칼텍스'}],fare:1500,transfers:0,walking_minutes:7,observed_at:'2026-10-16T00:51:00Z'});
  assert.match(summary.sections,/인천역 → GS칼텍스/);assert.match(summary.metrics,/1,500원/);assert.match(summary.metrics,/환승 0회/);

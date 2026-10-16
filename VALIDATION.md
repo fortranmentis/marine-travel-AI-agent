@@ -1,5 +1,24 @@
 # Validation record — 2026-10-15 (Asia/Seoul)
 
+## Inline travel cards — 2026-10-16
+
+- **77 Python + 10 Node tests passed**; existing Starlette/httpx warning remains.
+  Frontend regressions cover slot-ID pairing independent of route order, meal/cafe
+  links, car/walk/mixed transit modes, missing coordinates/routes/distance, insufficient
+  gaps, non-destination breaks and suppression of ground legs over scheduled ferries.
+- Actual local Jeju northeast rule plan displayed Hamdeok Beach → travel card →
+  Hunnam restaurant → travel card → Seoubong trail. Source car durations/distances
+  were 1 minute/215m and 2 minutes/494m when rounded for display. These observations
+  are not real-time traffic or driving feasibility guarantees.
+- Desktop 1280px and mobile 390px layouts had no horizontal overflow
+  (document widths 1265px / 375px). [Desktop](docs/inline-transfer-desktop.jpg) /
+  [mobile](docs/inline-transfer-mobile.jpg) show the actual Jeju itinerary.
+- Segment-map action highlighted exactly one route path. Photo captions were absent,
+  while the plan-level photo-credit disclosure was present and initially closed.
+- The ferry proposal describes a small reviewed-route pilot, separate timetable,
+  observed operation status and booking data, and an optional public-screen adapter.
+  No ferry data collection, reservation or island activation was added.
+
 ## Playwright transit checks — 2026-10-16
 
 - **77 Python + 6 Node tests passed** with `--basetemp=.tmp/pytest-transit-walk`.

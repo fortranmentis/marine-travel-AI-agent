@@ -1,10 +1,11 @@
-import {initializeNational} from './national.js?v=0.4.3';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.3';
-import {initializeTripForm} from './trip-form.js?v=0.4.3';
-import {$,el,button,plainText} from './ui.js?v=0.4.3';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.3';
-import {weatherCard} from './weather.js?v=0.4.3';
-import {initializeMap,setMapPlan,showOnMap,highlightSlot} from './maps.js?v=0.4.3';
+import {initializeNational} from './national.js?v=0.4.4';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.4.4';
+import {initializeTripForm} from './trip-form.js?v=0.4.4';
+import {$,el,button,plainText} from './ui.js?v=0.4.4';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.4.4';
+import {weatherCard} from './weather.js?v=0.4.4';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.4.4';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.4.4';
 
 const form=$('#trip-form');
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
@@ -24,8 +25,7 @@ function photo(contentId){
   const empty=()=>{figure.replaceChildren(el('div','사진 준비 중이거나 제공된 사진이 없어요.','photo-empty'));};
   if(value?.status!=='available'){empty();return figure;}
   const image=el('img');image.src=value.url;image.alt=value.title||'관광지 사진';image.loading='lazy';image.decoding='async';image.onerror=empty;
-  const caption=el('figcaption'),source=el('a',value.source),license=el('a',value.license==='Type3'?'공공누리 3유형':'공공누리 1유형');source.href=value.source_url;license.href=value.license_url;
-  for(const a of [source,license]){a.target='_blank';a.rel='noopener noreferrer';}caption.append(source,document.createTextNode(' · '),license);figure.append(image,caption);return figure;
+  figure.append(image);return figure;
 }
 function render(plan){
   state.plan=plan;$('#empty').hidden=true;$('#result-title').textContent=`${plan.trip.region} · ${plan.trip.days}일의 바다`;const box=$('#plan');box.replaceChildren();
@@ -39,7 +39,9 @@ function render(plan){
     if(day.search_reference)section.append(el('p',`관광 탐색 기준: ${day.search_reference.title}. 주변 후보를 찾기 위한 기준점이며 숙소·실제 출발지가 아닙니다.`,'search-reference'));
     section.append(el('p',`관광·체험 ${day.actual_visits??'—'} / 요청 ${day.requested_visits??'—'}곳`,'forecast'));
     for(const warning of day.warnings||[])section.append(el('p',warning,'route-warning'));
+    const transfers=transfersFor(day,plan.routes?.[day.date]);
     for(const item of day.items){
+      if(transfers.has(item.slot_id))section.append(transferCard(transfers.get(item.slot_id),day.date,showRouteSegment));
       const compact=['break','buffer'].includes(item.kind),slot=el('div',undefined,'slot'+(compact?' compact':''));slot.append(el('div',item.start+'\n'+item.end,'time'));
       const card=el('article',undefined,'card slot-card '+item.kind);card.dataset.slot=item.slot_id;const info=el('div',undefined,'card-content');info.append(el('h4',item.title));
       if(item.kind==='locked')info.append(el('span','시간 고정됨','lock-badge'));
@@ -68,6 +70,12 @@ function render(plan){
     for(const recommendation of day.food_recommendations||[]){if(!recommendation.candidates.length)continue;const details=el('details',undefined,'nearby-food');details.append(el('summary',`${recommendation.start} ${recommendation.kind==='cafe'?'주변 카페':'주변 식당'} 후보`));for(const candidate of recommendation.candidates){const row=el('div',undefined,'food-candidate');row.append(photo(candidate.id),el('p',candidate.title+' · '+candidate.cuisine_label+' · '+candidate.distance_km+'km (직선거리)'));details.append(row);}details.append(el('small','TourAPI 분류 기준 후보입니다. 실제 메뉴·영업시간·이동 경로·단체 수용 여부를 확인하세요.'));section.append(details);}
     box.append(section);
   }
+  const credits=el('details',undefined,'photo-credits');credits.append(el('summary','사진 이용정보'));
+  for(const value of Object.values(plan.media||{}).filter(v=>v.status==='available')){
+    const row=el('p',value.title+' · '+value.source+' · ');
+    const link=el('a',value.license==='Type3'?'공공누리 3유형':'공공누리 1유형');link.href=value.license_url;link.target='_blank';link.rel='noopener noreferrer';row.append(link);credits.append(row);
+  }
+  if(credits.childNodes.length>1)box.append(credits);
   box.append(el('p','자료 수집: '+plan.collected_at,'forecast'));$('#chat-panel').hidden=false;setMapPlan(plan);
 }
 async function setLock(item){if(state.busy)return;busy(true);try{const p=state.plan;const updated=await api(`/api/plans/${p.plan_id}/lock`,{revision:p.revision,slot_id:item.slot_id,locked:item.kind!=='locked'});syncForm(updated);render(updated);status(item.kind==='locked'?'고정을 해제했습니다.':'시간을 고정했습니다. 지도 좌표도 유지됩니다.');}catch(error){status(error.message,true);}finally{busy(false);}}

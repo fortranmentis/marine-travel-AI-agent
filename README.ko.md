@@ -19,7 +19,7 @@
 
 </div>
 
-![29개 예보 권역, 5개 도구, 8종 보관 피드, 83개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 5개 도구, 8종 보관 피드, 87개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -205,7 +205,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 10월 16일 한국시간 기준 재실행: Python 77개, 프런트엔드 6개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 10월 16일 한국시간 기준 재실행: Python 77개, 프런트엔드 10개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |
@@ -271,3 +271,7 @@ node --test tests/web.test.mjs
 프로젝트에 기록된 원천 출처는 [TourAPI](https://www.data.go.kr/data/15101578/openapi.do), [국립해양조사원 갯벌체험지수](https://www.data.go.kr/data/15142489/openapi.do), [기상청 API Hub](https://apihub.kma.go.kr/)입니다. Ollama·OSRM·Leaflet/OpenStreetMap을 함께 사용합니다. Leaflet 1.9.4와 [BSD 라이선스](web/vendor/leaflet/LICENSE)는 저장소에 포함되어 있습니다.
 
 현재 프로젝트 전체에 적용되는 라이선스 파일은 없습니다. 의존성 라이선스와 공공데이터·이미지 이용조건은 별도로 적용됩니다.
+
+### 방문 사이 이동 카드
+
+관광지·식당·카페 사이에 이동수단·예상 시간·확보된 거리를 표시합니다. 지도 버튼으로 해당 구간을 강조하며, 대중교통은 상세 노선·승하차 지점을 펼쳐볼 수 있습니다. 사진 출처는 사진 아래에서 일정 하단의 접힌 사진 이용정보로 옮겼습니다. 배편은 [별도 제안](docs/FERRY_PROPOSAL.md) 단계이며 이번 변경으로 활성화하지 않았습니다.

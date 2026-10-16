@@ -19,7 +19,7 @@
 
 </div>
 
-![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 83 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, five typed tools, eight retained marine feeds, 87 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -203,9 +203,13 @@ For Linux/macOS, use `.venv/bin/python` and start the server with:
 
 If your Windows Python cannot bootstrap pip inside the environment, use `python -m pip --python .venv/Scripts/python.exe install -r requirements.txt`.
 
+## Between-stop travel cards
+
+Each attraction, restaurant and cafe is connected by an inline travel card with the actual mode, reference duration, known distance and a map-segment button. Transit details expand to show lines and stops; missing routes remain explicit. Photo credits are collected in a collapsed section. Ferry integration is still a [proposal](docs/FERRY_PROPOSAL.md), not a newly enabled service.
+
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 77 Python tests and 6 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on October 16, 2026 (Asia/Seoul): 77 Python tests and 10 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

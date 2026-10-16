@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.4.3';
+import {el,button} from './ui.js?v=0.4.4';
 
 export function weatherKind(row) {
   const pty=String(row?.PTY??'');
