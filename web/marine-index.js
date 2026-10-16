@@ -1,4 +1,4 @@
-import {el} from './ui.js?v=0.5.0';
+import {el} from './ui.js?v=0.5.1';
 
 const grades=['매우좋음','좋음','보통','나쁨','매우나쁨'];
 const tones=['excellent','good','moderate','poor','very-poor'];

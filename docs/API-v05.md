@@ -1,5 +1,9 @@
 # v0.5 — PDF export, attraction selection and live ferry observations
 
+**v0.5.1 update:** [Conditional island tourism drafts](ISLAND_DRAFTS.md) now
+enable the five former forecast-only UI selections. Full round-trip access is
+still unverified; the today-only adapter contract below is unchanged.
+
 English first; Korean behavior notes follow each contract. Existing trip, revision,
 stream and replacement contracts remain in [v0.2](API-v02.md), [v0.3](API-v03.md)
 and [v0.4](API-v04.md).

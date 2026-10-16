@@ -1,20 +1,21 @@
-import {initializeNational} from './national.js?v=0.5.0';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.5.0';
-import {initializeTripForm} from './trip-form.js?v=0.5.0';
-import {$,el,button,plainText} from './ui.js?v=0.5.0';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.5.0';
-import {weatherCard} from './weather.js?v=0.5.0';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.5.0';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.5.0';
-import {initializeFerries} from './ferries.js?v=0.5.0';
+import {initializeNational} from './national.js?v=0.5.1';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.5.1';
+import {initializeTripForm} from './trip-form.js?v=0.5.1';
+import {$,el,button,plainText} from './ui.js?v=0.5.1';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.5.1';
+import {weatherCard} from './weather.js?v=0.5.1';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.5.1';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.5.1';
+import {initializeFerries} from './ferries.js?v=0.5.1';
 
 const form=$('#trip-form');
+let ferryPanel=null;
 const state={history:[],plan:null,locked:[],excluded:[],busy:false,alternative:null,lastRequest:null};
 const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 form.elements.start_date.value=today;form.elements.start_date.min=today;
 const tripForm=initializeTripForm(form);
 const national=initializeNational(form);
-api('/api/config').then(config=>{initializeFerries(form,config);for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
+api('/api/config').then(config=>{ferryPanel=initializeFerries(form,config);for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
 function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
 function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
@@ -31,6 +32,19 @@ function photo(contentId){
 function render(plan){
   $('#download-pdf').hidden=false;
   state.plan=plan;$('#empty').hidden=true;$('#result-title').textContent=`${plan.trip.region} · ${plan.trip.days}일의 바다`;const box=$('#plan');box.replaceChildren();
+  if(plan.island_access){
+    const a=plan.island_access,card=el('section',undefined,'island-access note');card.setAttribute('aria-label','섬 접근 확인 상태');
+    card.append(el('h3',a.island+(a.mode==='ferry'?' · 왕복 배편 미확정':' · 교량 연결 관광')),el('p',a.note));
+    if(a.mode==='ferry'){
+      card.append(el('p',a.operation_note||'당일 운항정보 미조회'));
+      if(a.as_of)card.append(el('p','공식 운항 기준: '+new Date(a.as_of).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})));
+      if(a.rows.length){
+        card.append(el('p',`관련 면허항로 ${a.matching_count}편 관측 · 아래 ${Math.min(6,a.rows.length)}편은 입출도 확정편이 아닙니다.`));
+        const list=el('ul');for(const row of a.rows.slice(0,6))list.append(el('li',`${row.departure} ${row.vessel} · ${row.origin} 출항 · ${row.route} · ${row.operation||'미확인'}`));card.append(list);
+      }
+      card.append(button('오늘 배편 전체 확인',()=>ferryPanel?.show(a.office),'secondary'));
+    }box.append(card);
+  }
   const notices=el('details',undefined,'notices');notices.append(el('summary','검토용 초안 · 운영·연령·현장 조건 확인 필요'));plan.notices.forEach(t=>notices.append(el('p',t)));box.append(notices);
   if(plan.travel_index)box.append(marineIndexCard(plan.travel_index,{overall:true}));
   $('#undo').hidden=!plan.can_undo;$('#messages').classList.toggle('outdated',!!plan.explanation_outdated);

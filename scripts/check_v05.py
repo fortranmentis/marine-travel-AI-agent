@@ -13,7 +13,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--ai',action='store_true');args=parser.parse_args()
     root=Path(__file__).resolve().parents[1]
     with httpx.Client(base_url='http://127.0.0.1:8001',timeout=240,trust_env=False) as client:
-        config=client.get('/api/config').json();assert config['version']=='0.5.0'
+        config=client.get('/api/config').json();assert config['version'].startswith('0.5.')
         response=client.get('/api/ferries/live',params=dict(office='인천',date=config['today']))
         response.raise_for_status();ferries=response.json();assert ferries['status']=='available' and ferries['rows']
         assert all(row['arrival'] is None for row in ferries['rows'])

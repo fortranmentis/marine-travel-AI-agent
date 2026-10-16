@@ -1,5 +1,45 @@
 # Validation record — updated 2026-10-16 (Asia/Seoul)
 
+## v0.5.1 conditional island tourism — 2026-10-16
+
+- **111 Python + 11 Node tests passed**; frontend syntax and `git diff --check`
+  passed. The existing Starlette/httpx deprecation warning remains. New regressions
+  cover all five pilot scopes, exact-ID joins, source-region forecasts, future
+  date isolation, unknown/cancelled access, no fabricated ferry slots, fixed-visit
+  boundaries, scoped food, replacement and undo preserving access state.
+- Real local API generated tourism visits in all five newly enabled scopes:
+  Baengnyeongdo 2; Deokjeokdo 2; Jeungdo 2; Heuksando 1; Geomundo 1. Source and
+  route limits reduced the last two requests below the requested two visits.
+  No slots were invented to meet that count. Available adjacent car routes were
+  returned for the first three; one-visit days have no inter-visit route.
+- Real KOMSA public observations at **11:30 KST** yielded exact licensed-route
+  matches 4 / 8 / not requested / 9 / 4 respectively. These are all matching
+  observations, including non-operating/historical departures, not usable
+  outbound/return pairs. Arrival, reservation and mainland access flags stayed
+  false. Jeungdo uses the documented bridge classification without inventing a
+  ferry; no mainland approach was verified. No reviewed island manifest enabled.
+- Real Qwen request returned `ok` with `build_itinerary: ok` after one rejected
+  tool argument set. The final plan retained `conditional_island` and unknown
+  access. This is one recovery observation, not a tool-use quality benchmark.
+- Browser checked active national island buttons, explicit pilot-island names,
+  Deokjeokdo generation, the persistent caveat/actual observation card and the
+  action opening the complete Incheon table. Desktop/mobile document widths
+  were 1265/375px in 1280/390px viewports, with no horizontal page overflow.
+  [Desktop](docs/island-draft-desktop.jpg), [mobile](docs/island-draft-mobile.jpg).
+- A one-page Deokjeokdo Korean PDF was generated and text-checked for the
+  unconfirmed-access warning, then rendered with Poppler and visually inspected.
+  Island title, forecast, visits, transfers and caveats fit without clipping.
+- The new scopes map inspected tourism IDs to pilot islands; these are not
+  official KHOA polygons or complete island inventories. An exploratory PATIS
+  detail screen displayed port times for one Yeosu sailing, but consistent data
+  for every pilot route was not established and no PATIS-based pairing was added.
+  A non-pilot TourAPI port coordinate was inconsistent with its address and was
+  excluded from approach verification; no guessed coordinate correction was made.
+- Full dated round trips, terminal coordinates, port access, vehicle shipping,
+  lodging, reservations, future timetable integration and more island records
+  remain work. See [contract](docs/ISLAND_DRAFTS.md). Repeat live probes explicitly
+  with `python scripts/check_island_drafts.py --ai`; local reports remain ignored.
+
 ## v0.5 PDF, attraction filtering and actual ferry operations — 2026-10-16
 
 - **102 Python + 11 Node tests passed** on the final source. Existing

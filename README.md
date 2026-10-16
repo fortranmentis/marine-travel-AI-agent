@@ -12,24 +12,40 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.5.0](docs/assets/version.svg)
+![Version: 0.5.1](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, six typed tools, eight retained marine feeds, 113 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, six typed tools, eight retained marine feeds, 122 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
-**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional travel itineraries. Its Korean interface, **바다결**, supports **one- to three-day car or walking trips** across **24 land-tourism regions linked to 29 nationwide sea-travel outlooks**, with the existing Incheon presets retained.
+**Marine Travel AI Agent** combines Korean tourism records, marine activity forecasts and coordinate-based weather forecasts into provisional travel itineraries. Its Korean interface, **바다결**, supports **one- to three-day car or walking trips** across **29 nationwide forecast-linked scopes: 25 ground/bridge scopes and four conditional on-island scopes**, with the existing Incheon presets retained.
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.5 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.5.1 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
 
-## New in v0.5
+## New in v0.5.1 — Island tourism drafts
+
+Previously disabled offshore selections now provide explicit pilot tourism drafts:
+**Incheon northwest → Baengnyeongdo; Incheon southwest → Deokjeokdo; Sinan
+northeast → Jeungdo; Sinan southwest → Heuksando; Yeosu islands → Geomundo.**
+Jeungdo uses a bridge-connected scope; the other four return `conditional_island`.
+
+The planner uses exact island attraction IDs, local routes and the selected
+region's sea-travel outlook. Today's related KOMSA observations appear beside the
+draft. **Daily hours are planned time on the island; ferry crossings, mainland
+access, lodging and vehicle shipping are unconfirmed.** Future travel dates do
+not reuse today's sailings. PDF, replacement and undo retain this access caveat.
+[Pilot scope, data contract and remaining work](docs/ISLAND_DRAFTS.md).
+
+![Deokjeokdo tourism draft with explicit ferry access caveat](docs/island-draft-desktop.jpg)
+
+## Added in v0.5
 
 | Feature | Behavior and boundary |
 | --- | --- |
@@ -37,13 +53,13 @@ The engineering focus is **a traceable path from source records to a structured 
 | **More focused attraction candidates** | Exclude generic culture halls, libraries, public facilities and sports venues from automatic suggestions; retain museums, galleries, memorials and exhibitions. The current catalog excludes 81 of 5,176 tourism-type records before regional/access filtering. This is a selection policy, not a venue-quality assessment. |
 | **Actual ferry operations** | Playwright reads the public KOMSA screen for today's departures, vessels, routes and operation status. Select an operations office and filter by licensed route. A sixth typed tool, `get_ferry_operations`, makes the same observation available to Qwen. |
 
-**Ferry scope:** today's observed departures do not establish arrival times, future timetables, seats or bookings. The adapter leaves these unknown and does not automatically enable offshore itineraries. Five offshore forecast regions remain forecast-only until dated round-trip and access checks are complete. [Setup, endpoints and limits](docs/API-v05.md).
+**Ferry scope:** today's observed departures do not establish arrival times, future timetables, seats or bookings. The adapter leaves these unknown. v0.5.1 provides conditional island tourism drafts, while complete dated round-trip access remains unverified. [Setup, endpoints and limits](docs/API-v05.md).
 
 ![v0.5 actual ferry operations panel, filtered to a licensed route](docs/v05-ferries.jpg)
 
 ## National coverage retained from v0.4
 
-Compare morning/afternoon or daily sea-travel grades across **29 forecast regions**, select a province and region, then request a local trip draft. **24 regions support land-tourism planning**; five offshore regions provide forecasts pending ferry verification. The atomic collection covers **10,102 TourAPI records in ten coastal provinces**; only eligible local candidates enter a draft.
+Compare morning/afternoon or daily sea-travel grades across **29 forecast regions**, select a province and region, then request a local trip draft. **25 scopes now support ground/bridge tourism and four support conditional island drafts**; the latter require independent round-trip verification. The atomic collection covers **10,102 TourAPI records in ten coastal provinces**; only eligible local candidates enter a draft.
 
 Poor sea outlooks prioritize eligible cultural-attraction candidates after facility exclusions. Source grades, missing coverage, route checks and the actual forecast-date range stay visible. Search regions are application filters, not official forecast polygons. See [coverage, API and collection details](docs/API-v04.md).
 
@@ -51,7 +67,7 @@ Poor sea outlooks prioritize eligible cultural-attraction candidates after facil
 
 Daily time windows, attraction counts, party types and child counts; nearby meals by TourAPI cuisine and cafe breaks; horizontally scrollable weather; daily and whole-trip sea-travel outlooks. Walking uses a separate OSRM foot graph.
 
-**Transit now uses Playwright and the rendered Naver Map UI without a transit API key.** It shows lookup-time reference routes, not travel-date timetable verification. Install Chromium with `python -m playwright install chromium`. See [browser setup and limits](docs/BROWSER_TRANSIT.md). Ferry islands still require reviewed round-trip data; none is enabled by default.
+**Transit now uses Playwright and the rendered Naver Map UI without a transit API key.** It shows lookup-time reference routes, not travel-date timetable verification. Install Chromium with `python -m playwright install chromium`. See [browser setup and limits](docs/BROWSER_TRANSIT.md). The separate reviewed round-trip scheduler has no enabled manifest; conditional on-island drafts are available as described above.
 
 Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The preview gallery below also retains v0.2 development captures.
 
@@ -227,7 +243,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 102 Python tests and 11 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on October 16, 2026 (Asia/Seoul): 111 Python tests and 11 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

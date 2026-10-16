@@ -109,6 +109,9 @@ def _create_pdf(plan):
            p(f"동행 {dict(family='가족',solo='개인',couple='커플',group='단체').get(trip.get('party_type'),'여행객')} · 성인 {trip.get('adults',0)}명 · 자녀 {trip.get('child_count',len(trip.get('child_ages',[])))}명 · 이동 {MODES.get(trip.get('transport'),'이동수단 미확인')}"),
            p('전체 바다여행 전망: '+str((plan.get('travel_index') or {}).get('grade') or '자료 미확인')),
            p('검토용 초안입니다. 운영시간·예약·연령 조건·현장 통제는 별도 확인이 필요합니다. 대중교통은 조회 시점 참고 경로입니다.',small),Spacer(1,12)]
+    access=plan.get('island_access')
+    if access:
+        story.extend([p(access['island']+' · '+('왕복 배편 미확정' if access['mode']=='ferry' else '교량 연결 관광'),heading),p(access['note'],small)])
     for index,day in enumerate(plan['days']):
         if index: story.append(PageBreak())
         story.extend([p(f"{index+1}일차 · {day['date']} · {day.get('day_start','')}~{day.get('day_end','')}",heading),

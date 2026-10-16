@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.5.0';
+import {el,button} from './ui.js?v=0.5.1';
 
 export function ferryState(row){
   return row.operation_status==='reported_normal'?'normal':row.operation_status==='not_operating'?'stopped':'unknown';
@@ -43,4 +43,5 @@ export function initializeFerries(form,config){
     }catch(error){if(request===sequence){message.textContent=error.message;result.replaceChildren();}}
     finally{running=false;load.disabled=false;}
   };
+  return {show(name){office.value=name;clear();root.open=true;root.scrollIntoView({behavior:'smooth',block:'start'});load.onclick();}};
 }

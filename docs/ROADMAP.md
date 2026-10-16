@@ -1,5 +1,14 @@
 # Implementation roadmap
 
+## v0.5.1 — conditional island tourism
+
+- [x] Five explicit island/bridge scopes with exact-ID tourism boundaries
+- [x] Conditional on-island schedules, source-specific sea outlook and local routes
+- [x] Today-only related KOMSA observations; future-date and unknown-access labels
+- [x] Persistent web/PDF caveats and scoped alternatives, food and fixed visits
+- [ ] Verified complete outbound/return access, arrivals, bookings and terminal transfers
+
+
 ## v0.5 — export and source-backed ferry observations
 
 - [x] Revision-checked Korean PDF download with embedded local TTF

@@ -33,6 +33,12 @@ SPECS = {s['id']:s for s in [
 for name in LEGACY:
     SPECS[name] = dict(spec(name,'2'), forecast_area='인천내륙', legacy=True)
 
+from .island_drafts import PROFILES
+for name, profile in PROFILES.items():
+    SPECS[name].update(planning_enabled=True, planning_mode='island_draft' if profile['access']=='ferry' else 'bridge',
+                      island_title=profile['title'], access_mode=profile['access'],
+                      reason='왕복 배편 미확정 · 섬 내 관광 초안' if profile['access']=='ferry' else '교량 연결 관광 초안')
+
 RegionName = Annotated[str, Field(min_length=1,max_length=40,json_schema_extra={'enum':list(SPECS)})]
 
 # Exact TourAPI records inspected in the national catalog. These are search
@@ -57,6 +63,9 @@ def matches(row, name, catalog):
     point=coords(row)
     if not point:
         return False
+    if name in PROFILES:
+        profile=PROFILES[name]
+        return str(row.get('areacode'))==definition['area_code'] and str(row.get('contentid')) in (*profile['ids'],*profile.get('food_ids',()))
     if name in LEGACY:
         return str(row.get('areacode','2')) == '2' and in_region(*point,name)
     if str(row.get('areacode')) != definition['area_code'] or not definition['planning_enabled']:
@@ -76,7 +85,8 @@ def gateway(name, catalog=None):
     from . import providers
     from .planner import coords
     c=catalog or providers.catalog()
-    row=next((p for p in c['places'] if str(p['contentid'])==GATEWAYS.get(name)),None)
+    identity=PROFILES[name]['ids'][0] if name in PROFILES else GATEWAYS.get(name)
+    row=next((p for p in c['places'] if str(p['contentid'])==identity),None)
     if not row or not matches(row,name,c):
         return None
     point=coords(row)

@@ -51,7 +51,7 @@ def test_national_defaults_and_offshore_gate(national):
     assert planner.Trip(region='강릉',start_date=date).activity=='seatrip'
     assert planner.Trip(start_date=date).activity=='mudflat'
     with pytest.raises(ValidationError):planner.Trip(region='강릉',activity='mudflat',start_date=date)
-    with pytest.raises(ValidationError):planner.Trip(region='인천북서',start_date=date)
+    assert planner.Trip(region='인천북서',start_date=date).region=='인천북서'
     with pytest.raises(ValidationError):planner.Trip(region='없는 지역',start_date=date)
 
 

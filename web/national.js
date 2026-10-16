@@ -1,5 +1,5 @@
-import {el,button} from './ui.js?v=0.5.0';
-import {indexBadge} from './marine-index.js?v=0.5.0';
+import {el,button} from './ui.js?v=0.5.1';
+import {indexBadge} from './marine-index.js?v=0.5.1';
 
 const legacy=['영종·용유','강화','송도·도심'];
 export function initializeNational(form){
@@ -12,13 +12,16 @@ export function initializeNational(form){
     const local=legacy.includes(region.value);
     for(const option of form.elements.activity.options)if(['mudflat','beach'].includes(option.value))option.disabled=!local;
     if(!local&&['mudflat','beach'].includes(form.elements.activity.value))form.elements.activity.value='seatrip';
+    const scope=data?.regions.find(r=>r.id===region.value);
+    document.querySelector('#island-scope-note').hidden=!scope?.island_title;
+    document.querySelector('#island-scope-note').textContent=scope?.island_title?`${scope.title} 시범 관광 범위: ${scope.island_title}. ${scope.access_mode==='ferry'?'일별 시작·마침은 섬 내 관광 시간입니다. 입출도·출발항 접근·숙박·차량 선적은 미확정이며 선택 이동수단은 섬 안에만 적용합니다.':'교량 연결 관광 범위이며 출발지 접근은 별도 확인합니다.'}`:'';
   }
   function populate(preferred=region.value){
     if(!data)return;
     topProvince.value=province.value;
     const rows=data.regions.filter(r=>province.value==='all'||r.province===province.value);
     region.replaceChildren();
-    for(const r of rows){const option=el('option',r.title+(r.planning_enabled?'':' · 예보만 제공'));option.value=r.id;option.disabled=!r.planning_enabled;region.append(option);}
+    for(const r of rows){const option=el('option',r.title+(r.island_title?' · '+r.island_title+' 초안':'')+(r.planning_enabled?'':' · 자료 준비 필요'));option.value=r.id;option.disabled=!r.planning_enabled;region.append(option);}
     if(['all','인천'].includes(province.value))for(const name of legacy){const option=el('option',name+' · 인천 세부 권역');option.value=name;region.append(option);}
     if([...region.options].some(o=>o.value===preferred&&!o.disabled))region.value=preferred;
     else {const first=[...region.options].find(o=>!o.disabled);if(first)region.value=first.value;}
@@ -40,11 +43,13 @@ export function initializeNational(form){
       const periods=el('div',undefined,'national-periods');
       if(row.outlook.temporal_resolution==='daily')periods.append(el('span','일 단위 예보 · 오전·오후 구분 없음'));
       else for(const period of ['오전','오후']){const evidence=row.outlook.rows.find(r=>r.predcNoonSeCd===period);periods.append(el('span',period+' · '+(row.outlook.status==='stale'?'갱신 필요':evidence?.totalIndex||'자료 없음')));}article.append(periods);
-      if(row.planning_enabled){article.append(button('이 권역으로 일정 만들기',()=>{selectRegion(row.id);form.scrollIntoView({behavior:'smooth',block:'start'});},'national-select'));}
+      if(row.island_title)article.append(el('p',row.island_title+' · '+row.reason,'national-disabled'));
+      if(row.planning_enabled){article.append(button(row.planning_mode==='island_draft'?'섬 내 일정 만들기':'이 권역으로 일정 만들기',()=>{selectRegion(row.id);form.scrollIntoView({behavior:'smooth',block:'start'});},'national-select'));}
       else article.append(el('p',row.reason,'national-disabled'));
       cards.append(article);
     }
-    document.querySelector('#national-count').textContent=`${data.regions.length}개 예보 권역 · ${data.regions.filter(r=>r.planning_enabled).length}개 권역 일정 지원`;
+    const available=data.regions.filter(r=>r.planning_enabled),conditional=available.filter(r=>r.planning_mode==='island_draft').length;
+    document.querySelector('#national-count').textContent=`${data.regions.length}개 예보 권역 · 육상·교량 ${available.length-conditional}개 · 섬 내 초안 ${conditional}개`;
   }
   async function load(){
     const request=++sequence;date.value=form.elements.start_date.value;

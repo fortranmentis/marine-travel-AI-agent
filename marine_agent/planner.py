@@ -46,6 +46,8 @@ class Trip(BaseModel):
     @model_validator(mode='after')
     def validate_trip(self):
         definition=regions.get(self.region)
+        if definition.get('planning_mode') in ('island_draft','bridge') and self.island_id:
+            raise ValueError('도서 권역의 관광 초안과 별도 검증 섬을 함께 지정할 수 없습니다.')
         if self.region not in regions.LEGACY and 'activity' not in self.model_fields_set:
             self.activity='seatrip'
         if not definition['planning_enabled'] and not self.island_id:
@@ -199,6 +201,9 @@ def build_plan(trip):
         candidates = islands.candidates(island, trip.excluded_ids)
     if not candidates:
         raise ValueError('해당 권역에 사용할 관광 후보가 없습니다. 먼저 데이터를 수집하세요.')
+    if regions.get(trip.region).get('island_title') and any(
+        not any((lock.id==p['id'] if lock.id else lock.title==p['title']) for p in candidates) for lock in trip.locked):
+        raise ValueError('도서 초안의 고정 방문은 선택한 섬의 관광 후보에서 지정해 주세요.')
     locked_titles = {lock.title for lock in trip.locked}
     used = {p['id'] for p in candidates if p['title'] in locked_titles or p['id'] in {l.id for l in trip.locked}}
     days, marine_used = [], False
@@ -362,7 +367,16 @@ def build_plan(trip):
         day['alternatives'] = [p for p in candidates if p['id'] not in used][:6]
     validate_schedule(days)
     progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')
-    return dict(status='provisional', trip=trip.model_dump(mode='json'), days=days, travel_index=travel.overall_outlook(days),
+    from .island_drafts import access_info
+    access=access_info(trip.region,trip.start_date.isoformat())
+    if access:
+        for day in days:
+            day['warnings'].insert(0,access['note'])
+            if trip.days>1 and access['mode']=='ferry':
+                day['warnings'].append('섬 숙박·입도일·출도일의 왕복 시간은 미확정입니다. 섬 내 일정만 제공합니다.')
+        progress.emit('data','섬 관광 범위와 배편 확인 상태를 구분했어요.',state='completed')
+    return dict(status='conditional_island' if access and access['mode']=='ferry' else 'provisional',
+                island_access=access,trip=trip.model_dump(mode='json'), days=days, travel_index=travel.overall_outlook(days),
                 generated_at=dt.datetime.now(providers.KST).isoformat(), collected_at=c['collected_at'],
                 marine_scheduled=marine_used,
                 notices=['검토용 초안입니다. 특보·현장 통제·체험장 운영·자녀 연령 조건은 미확인입니다.',
