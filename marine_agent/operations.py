@@ -16,9 +16,19 @@ from .config import ROOT
 @asynccontextmanager
 async def lifespan(app):
  runs.maintenance(recover=True)
+ from . import journeys
+ import threading
+ journeys.maintenance(recover=True)
+ cleanup_stop=threading.Event()
+ def cleanup():
+  while not cleanup_stop.wait(60):
+   try:journeys.maintenance()
+   except Exception:pass
+ cleanup_thread=threading.Thread(target=cleanup,daemon=True);cleanup_thread.start()
  from .observability import start_retention,stop_retention
  start_retention()
  yield
+ cleanup_stop.set();cleanup_thread.join(timeout=2)
  stop_retention()
 def no_store(response:Response):response.headers['Cache-Control']='no-store'
 router=APIRouter(lifespan=lifespan,dependencies=[Depends(no_store)])

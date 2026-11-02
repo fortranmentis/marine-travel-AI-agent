@@ -13,4 +13,4 @@ jobs:
           node-version: '22'
       - run: python -m pip install -r requirements-dev.txt
       - run: python -m pytest -q
-      - run: node --test tests/web.test.mjs tests/live-stability.test.mjs
+      - run: node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-session.test.mjs

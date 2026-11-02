@@ -1,9 +1,9 @@
-import {el,button} from './ui.js?v=0.8.2';
-import {indexBadge} from './marine-index.js?v=0.8.2';
+import {el,button} from './ui.js?v=0.9.0';
+import {indexBadge} from './marine-index.js?v=0.9.0';
 
 const legacy=['영종·용유','강화','송도·도심'];
 export function initializeNational(form){
-  let data=null,sequence=0;
+  let data=null,sequence=0,pendingRegion=null;
   const province=form.elements.province,region=form.elements.region,date=document.querySelector('#outlook-date');
   const topProvince=document.querySelector('#outlook-province');
   date.value=form.elements.start_date.value;date.min=form.elements.start_date.min;
@@ -28,6 +28,7 @@ export function initializeNational(form){
     activities();
   }
   function selectRegion(name){
+    if(!data){pendingRegion=name;return;}
     const row=data?.regions.find(r=>r.id===name);
     if(row){province.value=row.province;populate(name);}
     else if(legacy.includes(name)){province.value='인천';populate(name);region.value=name;}
@@ -65,7 +66,7 @@ export function initializeNational(form){
       for(const name of [...new Set(data.regions.map(r=>r.province))])province.append(new Option(name,name));
       province.value=[...province.options].some(o=>o.value===selected)?selected:'all';
       topProvince.replaceChildren(...[...province.options].map(o=>new Option(o.textContent,o.value)));
-      populate();render();
+      if(pendingRegion){const preferred=pendingRegion;pendingRegion=null;selectRegion(preferred);}else{populate();render();}
       note.textContent=`${data.date} · 09~18시 비교 (일 예보는 하루 등급) · 수집 ${new Date(data.collected_at).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'})}`;
       document.querySelector('#forecast-range').textContent=data.forecast_dates.length?`현재 제공 날짜: ${data.forecast_dates[0]} ~ ${data.forecast_dates.at(-1)} · 날짜·오전/오후별 결측이 있을 수 있어요.`:'현재 제공된 예보 날짜가 없습니다.';
     }catch{if(request!==sequence)return;data=null;cards.replaceChildren();document.querySelector('#forecast-range').textContent='';note.textContent='전국 예보를 불러오지 못했습니다. 데이터 수집·연결 상태를 확인해 주세요.';}

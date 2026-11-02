@@ -1,5 +1,7 @@
 # v0.8 — Live execution graphs and local Langfuse
 
+**v0.9:** form-based journeys now use local LangGraph nodes with persisted choice/resume state. The new two-hour recovery stores contain structured trip/plan data and are separate from the seven-day summary-only telemetry described here. They are not sent to Langfuse. [Service flow, retention and recovery](LANGGRAPH.md).
+
 ## What runs where
 
 - **Cytoscape.js 3.34.4:** the travel progress popup, completed request graph and authenticated `/ops` live graph. Color/status changes come from real execution events, not simulated percentages or model reasoning.

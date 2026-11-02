@@ -72,7 +72,7 @@ Existing plan/chat endpoints retain their response contracts and add an `executi
 
 ## Storage and failures
 
-SQLite stores allowlisted names, statuses, IDs, timestamps, measured durations, counts, attempt numbers, parent relationships and fixed error codes. It stores **no prompts, model thoughts, model responses, provider payloads, credential URLs or precise trip coordinates**. Traveler result data remains in the existing bounded in-memory plan registry; execution history is not itinerary persistence.
+SQLite stores allowlisted names, statuses, IDs, timestamps, measured durations, counts, attempt numbers, parent relationships and fixed error codes. It stores **no prompts, model thoughts, model responses, provider payloads, credential URLs or precise trip coordinates**. Since v0.9, traveler results use a separate two-hour bounded SQLite plan registry and LangGraph recovery store. These richer local stores are not execution history or exported telemetry. See [LangGraph storage/recovery](LANGGRAPH.md).
 
 Terminal summaries expire after seven days. Cleanup runs when creating executions, viewing ops status and completing jobs. Startup marks unfinished executions interrupted, without replaying them. AI requests can finish if summary storage fails; `/ops` exposes recording health. Collection jobs require a working summary store before acceptance. Jobs already started during a recording outage may still complete collection; operators must verify freshness and recording health.
 

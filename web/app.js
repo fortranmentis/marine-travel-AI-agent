@@ -1,14 +1,15 @@
-import {initializeNational} from './national.js?v=0.8.2';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.8.2';
-import {initializeTripForm} from './trip-form.js?v=0.8.2';
-import {$,el,button,plainText} from './ui.js?v=0.8.2';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.8.2';
-import {weatherCard} from './weather.js?v=0.8.2';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.8.2';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.8.2';
-import {initializeFerries} from './ferries.js?v=0.8.2';
-import {initializeTransport} from './public-transport.js?v=0.8.2';
-import {initializeTimetable} from './ferry-timetable.js?v=0.8.2';
+import {initializeJourney} from './journey-session.js?v=0.9.0';
+import {initializeNational} from './national.js?v=0.9.0';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.9.0';
+import {initializeTripForm} from './trip-form.js?v=0.9.0';
+import {$,el,button,plainText} from './ui.js?v=0.9.0';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.9.0';
+import {weatherCard} from './weather.js?v=0.9.0';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.9.0';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.9.0';
+import {initializeFerries} from './ferries.js?v=0.9.0';
+import {initializeTransport} from './public-transport.js?v=0.9.0';
+import {initializeTimetable} from './ferry-timetable.js?v=0.9.0';
 
 const form=$('#trip-form');
 let ferryPanel=null;
@@ -20,7 +21,9 @@ const transportUI=initializeTransport(form),timetableUI=initializeTimetable(form
 const national=initializeNational(form);
 api('/api/config').then(config=>{ferryPanel=initializeFerries(form,config);for(const island of config.islands||[]){const option=el('option',island.title);option.value=island.id;form.elements.island_id.append(option);}const option=form.elements.transport.querySelector('[value=transit]');option.textContent=config.mobility?.transit?'대중교통 + 도보 (지도 참고 경로)':'대중교통 + 도보 (조회 준비 필요)';option.title=config.mobility?.transit_reason||'조회 시점 참고 경로 · 여행일 시간표 미확인';}).catch(()=>{});
 function status(text,error=false){$('#status').textContent=text;$('#status').className=error?'error':'';}
-function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);}
+function busy(value){state.busy=value;document.querySelectorAll('button:not([data-always-enabled])').forEach(b=>b.disabled=value);journey.restrictions();}
+const journey=initializeJourney({stream:streamRequest,display:displayResult,busy,status,isBusy:()=>state.busy});
+function mutationButton(text,action){const b=button(text,()=>{if(!journey.blocked())action();});b.dataset.planMutation='';return b;}
 function trip(){const f=new FormData(form);return {region:f.get('region'),start_date:f.get('start_date'),days:Number(f.get('days')),...tripForm.read(),activity:f.get('activity'),excluded_ids:state.excluded,locked:state.locked};}
 async function api(path,body){const response=await fetch(path,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});const data=await response.json();if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:'날짜·인원·고정 일정 등 입력 조건을 확인해 주세요.');return data;}
 function edits(){const box=$('#edits');box.replaceChildren();if(state.locked.length||state.excluded.length){box.append(el('div',`고정 ${state.locked.length}개 · 제외 ${state.excluded.length}개`));box.append(button('다음 생성의 고정·제외 조건 초기화',()=>{state.locked=[];state.excluded=[];edits();status('다시 생성하면 초기화한 조건이 반영됩니다.');}));}}
@@ -84,9 +87,9 @@ function render(plan){
         card.addEventListener('click',event=>{if(!event.target.closest('button,a'))showOnMap(day.date,item.slot_id);});
         card.addEventListener('keydown',event=>{if(event.target===card&&['Enter',' '].includes(event.key)){event.preventDefault();showOnMap(day.date,item.slot_id);}});
       }
-      if(['tourism','marine'].includes(item.kind)||item.kind==='locked'&&item.original_kind){actions.append(button(item.kind==='locked'?'고정 해제':'시간 고정',()=>setLock(item)));}
-      if(item.kind==='tourism')actions.append(button('다른 관광지로 바꾸기',()=>showAlternatives(day,item)));
-      if(item.id&&item.kind!=='locked')actions.append(button('다음 일정에서 제외',()=>{if(!state.excluded.includes(item.id))state.excluded.push(item.id);edits();status('다음 생성에서 제외할 조건을 추가했습니다.');}));
+      if(['tourism','marine'].includes(item.kind)||item.kind==='locked'&&item.original_kind){actions.append(mutationButton(item.kind==='locked'?'고정 해제':'시간 고정',()=>setLock(item)));}
+      if(item.kind==='tourism')actions.append(mutationButton('다른 관광지로 바꾸기',()=>showAlternatives(day,item)));
+      if(item.id&&item.kind!=='locked')actions.append(mutationButton('다음 일정에서 제외',()=>{if(!state.excluded.includes(item.id))state.excluded.push(item.id);edits();status('다음 생성에서 제외할 조건을 추가했습니다.');}));
       if(actions.childNodes.length)info.append(actions);card.append(info);
       if(!compact)card.append(photo(item.id));slot.append(card);section.append(slot);
     }
@@ -99,7 +102,7 @@ function render(plan){
     const link=el('a',value.license==='Type3'?'공공누리 3유형':'공공누리 1유형');link.href=value.license_url;link.target='_blank';link.rel='noopener noreferrer';row.append(link);credits.append(row);
   }
   if(credits.childNodes.length>1)box.append(credits);
-  box.append(el('p','자료 수집: '+plan.collected_at,'forecast'));$('#chat-panel').hidden=false;setMapPlan(plan);
+  box.append(el('p','자료 수집: '+plan.collected_at,'forecast'));$('#chat-panel').hidden=false;setMapPlan(plan);journey.restrictions();
 }
 async function setLock(item){if(state.busy)return;busy(true);try{const p=state.plan;const updated=await api(`/api/plans/${p.plan_id}/lock`,{revision:p.revision,slot_id:item.slot_id,locked:item.kind!=='locked'});syncForm(updated);render(updated);status(item.kind==='locked'?'고정을 해제했습니다.':'시간을 고정했습니다. 지도 좌표도 유지됩니다.');}catch(error){status(error.message,true);}finally{busy(false);}}
 function showAlternatives(day,item){
@@ -120,24 +123,31 @@ $('#download-pdf').onclick=async()=>{
     document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);status('일정 PDF 다운로드를 요청했습니다. 브라우저 다운로드 목록에서 확인하세요.');
   }catch(error){status(error.message,true);}finally{busy(false);}
 };
-$('#undo').onclick=async()=>{if(state.busy)return;busy(true);try{const p=state.plan;render(await api(`/api/plans/${p.plan_id}/undo`,{revision:p.revision}));status('직전 교체를 되돌렸습니다.');}catch(error){status(error.message,true);}finally{busy(false);}};
-async function aiRequest(request){
-  state.lastRequest=request;beginProgress();
-  try{const response=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const result=await readNDJSON(response,updateProgress);finishProgress(result);return result;}
+$('#undo').dataset.planMutation='';$('#chat-form button').dataset.planMutation='';
+$('#undo').onclick=async()=>{if(state.busy||journey.blocked())return;busy(true);try{const p=state.plan;render(await api(`/api/plans/${p.plan_id}/undo`,{revision:p.revision}));status('직전 교체를 되돌렸습니다.');}catch(error){status(error.message,true);}finally{busy(false);}};
+async function streamRequest(path,request,token){
+  beginProgress();
+  try{const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'X-Journey-Token':token}:{})},body:JSON.stringify(request)});const result=await readNDJSON(response,event=>{journey.remember(event);updateProgress(event);});finishProgress(result);return result;}
   catch(error){finishProgress(null,true);throw error;}
 }
-function displayResult(data){if(data.plan){syncForm(data.plan);render(data.plan);}$('#messages').append(el('div',data.answer,'answer'));$('#chat-panel').hidden=false;$('#trace').textContent=data.trace.map(t=>`${t.tool}: ${t.status}`).join(' → ');status(data.status==='ok'?'초안을 만들었습니다. 미확인 항목을 확인해 주세요.':'AI 처리 상태: '+data.status+' · 데이터 기반 초안을 확인해 주세요.');}
+async function aiRequest(request){
+  state.lastRequest=request;
+  if(request.trip){journey.prepare();return streamRequest('/api/journeys/stream',{trip:request.trip,use_ai:request.use_ai??true});}
+  journey.forget();return streamRequest('/api/chat/stream',request);
+}
+function displayResult(data){journey.update(data);if(data.plan){syncForm(data.plan);render(data.plan);}$('#messages').replaceChildren(el('div',data.answer||'저장된 여행 진행입니다.','answer'));$('#chat-panel').hidden=false;$('#trace').textContent=(data.trace||[]).map(t=>`${t.tool}: ${t.status}`).join(' → ');if(data.execution)executionSummary(data.execution);status(data.status==='waiting'?'선택을 기다리고 있습니다. 위에서 진행 방법을 선택해 주세요.':data.status==='ok'?'초안을 만들었습니다. 미확인 항목을 확인해 주세요.':'데이터 기반 초안과 처리 상태를 확인해 주세요.');}
 async function generate(useAI){
-  if(state.busy||!form.reportValidity())return;busy(true);status(useAI?'AI가 여행 자료를 확인하고 있습니다.':'데이터와 규칙으로 초안을 만드는 중입니다.');
-  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 선택한 권역의 바다여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);executionSummary(plan.execution);$('#chat-panel').hidden=false;state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
+  if(state.busy||!form.reportValidity())return;busy(true);status('여행 조건을 검토하고 있습니다.');
+  try{const input=trip();const message='입력한 여행 조건으로 검토용 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input,use_ai:useAI});state.history=useAI?[{role:'user',content:message},{role:'assistant',content:data.answer}]:[];displayResult(data);}
   catch(error){status(error.message,true);}finally{busy(false);}
 }
 form.onsubmit=e=>{e.preventDefault();generate(true);};$('#rules').onclick=()=>generate(false);
-initializeProgress(async()=>{if(state.busy||!state.lastRequest)return;busy(true);try{const data=await aiRequest(state.lastRequest);$('#messages').replaceChildren();displayResult(data);}catch(error){status(error.message,true);}finally{busy(false);}},()=>generate(false));
+initializeProgress(async()=>{if(state.busy)return;if(journey.hasTicket()){$('#progress-dialog').close();await journey.restore();return;}if(!state.lastRequest)return;busy(true);try{const data=await aiRequest(state.lastRequest);$('#messages').replaceChildren();displayResult(data);}catch(error){status(error.message,true);}finally{busy(false);}},()=>generate(false));
 $('#chat-form').onsubmit=async e=>{
-  e.preventDefault();if(state.busy)return;const message=$('#chat-input').value;busy(true);status('수정 요청을 검토하고 있습니다…');$('#messages').append(el('div',message,'user-message'));
+  e.preventDefault();if(state.busy||journey.blocked())return;const message=$('#chat-input').value;busy(true);status('수정 요청을 검토하고 있습니다…');$('#messages').append(el('div',message,'user-message'));
   try{const context=state.plan?`현재 여행 조건: ${JSON.stringify({...state.plan.trip,locked:state.locked,excluded_ids:state.excluded})}\n요청: ${message}`:message;const data=await aiRequest({message:context,history:state.history.slice(-6),locked:state.locked,excluded_ids:state.excluded});displayResult(data);state.history.push({role:'user',content:message},{role:'assistant',content:data.answer});$('#chat-input').value='';}
   catch(error){status(error.message,true);}finally{busy(false);}
 };
 initializeMap();
+if(journey.hasTicket())journey.restore();
 api('/api/health').then(d=>{$('#health').textContent=d.catalog_ready?`${d.scope==='coastal'?'전국':'인천'} 관광 ${d.places.toLocaleString('ko-KR')}건 연결 · 바다예보 ${d.forecast_regions||0}권역\n수집: ${d.collected_at}`:'데이터 수집을 먼저 실행해 주세요.';$('#health-dot').style.color=d.catalog_ready?'#308a68':'#a47d39';}).catch(()=>{$('#health').textContent='서버 상태를 확인할 수 없습니다.';});

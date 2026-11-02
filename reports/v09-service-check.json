@@ -1,0 +1,36 @@
+{
+  "version": "0.9.0",
+  "real_qwen": {
+    "run_id": "62279a816edf4e8c859e96aab2cedc0c",
+    "execution_status": "warning",
+    "duration_s": 35.689,
+    "steps": 13,
+    "langgraph_tools": [
+      "journey_build",
+      "journey_finish",
+      "journey_validate"
+    ],
+    "langfuse_observations": 14,
+    "langfuse_generations": 2,
+    "raw_input_output_absent": true
+  },
+  "browser_fixture": {
+    "data": "synthetic rain, venues and routes; real HTTP/LangGraph/SQLite",
+    "pending_visits": 1,
+    "requested_visits": 3,
+    "after_explicit_transit_visits": 3,
+    "pending_restored_after_server_restart": true,
+    "mobile_document_width": 375,
+    "mobile_viewport": 390
+  },
+  "production_browser": {
+    "completed_plan_restored_after_container_restart": true,
+    "pdf_downloaded_after_restart": true,
+    "pdf_bytes": 66071
+  },
+  "http_fixture": {
+    "first_ticket_seconds": 0.053,
+    "completed_after_stream_close": true,
+    "final_status": "pending"
+  }
+}

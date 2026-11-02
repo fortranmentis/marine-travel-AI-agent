@@ -14,7 +14,7 @@ from .config import ROOT, CATALOG
 from . import agent, planner, providers, progress, plans, islands, regions, runs
 from .browser_transit import budgeted
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.8.2')
+app = FastAPI(title='Marine Travel AI Agent', version='0.9.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -94,7 +94,7 @@ def public_config():
                 ferry_status='live_operations_only_roundtrip_review_required',ferry_offices=list(OFFICES),
                 today=dt.datetime.now(providers.KST).date().isoformat(),
                 tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.8.2',transport_api=availability())
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.9.0',transport_api=availability())
 
 
 @app.get('/api/transport/nearby')
@@ -296,3 +296,5 @@ def lock_slot(plan_id: str, request: LockUpdate):
 
 from .operations import router as operations_router
 app.include_router(operations_router)
+from .journeys import router as journeys_router
+app.include_router(journeys_router)

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.8.2" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.9.0" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent · 바다결
 
@@ -12,14 +12,14 @@
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.8.2](docs/assets/version.svg)
+![Version: 0.9.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 8개 도구, 8종 보관 피드, 207개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 8개 도구, 8종 보관 피드, 223개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,9 +27,17 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.8.2 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.9.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
+
+## v0.9 LangGraph 서비스 연결
+
+입력 폼의 AI·규칙 기반 요청이 LangGraph의 일정 구성 → 검증 → 날씨·도보 제약 시 선택 대기 → 재검토 → 완료 흐름을 사용합니다. 최대 2회 재검토하며 고정 예약을 보존하고, 이동수단 변경은 명시적인 선택 후 적용합니다. 체크포인트와 버전별 일정을 SQLite에 보관해 최대 2시간 동안 새로고침·서버 재시작 후 복원합니다. Cytoscape·Langfuse에는 허용된 단계 이벤트만 전달하며 n8n은 자료 수집을 계속 담당합니다. [동작·API·복구·제한](docs/LANGGRAPH.md).
+
+![검증용 합성 우천 예보: 서버 재시작 후 선택 대기 복원](docs/langgraph-v09-pending.png)
+
+위 화면은 합성 예보·관광지·경로임을 표시한 검증 화면입니다. 실제 Qwen·운영 서비스 결과는 [VALIDATION.md](VALIDATION.md)에 구분해 기록합니다.
 
 ## v0.8.2 날씨·이동·동행 시나리오 규칙
 
@@ -200,7 +208,11 @@ flowchart TD
     Sources[TourAPI 및 해양지수 8종] --> Sync[전체 페이지 수집과 검증]
     Sync --> Catalog[로컬 JSON 카탈로그 원자적 갱신]
     UI[한국어 웹 UI] --> API[FastAPI]
-    API --> Agent[Ollama 도구 호출 루프]
+    API --> Graph[LangGraph 폼 일정 흐름]
+    Graph --> Agent[Ollama 도구 호출 루프]
+    API -->|기존 채팅| Agent
+    Graph --> Checkpoint[(2시간 체크포인트)]
+    Graph -->|규칙 생성 및 재검토| Planner
     Agent --> Tools[허용 목록 및 인자 검증]
     Tools --> Planner[Python 일정 엔진]
     Tools --> Detail[관광 상세정보 및 기상청 예보]
@@ -208,7 +220,7 @@ flowchart TD
     API -->|규칙 기반 직접 생성| Planner
     Planner --> Plan[구조화된 검토용 일정]
     Plan --> Enrich[사진 및 OSRM 도로 경로]
-    Enrich --> Store[리비전 기반 메모리 일정 저장]
+    Enrich --> Store[리비전 기반 SQLite 일정 저장]
     Store --> UI
     Store --> PDF[한글 PDF 저장]
     Tools --> Ferry[Playwright KOMSA 공식 화면 조회]
@@ -311,7 +323,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 11월 2일 한국시간 기준 재실행: Python 181개, 프런트엔드 26개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 11월 2일 한국시간 기준 재실행: Python 195개, 프런트엔드 28개 테스트 통과.** 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |
@@ -324,7 +336,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest -q --basetemp=.tmp/pytest
-node --test tests/web.test.mjs tests/live-stability.test.mjs
+node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-session.test.mjs
 ```
 
 프런트엔드 테스트에는 **Node.js 18 이상**이 필요하며 npm 패키지 설치는 필요하지 않습니다. 상세 근거와 미검증 항목은 [검증 기록](VALIDATION.md)을 참고하세요.
@@ -352,7 +364,7 @@ node --test tests/web.test.mjs tests/live-stability.test.mjs
 - **현장 이용 가능성:** 운영시간·예약·자녀 이용 연령·특보·현장 통제·주차장 접근은 미검증입니다. 좋은 지수가 안전한 출입이나 가족 적합성을 의미하지 않습니다.
 - **예보 해석:** 해양예보 누락·오래된 자료는 체험 편성 근거로 사용하지 않습니다. 날씨 누락도 좋은 날씨로 해석하지 않지만, 해양지수 조건을 충족하면 기상 미확인 안내와 함께 후보를 편성할 수 있습니다. 날씨는 표시된 대표 관광 후보 좌표 기준이며 전체 방문지의 예보를 검증하지 않습니다.
 - **배치 가정:** 갯벌체험 60분, 준비·환복 각 30분, 관광 90분은 설계 가정입니다. 초기 배치는 최적 경로를 보장하지 않습니다. 도로 시간은 실시간 교통을 반영하지 않으며 배편은 검증된 당일 왕복 자료가 필요하며 차량 선적·섬 숙박·출발항까지의 접근은 지원하지 않습니다.
-- **실행 범위:** Uvicorn 단일 워커를 사용합니다. 일정은 프로세스 메모리에 최대 128개·생성 후 2시간 보관되며 재시작 시 사라집니다. AI 대화 생성은 동시에 한 건만 처리합니다. 인증 없는 로컬 개발용이므로 루프백으로 실행합니다.
+- **실행 범위:** Uvicorn 단일 워커를 사용합니다. 일정은 SQLite에 등록 후 2시간·최대 128개 보관하며 재시작 후에도 복원합니다. 그래프 진행은 별도로 시작 후 2시간·최대 128건 보관합니다. 생성은 동시에 한 건만 처리합니다. 진행별 접근 토큰과 운영자 토큰은 있지만 외부 공개용 계정 인증 체계는 아니므로 루프백에서만 실행합니다.
 - **데이터·이미지:** `.env`, `data/`, 가상환경, 실제 대화 보고서는 Git에서 제외합니다. 사진은 관광지 ID와 허용 이용 유형을 확인한 경우 표시합니다. 원천 문구·사진·Leaflet·지도 데이터의 이용조건은 각각 적용됩니다.
 
 캐시·문제 해결·GitHub About 설정 문구는 [운영 참고 문서](docs/NOTES.md)에 있습니다.

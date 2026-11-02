@@ -1,5 +1,5 @@
-import {createGraph} from './execution-graph.js?v=0.8.2';
-import {$, el} from './ui.js?v=0.8.2';
+import {createGraph} from './execution-graph.js?v=0.9.0';
+import {$, el} from './ui.js?v=0.9.0';
 
 const steps = [['input','조건 확인'],['data','예보·관광정보 조회'],['schedule','일정 구성·검증'],['enrich','지도·사진 준비'],['result','결과 완성']];
 let started = 0, timer, lastMessage = '', running = false;
@@ -11,8 +11,8 @@ function progressGraph(){return liveGraph||(liveGraph=createGraph(document.query
 export function executionSummary(data){if(!data)return;summary=data;const graphTarget=document.querySelector("#result-graph");if(graphTarget){graphTarget.hidden=false;resultGraph??=createGraph(graphTarget);resultGraph.snapshot(data);requestAnimationFrame(()=>resultGraph.resize());}const target=document.querySelector("#execution-summary");if(!target)return;target.hidden=false;target.replaceChildren(el("h3","이번 요청의 실행 흐름"),el("p",`${{success:"완료",warning:"일부 자료 확인 필요",failed:"실패",interrupted:"중단"}[data.status]||data.status} · ${data.duration_s}초`));const list=el("ol");for(const s of data.steps||[]){const row=el("li",`${s.tool||s.provider||steps.find(([k])=>k===s.stage)?.[1]||s.stage} · ${{completed:"완료",started:"실행 중",failed:"실패",warning:"일부 미확보",skipped:"생략"}[s.state]||s.state} · ${s.duration_s??"—"}초`);list.append(row);}const details=el("details");details.append(el("summary","실제 단계·도구 호출 보기"),list);target.append(details);}
 
 export function openProgress() { if (!$('#progress-dialog').open) $('#progress-dialog').showModal();requestAnimationFrame(()=>liveGraph?.resize()); }
-export function beginProgress() {
-  progressGraph().reset({kind:"ai_plan"});
+export function beginProgress(kind="plan") {
+  progressGraph().reset({kind});
   completed.clear();toolRows.clear();stageTimes.clear();document.querySelector("#progress-tools")?.replaceChildren(); running = true; started = performance.now();
   $('#progress-steps').replaceChildren(...steps.map(([id,label]) => {const li=el('li',label);li.dataset.stage=id;return li;}));
   $('#progress-recovery').hidden = true;

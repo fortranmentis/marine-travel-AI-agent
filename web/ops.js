@@ -1,6 +1,6 @@
-import {restoreRuns,updateRun,updateStep,isActiveRun} from './live-model.js?v=0.8.2';
-import {createGraph,graphLabel} from './execution-graph.js?v=0.8.2';
-import {connectLive} from './live-events.js?v=0.8.2';
+import {restoreRuns,updateRun,updateStep,isActiveRun} from './live-model.js?v=0.9.0';
+import {createGraph,graphLabel} from './execution-graph.js?v=0.9.0';
+import {connectLive} from './live-events.js?v=0.9.0';
 const $=s=>document.querySelector(s),el=(tag,text)=>{const e=document.createElement(tag);if(text!=null)e.textContent=text;return e;};
 const names={ai_plan:'AI 일정',rules_plan:'규칙 일정',seatrip_sync:'바다여행지수 갱신',tourism_sync:'관광정보 갱신',queued:'대기',running:'실행 중',success:'성공',warning:'경고 포함 완료',failed:'실패',interrupted:'중단',started:'실행 중',completed:'완료',skipped:'생략',input:'조건 확인',data:'자료 조회',schedule:'일정 구성·검증',enrich:'지도·사진',result:'결과 완성',collect:'수집',validate:'검증',save:'저장',fallback:'규칙 기반 전환'};
 const label=s=>names[s]||s,clock=s=>s?new Date(s).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):'기록 없음';

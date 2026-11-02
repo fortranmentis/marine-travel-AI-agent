@@ -1,8 +1,13 @@
-"""Single-process, bounded plan registry with atomic revision checks."""
+"""Bounded plan registry with optional SQLite persistence and atomic revisions."""
 from collections import OrderedDict
 import copy
 import threading
 import time
+import os
+import json
+import sqlite3
+from pathlib import Path
+from contextlib import contextmanager
 from uuid import uuid4
 
 from . import enrichment, planner
@@ -15,10 +20,53 @@ class PlanError(Exception):
 
 
 class PlanStore:
-    def __init__(self, capacity=128, ttl=7200):
+    def __init__(self, capacity=128, ttl=7200, persistent=False):
         self.capacity, self.ttl = capacity, ttl
         self.entries = OrderedDict()
         self.lock = threading.RLock()
+        self.persistent = persistent
+
+    @contextmanager
+    def database(self):
+        from .config import DATA
+        path=Path(os.environ.get('PLANS_DB_PATH',str(DATA/'plans.sqlite3')))
+        path.parent.mkdir(parents=True,exist_ok=True)
+        c=sqlite3.connect(path,timeout=10)
+        c.execute('PRAGMA journal_mode=WAL')
+        c.execute('CREATE TABLE IF NOT EXISTS plans(id TEXT PRIMARY KEY,revision INTEGER,expires REAL,body TEXT,previous TEXT)')
+        try:
+            with c:yield c
+        finally:c.close()
+
+    def load(self,plan_id):
+        if not self.persistent:return
+        with self.database() as c:
+            c.execute('DELETE FROM plans WHERE expires<=?',(time.time(),))
+            row=c.execute('SELECT expires,body,previous FROM plans WHERE id=?',(plan_id,)).fetchone()
+        if row:
+            self.entries[plan_id]=dict(plan=json.loads(row[1]),previous=json.loads(row[2]) if row[2] else None,
+                expires=time.monotonic()+max(0,row[0]-time.time()))
+        else:self.entries.pop(plan_id,None)
+
+    def save(self,result,previous=None,expected=None):
+        if not self.persistent:return
+        with self.database() as c:
+            c.execute('BEGIN IMMEDIATE')
+            c.execute('DELETE FROM plans WHERE expires<=?',(time.time(),))
+            if expected is None:
+                c.execute('INSERT INTO plans VALUES(?,?,?,?,?)',(result['plan_id'],result['revision'],time.time()+self.ttl,json.dumps(result,ensure_ascii=False),None))
+                c.execute('DELETE FROM plans WHERE id IN (SELECT id FROM plans ORDER BY expires DESC LIMIT -1 OFFSET ?)',(self.capacity,))
+            else:
+                changed=c.execute('UPDATE plans SET revision=?,body=?,previous=? WHERE id=? AND revision=?',
+                    (result['revision'],json.dumps(result,ensure_ascii=False),json.dumps(previous,ensure_ascii=False) if previous else None,result['plan_id'],expected)).rowcount
+                if not changed:raise PlanError(409,'이미 변경되거나 만료된 일정입니다. 최신 일정을 확인하세요.')
+
+    def latest(self,plan_id):
+        with self.lock:
+            self.prune();self.load(plan_id)
+            entry=self.entries.get(plan_id)
+            if not entry:raise PlanError(410,'일정 보관 시간이 지났습니다. 새로 생성해 주세요.')
+            return copy.deepcopy(entry['plan'])
 
     def prune(self):
         now = time.monotonic()
@@ -28,6 +76,7 @@ class PlanStore:
     def get(self, plan_id, revision):
         with self.lock:
             self.prune()
+            self.load(plan_id)
             entry = self.entries.get(plan_id)
             if not entry:
                 raise PlanError(410, '일정 보관 시간이 지났거나 서버가 재시작되었습니다. 일정을 다시 생성해 주세요.')
@@ -36,14 +85,20 @@ class PlanStore:
             return copy.deepcopy(entry['plan'])
 
     @budgeted
-    def register(self, plan):
+    def register(self, plan, plan_id=None):
+        # A stable graph-attempt ID makes replay after registration idempotent.
+        if plan_id:
+            try:return self.latest(plan_id)
+            except PlanError as error:
+                if error.status!=410:raise
         result = copy.deepcopy(plan)
-        result.update(plan_id=uuid4().hex, revision=1, can_undo=False)
+        result.update(plan_id=plan_id or uuid4().hex, revision=1, can_undo=False)
         for day in result['days']:
             for item in day['items']:
                 item['slot_id'] = uuid4().hex
         enrichment.enrich(result)
         with self.lock:
+            self.save(result)
             self.prune()
             while len(self.entries) >= self.capacity:
                 self.entries.popitem(last=False)
@@ -55,6 +110,7 @@ class PlanStore:
             self.get(result['plan_id'], revision)
             result['revision'] = revision + 1
             result['can_undo'] = previous is not None
+            self.save(result,previous,revision)
             self.entries[result['plan_id']].update(plan=copy.deepcopy(result), previous=previous)
             return copy.deepcopy(result)
 
@@ -143,4 +199,4 @@ class PlanStore:
             return self.commit(result, revision, None)
 
 
-store = PlanStore()
+store = PlanStore(persistent=True)

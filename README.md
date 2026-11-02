@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.8.2" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.9.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent
 
@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.8.2](docs/assets/version.svg)
+![Version: 0.9.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 207 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 223 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,7 +27,15 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.8.2 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.9.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## v0.9 — LangGraph journeys connected to the service
+
+Form-based AI and rule-only requests now use a local LangGraph workflow: build → validate → wait for a traveler choice when weather/walking causes a shortage → revalidate → finish. Up to two rechecks preserve fixed bookings; transport changes require an explicit choice. SQLite checkpoints and revisioned plans restore after reload/restart for up to two hours. Cytoscape and Langfuse receive allowlisted node events; n8n still handles collection. [Behavior, endpoints, recovery and limits](docs/LANGGRAPH.md).
+
+![Synthetic rain: restored choice after server restart](docs/langgraph-v09-pending.png)
+
+The screenshot uses explicitly labelled synthetic weather, venues and routes. Real Qwen/service evidence is listed separately in [VALIDATION.md](VALIDATION.md).
 
 ## v0.8.2 — weather-aware scheduling scenarios
 
@@ -72,7 +80,9 @@ Cytoscape.js now visualizes actual stage/model/tool events in the travel popup a
 ```mermaid
 flowchart LR
     User[Traveler] --> API[FastAPI]
-    API --> Model[Qwen / Ollama]
+    API --> Graph[LangGraph workflow]
+    Graph --> Model[Qwen / Ollama]
+    Graph --> Checkpoints[(Two-hour checkpoints)]
     Model --> Tools[Typed tools]
     Tools --> Plan[Schedule validation]
     Plan --> Result[Maps, photos, PDF]
@@ -196,7 +206,11 @@ flowchart TD
     Sources[TourAPI and eight marine index feeds] --> Sync[Paginated collector]
     Sync --> Catalog[Atomic local JSON catalog]
     UI[Korean web interface] --> API[FastAPI]
-    API --> Agent[Bounded Ollama tool loop]
+    API --> Graph[LangGraph form workflow]
+    Graph --> Agent[Bounded Ollama tool loop]
+    API -->|legacy chat| Agent
+    Graph --> Checkpoint[(Two-hour checkpoints)]
+    Graph -->|rules and rechecks| Planner
     Agent --> Tools[Allowlisted typed tools]
     Tools --> Planner[Python itinerary engine]
     Tools --> Detail[TourAPI details and KMA weather]
@@ -204,7 +218,7 @@ flowchart TD
     API -->|direct planning| Planner
     Planner --> Plan[Structured provisional itinerary]
     Plan --> Enrich[Photos and OSRM road routes]
-    Enrich --> Store[Revisioned in-memory plan registry]
+    Enrich --> Store[Revisioned SQLite plan registry]
     Store --> UI
     Store --> PDF[Korean PDF export]
     Tools --> Ferry[KOMSA public screen via Playwright]
@@ -316,7 +330,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on November 2, 2026 (Asia/Seoul): 181 Python tests and 26 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on November 2, 2026 (Asia/Seoul): 195 Python tests and 28 frontend tests passed.** These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |
@@ -329,7 +343,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest -q --basetemp=.tmp/pytest
-node --test tests/web.test.mjs tests/live-stability.test.mjs
+node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-session.test.mjs
 ```
 
 Frontend tests need **Node.js 18+**, with no npm dependencies. See the [validation record](VALIDATION.md) for evidence boundaries and untested areas.
@@ -357,7 +371,7 @@ See [v0.5 export/ferry contracts](docs/API-v05.md) and [v0.2 revision/stream con
 - **Travel feasibility:** operating hours, bookings, child age limits, warning bulletins, closures and parking access are unverified. Favorable indices do not establish safe access or family suitability.
 - **Forecast interpretation:** missing or stale marine forecasts do not enable marine slots. Missing weather remains unknown; a favorable marine index can still produce a provisional candidate with unchecked weather notices. Weather is queried at a labeled representative tourism point, not every visit.
 - **Planning assumptions:** 60-minute mudflat experiences, 30-minute preparation/changing blocks and 90-minute tourism visits are heuristics. Initial scheduling is not a route optimizer. Driving estimates exclude current traffic; reviewed passenger-ferry day trips require separate data and do not include vehicle shipping or mainland-to-port access.
-- **Runtime limits:** use one Uvicorn worker. Plans remain in one process for two hours, capped at 128 entries; restarts lose them. One chat generation runs at a time. The prototype has no authentication; use loopback for local development.
+- **Runtime limits:** use one Uvicorn worker. Plans persist in local SQLite for two hours from registration, capped at 128 entries. Graph sessions have a separate two-hour/128-session limit. One generation runs at a time. Journey recovery uses per-session capabilities and operations use separate tokens; this is not public-deployment account authentication. Use loopback only.
 - **Data and assets:** `.env`, `data/`, virtual environments and live conversation reports are ignored. Photos require matching tourism IDs and accepted license metadata. Source text, images, Leaflet and map data retain their respective terms.
 
 See [operational notes and GitHub metadata](docs/NOTES.md) for caching, troubleshooting and suggested repository About text.

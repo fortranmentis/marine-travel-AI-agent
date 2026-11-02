@@ -13,7 +13,7 @@ from .config import DATA
 KST=dt.timezone(dt.timedelta(hours=9))
 KINDS={'ai_plan','rules_plan','seatrip_sync','tourism_sync','full_sync'}
 STAGES={'input','data','schedule','enrich','result','collect','validate','save','fallback'}
-TOOLS={'find_family_places','get_marine_conditions','get_place_details','get_weather','build_itinerary','get_ferry_operations','get_ferry_timetable','get_nearby_transport','unknown'}
+TOOLS={'find_family_places','get_marine_conditions','get_place_details','get_weather','build_itinerary','get_ferry_operations','get_ferry_timetable','get_nearby_transport','unknown','journey_build','journey_validate','journey_decision','journey_finish'}
 PROVIDERS={'TourAPI','KHOA','KMA','OSRM','photos','Ollama','transport'}
 _current=ContextVar('execution_run',default=None)
 _health={'available':True,'error_code':None}
