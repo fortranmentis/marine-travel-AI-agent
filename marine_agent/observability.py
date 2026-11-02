@@ -19,7 +19,7 @@ def client(base,public,secret):
  from langfuse import Langfuse
  from opentelemetry.sdk.trace import TracerProvider
  # Dedicated provider: unrelated instrumentations cannot leak through this adapter.
- return Langfuse(base_url=base,public_key=public,secret_key=secret,timeout=2,flush_at=20,flush_interval=1,environment='local',release='v0.8.1',tracer_provider=TracerProvider())
+ return Langfuse(base_url=base,public_key=public,secret_key=secret,timeout=2,flush_at=20,flush_interval=1,environment='local',release='v0.8.2',tracer_provider=TracerProvider())
 def get_client():
  if not enabled() or not all(config()):return None
  try:return client(*config())

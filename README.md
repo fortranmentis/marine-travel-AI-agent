@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.8.1" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.8.2" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent
 
@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.8.1](docs/assets/version.svg)
+![Version: 0.8.2](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 174 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 207 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,7 +27,11 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.8.1 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.8.2 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## v0.8.2 — weather-aware scheduling scenarios
+
+Twenty executable eligibility scenarios and thirteen integration cases cover rain, wind, opening windows, reviewed age/capacity limits, walking burden, reservations, meals and ferry uncertainty. AI and rule-only plans share deterministic rules; travelers can choose a pace. Rainy slots require source-reviewed indoor supply and may have fewer visits when that evidence is missing. This patch does not certify nationwide venue conditions. [Inputs, expected results and review setup](docs/PLANNING_RULES.md).
 
 ## v0.8.1 — live connection reliability
 
@@ -312,7 +316,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on November 2, 2026 (Asia/Seoul): 148 Python tests and 26 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on November 2, 2026 (Asia/Seoul): 181 Python tests and 26 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

@@ -1,5 +1,12 @@
 # Validation record — updated 2026-11-02 (Asia/Seoul)
 
+## v0.8.2 planning policy — 2026-11-02
+
+- **Offline:** 181 Python and 26 Node tests pass, including 20 data-driven eligibility cases and 13 integration cases for weather-time overlap, morning outdoor/afternoon indoor placement, empty indoor supply, fixed conflicts, route failures, walking caps, children/rests, group buffers, stale weather, provenance validation, closed food, replacement atomicity and unconfirmed ferry returns. [Inputs/expectations](docs/PLANNING_RULES.md), [executable JSON](docs/planning-scenarios.json).
+- **Evidence boundary:** scenarios use synthetic forecasts, reviewed facts and routes. No production indoor venue classifications, new live weather accuracy benchmark or ferry operating guarantee are asserted. The 60% precipitation probability, 8m/s wind and walking/rest thresholds are product assumptions, not scientific or official safety standards. One existing Starlette/httpx deprecation warning remains.
+- **Live model/UI:** a real Qwen `build_itinerary` request completed with a warning-bearing execution summary in 35.676 seconds. The sunny November 3 Incheon draft retained the selected relaxed pace, two 60-minute tourist visits and two 30-minute rests. Venue types remained explicitly unverified. [Sanitized summary](reports/v082-smoke.json), [desktop](docs/rules-v082-desktop.png), [mobile](docs/rules-v082-mobile.png). At 390px the document width was 375px. This does not constitute live rain-transition validation.
+- **Model prose limit:** the free-form explanation used an unsupported comfort phrase despite the system instruction. The structured schedule/venue evidence and explicit unverified labels, rather than that phrase, are the validation evidence. This patch does not establish model explanation accuracy or safety judgments.
+
 ## v0.8.1 reliability — 2026-11-02
 
 - **Offline:** 148 Python and 26 Node tests pass. New scenarios exercise old active runs amid newer completions, active/step snapshot limits, idempotent connection release, cancellation before first read, replay regression, stale responses after logout, rapid visibility changes, invalid-auth retry termination, temporary-error backoff, bounded active-priority cache and exactly-once observation closure.

@@ -1,14 +1,14 @@
-import {initializeNational} from './national.js?v=0.8.1';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.8.1';
-import {initializeTripForm} from './trip-form.js?v=0.8.1';
-import {$,el,button,plainText} from './ui.js?v=0.8.1';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.8.1';
-import {weatherCard} from './weather.js?v=0.8.1';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.8.1';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.8.1';
-import {initializeFerries} from './ferries.js?v=0.8.1';
-import {initializeTransport} from './public-transport.js?v=0.8.1';
-import {initializeTimetable} from './ferry-timetable.js?v=0.8.1';
+import {initializeNational} from './national.js?v=0.8.2';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.8.2';
+import {initializeTripForm} from './trip-form.js?v=0.8.2';
+import {$,el,button,plainText} from './ui.js?v=0.8.2';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.8.2';
+import {weatherCard} from './weather.js?v=0.8.2';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.8.2';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.8.2';
+import {initializeFerries} from './ferries.js?v=0.8.2';
+import {initializeTransport} from './public-transport.js?v=0.8.2';
+import {initializeTimetable} from './ferry-timetable.js?v=0.8.2';
 
 const form=$('#trip-form');
 let ferryPanel=null;
@@ -63,9 +63,10 @@ function render(plan){
     const transfers=transfersFor(day,plan.routes?.[day.date]);
     for(const item of day.items){
       if(transfers.has(item.slot_id))section.append(transferCard(transfers.get(item.slot_id),day.date,showRouteSegment,p=>transportUI.nearby(p)));
-      const compact=['break','buffer'].includes(item.kind),slot=el('div',undefined,'slot'+(compact?' compact':''));slot.append(el('div',item.start+'\n'+item.end,'time'));
+      const compact=['break','buffer','rest'].includes(item.kind),slot=el('div',undefined,'slot'+(compact?' compact':''));slot.append(el('div',item.start+'\n'+item.end,'time'));
       const card=el('article',undefined,'card slot-card '+item.kind);card.dataset.slot=item.slot_id;const info=el('div',undefined,'card-content');info.append(el('h4',item.title));
       if(item.kind==='locked')info.append(el('span','시간 고정됨','lock-badge'));
+      if(item.rule_evidence){const fact=item.rule_evidence;info.append(el('p','장소 유형: '+({indoor:'실내 확인',outdoor:'야외 확인',mixed:'실내·야외 혼합',unknown:'실내 여부 미확인'}[fact.environment]||'미확인'),'checks'));if(fact.source_url){const a=el('a','장소 조건 확인 출처 ↗');a.href=fact.source_url;a.target='_blank';a.rel='noopener noreferrer';info.append(a);}}
       if(item.cuisine_label)info.append(el('span','TourAPI 분류: '+item.cuisine_label,'food-badge'));
       if(item.food_details?.menu)info.append(el('p','대표 메뉴: '+plainText(item.food_details.menu)));
       if(item.food_details?.hours)info.append(el('p','안내 영업시간: '+plainText(item.food_details.hours)));

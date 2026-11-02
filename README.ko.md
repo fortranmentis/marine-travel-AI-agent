@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.8.1" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.8.2" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent · 바다결
 
@@ -12,14 +12,14 @@
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.8.1](docs/assets/version.svg)
+![Version: 0.8.2](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 8개 도구, 8종 보관 피드, 174개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 8개 도구, 8종 보관 피드, 207개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,9 +27,13 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.8.1 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.8.2 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
+
+## v0.8.2 날씨·이동·동행 시나리오 규칙
+
+20개 후보 판정 시나리오와 13개 통합 사례로 우천·강풍·운영시간·확인된 연령/인원 제한·도보 부담·고정 예약·식사·배편 미확정을 검증합니다. AI와 규칙 기반 일정에 같은 규칙을 적용하고 여행 속도를 선택할 수 있습니다. 우천 시간에는 출처로 실내임을 확인한 후보가 필요하며, 자료가 부족하면 방문 수를 줄입니다. 전국 장소의 이용 조건 검증이 완료된 것은 아닙니다. [구체적인 입력·기대 결과와 검토 자료 설정](docs/PLANNING_RULES.md).
 
 ## v0.8.1 실시간 연결 안정화
 
@@ -307,7 +311,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 11월 2일 한국시간 기준 재실행: Python 148개, 프런트엔드 26개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 11월 2일 한국시간 기준 재실행: Python 181개, 프런트엔드 26개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |

@@ -8,6 +8,8 @@ def offline_transport(monkeypatch, tmp_path):
     monkeypatch.setenv('LANGFUSE_ENABLED','false')
     monkeypatch.setenv('RUNS_DB_PATH',str(tmp_path/'runs.sqlite3'))
     from marine_agent import transport_api
+    from marine_agent import rules
+    monkeypatch.setattr(rules,'DATA',tmp_path)
     transport_api._cache.clear()
     yield
     transport_api._cache.clear()

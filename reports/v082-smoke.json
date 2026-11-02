@@ -1,0 +1,24 @@
+{
+  "version": "0.8.2",
+  "kind": "ai_plan",
+  "status": "warning",
+  "duration_s": 35.676,
+  "scope": "real Qwen generation in local browser, sunny forecast; rain cases are synthetic offline tests",
+  "selected_pace": "relaxed",
+  "tourism_visit_minutes": [
+    60,
+    60
+  ],
+  "rest_minutes": [
+    30,
+    30
+  ],
+  "desktop": {
+    "viewport": 1280,
+    "document_width": 1265
+  },
+  "mobile": {
+    "viewport": 390,
+    "document_width": 375
+  }
+}

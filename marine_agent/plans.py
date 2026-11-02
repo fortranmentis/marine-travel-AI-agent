@@ -103,19 +103,28 @@ class PlanStore:
         used = {i.get('id') for d in result['days'] for i in d['items']}
         if candidate is None or candidate_id in used or candidate_id in result['trip']['excluded_ids']:
             raise PlanError(422, '현재 선택할 수 없는 대체 관광지입니다.')
+        from . import rules
+        trip = planner.Trip.model_validate(result['trip'])
+        check = rules.assess(candidate,trip,target_day['date'],slot['start'],slot['end'],target_day.get('weather',{}),rules.reviewed_venues(),target_day.get('transport'))
+        if not check['allowed']:
+            raise PlanError(422, '날씨·운영·이용 조건에 맞지 않아 교체하지 않았습니다. '+ ' '.join(rules.MESSAGES[c] for c in check['codes']))
         if result['trip']['region'] not in planner.regions.LEGACY and not result['trip'].get('island_id'):
             from .mobility import route_between
             gateway=planner.regions.gateway(result['trip']['region'])
             if gateway is None or route_between(gateway,candidate,'car')['status'] != 'available':
                 raise PlanError(422,'관광 탐색 기준점에서 도로 접근을 확인하지 못해 교체하지 않았습니다.')
         slot.update(candidate, reason='선택한 대체 관광지로 기존 시간대를 유지해 교체했어요.',
-                    checks=['운영시간·휴무', '가족 적합성'])
+                    rule_evidence=check, checks=['운영시간·휴무', '동행 이용 조건'])
+        if not rules.walk_fits(target_day['items'],trip,target_day.get('weather',{}),target_day.get('transport',trip.transport)):
+            raise PlanError(422,'도보 이동량 기준을 초과하거나 거리를 확인하지 못해 교체하지 않았습니다.')
         new_route = enrichment.day_route(target_day)
         adjacent = [r for r in new_route['legs'] if slot_id in (r['from_slot'], r['to_slot'])]
         if any(r['status'] != 'available' for r in adjacent):
             raise PlanError(422, '인접 이동 경로를 확보하지 못해 교체하지 않았습니다.')
         if any(not r['fits_schedule'] for r in adjacent):
             raise PlanError(422, '이동시간이 기존 일정의 여유 시간보다 길어 교체하지 않았습니다.')
+        if any(r['duration_s']>max(0,r['available_minutes']-rules.profile(trip)['route_buffer_minutes'])*60 for r in adjacent):
+            raise PlanError(422,'동행 인원의 이동 준비·집결 여유를 확보하지 못해 교체하지 않았습니다.')
         planner.validate_schedule(result['days'])
         used = {i.get('id') for d in result['days'] for i in d['items']}
         for day in result['days']:

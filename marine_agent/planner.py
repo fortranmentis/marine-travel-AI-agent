@@ -36,6 +36,7 @@ class Trip(BaseModel):
     visits_per_day: int = Field(default=2, ge=1, le=6)
     cuisines: list[Literal['korean', 'chinese', 'japanese', 'western', 'other']] = Field(default_factory=list, max_length=5)
     cafes: bool = True
+    pace: Literal['relaxed', 'normal', 'active'] = 'normal'
     daily_times: list['DayTime'] = Field(default_factory=list, max_length=3)
     island_id: str | None = Field(default=None, max_length=60)
     day_start: str = Field(default='09:00', pattern=r'^(?:[01]\d|2[0-3]):[0-5]\d$')
@@ -188,7 +189,7 @@ def major_visit(item):
 def build_plan(trip):
     if isinstance(trip, dict):
         trip = Trip.model_validate(trip)
-    from . import travel, islands
+    from . import travel, islands, rules
     from .mobility import route_between
     island = islands.resolve(trip.island_id) if trip.island_id else None
     progress.emit('data', '선택 권역의 관광 후보와 바다여행예보를 확인하고 있어요.')
@@ -197,6 +198,8 @@ def build_plan(trip):
     if trip.region not in regions.LEGACY and not island and gateway is None:
         raise ValueError('관광 탐색 기준점이 준비되지 않았습니다. 전국 관광정보를 수집하세요.')
     candidates = [p for p in tourism_candidates(trip.region, limit=200) if p['id'] not in trip.excluded_ids]
+    reviews = rules.reviewed_venues()
+    pace = rules.profile(trip)
     if island:
         candidates = islands.candidates(island, trip.excluded_ids)
     if not candidates:
@@ -239,6 +242,7 @@ def build_plan(trip):
             if match:
                 item.update(id=match['id'], lat=match['lat'], lon=match['lon'], original_kind='tourism')
         conditions, weather = prepared[offset]
+        rejected = set()
         if island:
             conditions = dict(status='not_requested', rows=[])
             if any(i['start'] < day_start or i['end'] > day_end for i in items):
@@ -288,28 +292,32 @@ def build_plan(trip):
         last_point = next(((i['lat'], i['lon']) for i in items if i.get('lat') is not None and i.get('lon') is not None), (gateway['lat'],gateway['lon']) if gateway else None)
         count = 0
         tourism_budget = max(0, trip.visits_per_day - sum(major_visit(i) for i in items))
-        for start in range(max(minutes(day_start), minutes(day_start) + (60 if ground_mode == 'car' else 15)), minutes(day_end) - 89, 30):
+        visit_minutes = pace['visit_minutes']
+        for start in range(max(minutes(day_start), minutes(day_start) + (60 if ground_mode == 'car' else 15)), minutes(day_end) - visit_minutes + 1, 30):
             if count >= tourism_budget:
                 break
-            end = start + 90
+            end = start + visit_minutes
             if any(overlaps(start - 60, end + 60, minutes(i['start']), minutes(i['end'])) for i in items if i['kind'] != 'break'):
                 continue
             if any(overlaps(start, end, minutes(i['start']), minutes(i['end'])) for i in items):
                 continue
+            if any(i['kind'] in ('tourism','marine','locked') and overlaps(start-pace['rest_minutes'],end+pace['rest_minutes'],minutes(i['start']),minutes(i['end'])) for i in items):
+                continue
             available = [p for p in candidates if p['id'] not in used and (last_point is None or distance(last_point, (p['lat'], p['lon'])) <= (2 if ground_mode == 'walk' else 12))]
             if not available:
                 continue
-            available.sort(key=lambda p: (0 if outlook.get('grade') in ('나쁨','매우나쁨') and p.get('content_type')=='14' else 1,
+            evaluated = [(p,rules.assess(p,trip,date.isoformat(),start,end,weather,reviews,ground_mode)) for p in available]
+            for _,check in evaluated: rejected.update(check['codes'])
+            assessments = {p['id']:check for p,check in evaluated}
+            available = [p for p,check in evaluated if check['allowed']]
+            available.sort(key=lambda p: (assessments[p['id']]['rank'],0 if outlook.get('grade') in ('나쁨','매우나쁨') and p.get('content_type')=='14' else 1,
                                          distance(last_point, (p['lat'], p['lon'])) if last_point else 0, p['title']))
             place = None
-            for proposed in available[:3]:
+            for proposed in available[:12]:
                 if gateway:
                     access=route_between(gateway,proposed,'car')
                     if access['status'] != 'available':
                         continue
-                if ground_mode == 'car' and gateway is None:
-                    place = proposed
-                    break
                 ordered = sorted([i for i in items if i.get('lat') is not None], key=lambda i: i['start'])
                 neighbors = [(i, proposed, start - minutes(i['end'])) for i in ordered if minutes(i['end']) <= start][-1:]
                 neighbors += [(proposed, i, minutes(i['start']) - end) for i in ordered if minutes(i['start']) >= end][:1]
@@ -325,9 +333,13 @@ def build_plan(trip):
                     gap -= sum(max(0, min(upper, minutes(i['end'])) - max(lower, minutes(i['start'])))
                                for i in items if i is not a and i is not b)
                     route = route_between(a, b, ground_mode)
-                    if route['status'] != 'available' or route['duration_s'] > gap * 60:
+                    if route['status'] != 'available' or route['duration_s'] > max(0,gap-pace['route_buffer_minutes']) * 60:
+                        rejected.add('route_unavailable' if route['status'] != 'available' else 'route_time')
                         feasible = False
                         break
+                if feasible and not rules.walk_fits([*items,dict(proposed,start=hhmm(start),end=hhmm(end))],trip,weather,ground_mode):
+                    rejected.add('walk_budget')
+                    feasible = False
                 if feasible:
                     place = proposed
                     break
@@ -336,7 +348,10 @@ def build_plan(trip):
             used.add(place['id'])
             last_point = (place['lat'], place['lon'])
             items.append(dict(place, kind='tourism', start=hhmm(start), end=hhmm(end), source=c['tourism_source'],
-                              reason='선택 권역의 관광 후보; 방문 시간은 가정값', checks=['운영시간·휴무', '가족 적합성', '실제 경로·이동시간']))
+                              rule_evidence=assessments[place['id']],
+                              reason='시간대별 날씨·확인된 이용 조건·이동 여유를 비교한 관광 후보; 방문 시간은 가정값', checks=['운영시간·휴무', '동행 이용 조건', '실제 경로·이동시간']))
+            if pace['rest_minutes'] and end+pace['rest_minutes']<=minutes(day_end) and not any(overlaps(end,end+pace['rest_minutes'],minutes(i['start']),minutes(i['end'])) for i in items):
+                items.append(dict(kind='rest',title='이동 준비·휴식',start=hhmm(end),end=hhmm(end+pace['rest_minutes'])))
             count += 1
             if count >= tourism_budget:
                 break
@@ -351,6 +366,7 @@ def build_plan(trip):
                          actual_visits=sum(major_visit(i) for i in items),
                          warnings=[], search_reference=gateway,
                          alternative_note='같은 권역의 대체 후보입니다. 실내 여부·운영시간·가족 적합성은 개별 확인 필요'))
+        rules.explain(days[-1],trip,reviews,rejected)
     for day in days:
         if source_age > dt.timedelta(days=7):day['warnings'].append('관광정보 수집 후 7일이 지났습니다. 운영정보와 최신 관광정보 갱신을 확인하세요.')
         if not island:
@@ -367,7 +383,7 @@ def build_plan(trip):
             day['warnings'].append('대중교통은 조회 시점의 참고 경로입니다. 여행일 출발시각·막차·배차는 미확인입니다. 경로 미확보 구간은 원본 지도에서 확인하세요.')
         day['alternatives'] = [p for p in candidates if p['id'] not in used][:6]
     validate_schedule(days)
-    progress.emit('schedule', '시간 겹침과 고정 일정을 확인했어요.', state='completed')
+    progress.emit('schedule', '시간대별 날씨·장소 조건·도보 부담과 고정 일정을 확인했어요.', state='completed')
     from .island_drafts import access_info
     access=access_info(trip.region,trip.start_date.isoformat())
     if access:

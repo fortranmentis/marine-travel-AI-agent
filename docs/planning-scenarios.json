@@ -1,0 +1,472 @@
+[
+  {
+    "id": "rain_walk_indoor",
+    "description": "rain walk indoor",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "1"
+      },
+      "environment": "indoor",
+      "trip": {
+        "transport": "walk"
+      },
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "rain_walk_outdoor",
+    "description": "rain walk outdoor",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "1"
+      },
+      "environment": "outdoor",
+      "trip": {
+        "transport": "walk"
+      },
+      "review": {}
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "rain_indoor_required"
+      ]
+    }
+  },
+  {
+    "id": "rain_unknown_museum",
+    "description": "rain unknown museum",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "1"
+      },
+      "environment": "unknown",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "rain_indoor_required"
+      ]
+    }
+  },
+  {
+    "id": "snow_mixed_venue",
+    "description": "snow mixed venue",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "3"
+      },
+      "environment": "mixed",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "rain_indoor_required"
+      ]
+    }
+  },
+  {
+    "id": "high_probability_indoor",
+    "description": "high probability indoor",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0",
+        "POP": "80"
+      },
+      "environment": "indoor",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "high_probability_outdoor_backup",
+    "description": "high probability outdoor backup",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0",
+        "POP": "80"
+      },
+      "environment": "outdoor",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "strong_wind_outdoor",
+    "description": "strong wind outdoor",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0",
+        "WSD": "9"
+      },
+      "environment": "outdoor",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "wind_indoor_required"
+      ]
+    }
+  },
+  {
+    "id": "strong_wind_indoor",
+    "description": "strong wind indoor",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0",
+        "WSD": "9"
+      },
+      "environment": "indoor",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "missing_forecast",
+    "description": "missing forecast",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {},
+      "environment": "unknown",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "missing_pty",
+    "description": "missing pty",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "POP": "10"
+      },
+      "environment": "unknown",
+      "trip": {},
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "rain_and_good_sea",
+    "description": "rain and good sea",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "1"
+      },
+      "environment": "outdoor",
+      "trip": {
+        "activity": "seatrip"
+      },
+      "review": {}
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "rain_indoor_required"
+      ]
+    }
+  },
+  {
+    "id": "closed_venue",
+    "description": "closed venue",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {},
+      "review": {
+        "closed": true
+      }
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "venue_closed"
+      ]
+    }
+  },
+  {
+    "id": "outside_hours",
+    "description": "outside hours",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {},
+      "review": {
+        "hours": [
+          [
+            "09:00",
+            "14:30"
+          ]
+        ]
+      }
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "outside_hours"
+      ]
+    }
+  },
+  {
+    "id": "open_hours",
+    "description": "open hours",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {},
+      "review": {
+        "hours": [
+          [
+            "13:00",
+            "17:00"
+          ]
+        ]
+      }
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "young_child_age_restriction",
+    "description": "young child age restriction",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {
+        "child_ages": [
+          3,
+          8
+        ]
+      },
+      "review": {
+        "min_age": 6
+      }
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "age_restriction"
+      ]
+    }
+  },
+  {
+    "id": "group_capacity_exceeded",
+    "description": "group capacity exceeded",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {
+        "party_type": "group",
+        "adults": 12
+      },
+      "review": {
+        "max_party": 10
+      }
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "party_capacity"
+      ]
+    }
+  },
+  {
+    "id": "group_capacity_fits",
+    "description": "group capacity fits",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "indoor",
+      "trip": {
+        "party_type": "group",
+        "adults": 8
+      },
+      "review": {
+        "max_party": 10
+      }
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "solo_no_age_assumption",
+    "description": "solo no age assumption",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "unknown",
+      "trip": {
+        "party_type": "solo",
+        "adults": 1
+      },
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "couple_no_pace_assumption",
+    "description": "couple no pace assumption",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "0"
+      },
+      "environment": "unknown",
+      "trip": {
+        "party_type": "couple",
+        "adults": 2
+      },
+      "review": {}
+    },
+    "expected": {
+      "allowed": true,
+      "codes": []
+    }
+  },
+  {
+    "id": "rain_and_closed",
+    "description": "rain and closed",
+    "input": {
+      "time": [
+        "14:00",
+        "15:30"
+      ],
+      "weather": {
+        "PTY": "1"
+      },
+      "environment": "outdoor",
+      "trip": {},
+      "review": {
+        "closed": true
+      }
+    },
+    "expected": {
+      "allowed": false,
+      "codes": [
+        "venue_closed",
+        "rain_indoor_required"
+      ]
+    }
+  }
+]

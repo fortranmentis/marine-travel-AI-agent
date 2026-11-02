@@ -1,4 +1,4 @@
-import {mergeStep} from './execution-graph.js?v=0.8.1';
+import {mergeStep} from './execution-graph.js?v=0.8.2';
 export const isActiveRun = run => ['queued', 'running'].includes(run?.status);
 const isJourney = run => ['ai_plan', 'rules_plan'].includes(run.kind);
 const newest = (a, b) => String(b.started_at || '').localeCompare(String(a.started_at || ''));

@@ -1,4 +1,4 @@
-import {el} from './ui.js?v=0.8.1';
+import {el} from './ui.js?v=0.8.2';
 
 export function datesFor(start, days) {
   const date=new Date(start+'T00:00:00Z');
@@ -33,12 +33,12 @@ export function initializeTripForm(form){
   });
   ages();times();
   return {
-    read(){const data=new FormData(form);return {party_type:data.get('party_type'),transport:data.get('transport'),
+    read(){const data=new FormData(form);return {party_type:data.get('party_type'),pace:data.get('pace')||'normal',transport:data.get('transport'),
       adults:Number(data.get('adults')),child_count:Number(data.get('child_count')),
       child_ages:[...children.querySelectorAll('input')].map(n=>Number(n.value)),
       visits_per_day:Number(data.get('visits_per_day')),cafes:data.get('cafes')==='on',cuisines:data.getAll('cuisine'),
       island_id:data.get('island_id')||null,
       daily_times:[...days.querySelectorAll('[data-date]')].map(row=>({date:row.dataset.date,start:row.querySelector('[data-start]').value,end:row.querySelector('[data-end]').value}))};},
-    sync(trip){for(const name of ['party_type','transport','child_count','visits_per_day'])form.elements[name].value=trip[name]??({party_type:'family',transport:'car',child_count:trip.child_ages.length,visits_per_day:2}[name]);form.elements.cafes.checked=trip.cafes??true;form.elements.island_id.value=trip.island_id||'';for(const n of form.querySelectorAll('[name=cuisine]'))n.checked=(trip.cuisines||[]).includes(n.value);ages(trip.child_ages);times(trip.daily_times?.length?trip.daily_times:datesFor(trip.start_date,trip.days).map(date=>({date,start:trip.day_start,end:trip.day_end})));}
+    sync(trip){for(const name of ['party_type','pace','transport','child_count','visits_per_day'])form.elements[name].value=trip[name]??({party_type:'family',pace:'normal',transport:'car',child_count:trip.child_ages.length,visits_per_day:2}[name]);form.elements.cafes.checked=trip.cafes??true;form.elements.island_id.value=trip.island_id||'';for(const n of form.querySelectorAll('[name=cuisine]'))n.checked=(trip.cuisines||[]).includes(n.value);ages(trip.child_ages);times(trip.daily_times?.length?trip.daily_times:datesFor(trip.start_date,trip.days).map(date=>({date,start:trip.day_start,end:trip.day_end})));}
   };
 }

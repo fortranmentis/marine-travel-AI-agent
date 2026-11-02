@@ -76,6 +76,9 @@ def add_food(day, trip):
     items = day['items']
     used = {i.get('id') for i in items} | set(trip.excluded_ids)
     warnings = day.setdefault('warnings', [])
+    from . import rules
+    reviews = rules.reviewed_venues()
+    pace = rules.profile(trip)
 
     def offer(start, end, cafe=False):
         anchored = [i for i in items if i.get('lat') is not None and i.get('lon') is not None]
@@ -92,7 +95,7 @@ def add_food(day, trip):
             (anchor['lat'], anchor['lon']), 1 if trip.transport == 'walk' else 3)
         day.setdefault('food_recommendations', []).append(dict(kind='cafe' if cafe else 'meal',
             start=hhmm(start), end=hhmm(end), candidates=[p for p in candidates if p['id'] not in used][:4]))
-        for candidate in [p for p in candidates if p['id'] not in used][:2]:
+        for candidate in [p for p in candidates if p['id'] not in used][:8]:
             duration = 30 if cafe else 45
             begin, finish = start, end
             before_seconds = after_seconds = 0
@@ -110,6 +113,8 @@ def add_food(day, trip):
                 after_seconds = route['duration_s']
             if finish - begin < duration:
                 continue
+            if not rules.assess(candidate,trip,day['date'],begin,begin+duration,day.get('weather',{}),reviews)['allowed']:
+                continue
             if any(overlaps(begin, begin + duration, minutes(i['start']), minutes(i['end'])) for i in items):
                 continue
             def free_between(lo, hi):
@@ -118,6 +123,12 @@ def add_food(day, trip):
             if a and free_between(minutes(a['end']), begin) * 60 < before_seconds:
                 continue
             if b and free_between(begin + duration, minutes(b['start'])) * 60 < after_seconds:
+                continue
+            if not rules.walk_fits([*items,dict(candidate,start=hhmm(begin),end=hhmm(begin+duration))],trip,day.get('weather',{}),trip.transport):
+                continue
+            if a and free_between(minutes(a['end']),begin)<before_seconds/60+pace['route_buffer_minutes']:
+                continue
+            if b and free_between(begin+duration,minutes(b['start']))<after_seconds/60+pace['route_buffer_minutes']:
                 continue
             items.append(dict(candidate, kind='cafe' if cafe else 'meal', start=hhmm(begin), end=hhmm(begin + duration),
                 reason='주변 카페에서 쉬어가기' if cafe else '식사 시간대의 주변 식당 후보 · TourAPI 음식 분류 기준',
