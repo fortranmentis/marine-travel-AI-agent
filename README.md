@@ -37,6 +37,29 @@ Form-based AI and rule-only requests now use a local LangGraph workflow: build �
 
 The screenshot uses explicitly labelled synthetic weather, venues and routes. Real Qwen/service evidence is listed separately in [VALIDATION.md](VALIDATION.md).
 
+## Current capabilities
+
+| Area | Implemented behavior | Evidence / boundary |
+| --- | --- | --- |
+| Journey workflow | Build, validate, pause for a choice, recheck and finish; initial build plus at most two rechecks. | [LangGraph service](docs/LANGGRAPH.md); free-form chat uses the separate bounded tool loop. |
+| Traveler recovery | Same-tab reload recovery; SQLite checkpoints, revisioned edits and undo survive restart within retention limits. | Running work becomes interrupted on restart and needs explicit retry; pending choices stay pending. |
+| Weather and pace | Rain/wind eligibility, reviewed venue facts, walking budgets, rest and fixed bookings share deterministic rules. | [Planning scenarios](docs/PLANNING_RULES.md); missing indoor evidence can reduce visits. |
+| Execution visibility | Cytoscape stage/model/tool graph, authenticated operator SSE and local Langfuse traces. | [Observability](docs/OBSERVABILITY.md); telemetry excludes raw prompts, reasoning and outputs. |
+| Data operations | n8n policy checks, independent daily sea-travel and weekly tourism refresh, seven-day execution summaries. | [Workflows](docs/WORKFLOWS.md); automation requires a running PC and Docker engine. |
+| Travel review | Maps, photos, transfer cards, PDF, visit replacement/locking/undo, transport and ferry references. | [Transport APIs](docs/TRANSPORT_API.md); complete dated ferry access remains unverified. |
+
+**Dated integration record · November 2, 2026:** 7,644 tourism records and 290 sea-travel rows across 29 forecast regions. These are recorded collection results, not a live status indicator. Missing exact tourism gateway IDs can make a region unavailable even when it has a forecast.
+
+### Using the journey flow
+
+1. Select a region, dates, daily hours, party, travel mode and pace, then enter fixed bookings and exclusions.
+2. Start **AI로 여행 만들기** or **AI 없이 데이터로 초안 만들기**. Both form buttons use the same graph and deterministic validation.
+3. If weather or walking constraints leave too few visits on a day, review the available choices: keep the constraints, reduce visits or explicitly allow transit. Only applicable choices appear.
+4. Inspect the sources and unresolved checks, then edit eligible visits or export the stored plan as PDF. Reload the same tab to recover within the two-hour/capacity limits; lost browser recovery information cannot be reconstructed from a login.
+
+<details>
+<summary><strong>Earlier releases · v0.8.2 through v0.3</strong></summary>
+
 ## v0.8.2 — weather-aware scheduling scenarios
 
 Twenty executable eligibility scenarios and thirteen integration cases cover rain, wind, opening windows, reviewed age/capacity limits, walking burden, reservations, meals and ferry uncertainty. AI and rule-only plans share deterministic rules; travelers can choose a pace. Rainy slots require source-reviewed indoor supply and may have fewer visits when that evidence is missing. This patch does not certify nationwide venue conditions. [Inputs, expected results and review setup](docs/PLANNING_RULES.md).
@@ -147,19 +170,21 @@ Daily time windows, attraction counts, party types and child counts; nearby meal
 
 **Transit now uses Playwright and the rendered Naver Map UI without a transit API key.** It shows lookup-time reference routes, not travel-date timetable verification. Install Chromium with `python -m playwright install chromium`. See [browser setup and limits](docs/BROWSER_TRANSIT.md). The separate reviewed round-trip scheduler has no enabled manifest; conditional on-island drafts are available as described above.
 
-Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The main preview shows v0.6 transport screens; the expandable gallery retains v0.2 development captures.
+Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile](docs/national-mobile.jpg), [Gangneung draft](docs/national-plan.jpg). Earlier v0.3 captures: [full interface](docs/interface-v03.jpg), [weather scrolling](docs/weather-v03.jpg), [390px mobile](docs/mobile-v03.jpg). The main preview shows v0.9 recovery/choice screens; the expandable gallery retains v0.2 development captures.
+
+</details>
 
 ## Preview
 
 <table>
 <tr>
 <td width="68%" valign="top">
-<img src="docs/transport-api-bus.jpg" alt="v0.6 official bus route and current position references">
-<p><strong>Plan with context.</strong> Inspect official bus route information, ordered stops and current vehicle-position references.</p>
+<img src="docs/langgraph-v09-live.png" alt="v0.9 real Qwen itinerary restored after application restart">
+<p><strong>Plan with context.</strong> Restore the persisted journey, inspect the itinerary and download its stored PDF after an application restart.</p>
 </td>
 <td width="32%" valign="top">
-<img src="docs/transport-api-mobile.jpg" alt="v0.6 mobile transport lookup dialog">
-<p><strong>Review on the move.</strong> The mobile transport dialog shows nearby stops and explains the limits of live and future-day information.</p>
+<img src="docs/langgraph-v09-mobile.png" alt="v0.9 mobile synthetic weather choice">
+<p><strong>Review on the move.</strong> The mobile journey view presents explicit choices when weather and walking constraints reduce the requested visits. This capture uses synthetic data.</p>
 </td>
 </tr>
 </table>
@@ -175,7 +200,7 @@ Current v0.4 captures: [national comparison](docs/national-desktop.jpg), [mobile
 
 </details>
 
-<sub>Main preview: v0.6 transport screens, captured October 16, 2026. Expandable gallery: earlier v0.2 screens. Captures are dated observations, not current service status.</sub>
+<sub>Main preview: v0.9 recovery and choice screens, recorded November 2, 2026; the mobile scenario is synthetic. Expandable gallery: earlier v0.2 screens. Captures are dated observations, not current service status.</sub>
 
 ## Highlights
 
@@ -324,6 +349,10 @@ For Linux/macOS, use `.venv/bin/python` and start the server with:
 
 If your Windows Python cannot bootstrap pip inside the environment, use `python -m pip --python .venv/Scripts/python.exe install -r requirements.txt`.
 
+### Optional local operations stack
+
+For Docker Compose, scheduled collection, the operator view and local Langfuse, follow [deployment and independent token setup](docs/WORKFLOWS.md) and [observability setup](docs/OBSERVABILITY.md). Stop the native backend before starting the container app; run only one backend against the data directory. n8n owns collection schedules; LangGraph owns the traveler journey. Native startup above does not start n8n or Langfuse.
+
 ## Between-stop travel cards
 
 Each attraction, restaurant and cafe is connected by an inline travel card with the actual mode, reference duration, known distance and a map-segment button. Transit details expand to show lines and stops; missing routes remain explicit. Photo credits are collected in a collapsed section. The [v0.5 ferry adapter](docs/API-v05.md) reads today's official operations; automatic island scheduling still requires verified round-trip arrivals and access.
@@ -334,10 +363,10 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 | Evidence | Scope |
 | --- | --- |
-| Python regression tests | Forecast windows, missing/stale/closed conditions, fixed visits, pagination, atomic refresh, fallback, HTTP validation, enrichment and revisioned edits. |
-| Node.js tests | Weather display rules, Korean local time, split UTF-8 NDJSON parsing and truncated-stream failure. |
+| Python regression tests | Scheduling scenarios, pagination/atomic refresh, model fallback, HTTP contracts, checkpoint pause/resume, capability authentication, persistent revisions/undo, interruption/retry and expiry. |
+| Node.js tests | Weather/transfer display, Korean time, NDJSON/SSE parsing, graph event ordering, reconnect/authentication behavior and browser journey recovery references. |
 | Existing development record | Earlier source, Ollama, route, photo and browser observations are retained separately in [VALIDATION.md](VALIDATION.md). |
-| Local documentation/data audit | Existing catalog profiled; README previews rendered locally at 1280px with no missing images or horizontal overflow. |
+| Historical documentation/data audit | Earlier catalog profiling and 1280px README rendering are retained as dated observations; they do not describe the current provider state. |
 | CI configuration | Python 3.11 and Node.js 22 are configured in [GitHub Actions](.github/workflows/ci.yml); offline CI does not query providers or run Chromium. See the linked workflow for remote run status. |
 
 ```powershell
@@ -352,6 +381,10 @@ Frontend tests need **Node.js 18+**, with no npm dependencies. See the [validati
 
 | Method | Endpoint | Purpose |
 | --- | --- | --- |
+| POST | `/api/journeys/stream` | Start the form workflow with `{trip, use_ai}`; NDJSON ticket, progress and result. |
+| GET | `/api/journeys/{id}` | Recover status/result with `X-Journey-Token`. |
+| POST | `/api/journeys/{id}/resume/stream` | Resume with token and `{revision, choice}`; choices are `keep`, `fewer`, `transit`, or failure `retry`. |
+| GET | `/api/regions` | Forecast comparison and currently available tourism draft scopes. |
 | GET | `/api/health` | Catalog availability, collection time and counts. |
 | GET | `/api/places` | Regional tourism candidates. |
 | POST | `/api/plan` | Python-generated provisional itinerary. |
@@ -364,7 +397,7 @@ Frontend tests need **Node.js 18+**, with no npm dependencies. See the [validati
 | GET | `/api/plans/{plan_id}/pdf?revision=N` | Download an existing revision as a Korean PDF; conflict/expiry checks apply. |
 | GET | `/api/ferries/live?office=인천&date=YYYY-MM-DD` | Today-only public-screen ferry operations; unknown arrivals remain null. |
 
-See [v0.5 export/ferry contracts](docs/API-v05.md) and [v0.2 revision/stream contracts](docs/API-v02.md).
+The form uses the journey endpoints; the plan/chat endpoints remain compatible for direct clients. Recovery tokens stay out of URLs. See [journey authentication and revisions](docs/LANGGRAPH.md), [operations/SSE](docs/OBSERVABILITY.md), [official transport endpoints](docs/TRANSPORT_API.md), [v0.5 export/ferry contracts](docs/API-v05.md) and [v0.2 revision/stream contracts](docs/API-v02.md).
 
 ## Notes
 
@@ -380,6 +413,8 @@ See [operational notes and GitHub metadata](docs/NOTES.md) for caching, troubles
 
 | Path | Responsibility |
 | --- | --- |
+| [`marine_agent/journey_graph.py`](marine_agent/journey_graph.py) / [`journeys.py`](marine_agent/journeys.py) | Graph nodes, traveler choices, checkpoints and capability-protected recovery. |
+| [`marine_agent/rules.py`](marine_agent/rules.py) | Weather/venue eligibility, pace and walking rules. |
 | [`marine_agent/agent.py`](marine_agent/agent.py) | Tool schemas, execution budget and model fallback. |
 | [`marine_agent/pdf_export.py`](marine_agent/pdf_export.py) / [`browser_ferries.py`](marine_agent/browser_ferries.py) | Stored-plan PDF and today-only official ferry observations. |
 | [`marine_agent/planner.py`](marine_agent/planner.py) | Trip constraints and deterministic schedule construction. |
@@ -392,7 +427,7 @@ See [operational notes and GitHub metadata](docs/NOTES.md) for caching, troubles
 
 ## Roadmap
 
-Next priorities are operator/age verification, warning and access-restriction integration, parking/traffic feasibility, and a larger Korean tool-use evaluation set. Shared persistence, authentication and deployment monitoring are later work. See the [full roadmap](docs/ROADMAP.md).
+Next priorities are operator/age verification, warning and access-restriction integration, parking/traffic feasibility, and a larger Korean tool-use evaluation set. Local SQLite persistence, journey capabilities and operator monitoring are implemented; shared multi-worker storage and public account authentication remain future work. See the [full roadmap](docs/ROADMAP.md).
 
 ## Data sources and credits
 

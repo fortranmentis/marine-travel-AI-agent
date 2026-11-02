@@ -29,8 +29,6 @@
 
 > **v0.9.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
-최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
-
 ## v0.9 LangGraph 서비스 연결
 
 입력 폼의 AI·규칙 기반 요청이 LangGraph의 일정 구성 → 검증 → 날씨·도보 제약 시 선택 대기 → 재검토 → 완료 흐름을 사용합니다. 최대 2회 재검토하며 고정 예약을 보존하고, 이동수단 변경은 명시적인 선택 후 적용합니다. 체크포인트와 버전별 일정을 SQLite에 보관해 최대 2시간 동안 새로고침·서버 재시작 후 복원합니다. Cytoscape·Langfuse에는 허용된 단계 이벤트만 전달하며 n8n은 자료 수집을 계속 담당합니다. [동작·API·복구·제한](docs/LANGGRAPH.md).
@@ -38,6 +36,29 @@
 ![검증용 합성 우천 예보: 서버 재시작 후 선택 대기 복원](docs/langgraph-v09-pending.png)
 
 위 화면은 합성 예보·관광지·경로임을 표시한 검증 화면입니다. 실제 Qwen·운영 서비스 결과는 [VALIDATION.md](VALIDATION.md)에 구분해 기록합니다.
+
+## 현재 제공 기능
+
+| 영역 | 구현 내용 | 근거·제한 |
+| --- | --- | --- |
+| 일정 워크플로우 | 구성·검증·선택 대기·재검토·완료. 최초 구성 후 최대 2회 재검토. | [LangGraph 서비스](docs/LANGGRAPH.md); 자유 대화는 별도의 기존 도구 호출 흐름 사용. |
+| 진행 복구 | 같은 탭의 새로고침 복구. 체크포인트·일정 리비전·되돌리기를 SQLite에 보관. | 재시작 전 실행 중이던 작업은 중단 상태로 표시하고 명시적인 재시도 필요. 선택 대기는 유지. |
+| 날씨·여행 속도 | 우천·강풍, 출처로 확인한 장소 조건, 도보 부담, 휴식과 고정 예약에 공통 규칙 적용. | [계획 시나리오](docs/PLANNING_RULES.md); 실내 근거가 부족하면 방문 수 감소 가능. |
+| 실행 관찰 | Cytoscape 단계·모델·도구 그래프, 인증된 운영자 SSE, 로컬 Langfuse 추적. | [관측 안내](docs/OBSERVABILITY.md); 실행 요약에는 대화 원문·사고 토큰·출력 미보관. |
+| 자료 운영 | n8n 정책 확인, 바다여행 매일·관광정보 매주 독립 갱신, 7일 실행 요약. | [워크플로우](docs/WORKFLOWS.md); PC·Docker 엔진 실행 중에만 자동화 동작. |
+| 여행 검토 | 지도·사진·이동 카드·PDF, 방문 교체·고정·되돌리기, 교통·배편 참고 조회. | [교통 API](docs/TRANSPORT_API.md); 날짜별 완전한 왕복 접근은 미검증. |
+
+**2026년 11월 2일 연동 기록:** 관광정보 7,644건, 바다여행예보 290건·29개 권역. 당시 수집 결과이며 실시간 상태 표시가 아닙니다. 원천의 정확한 관광 기준점 ID가 없으면 예보가 있어도 해당 권역의 초안 생성이 제한될 수 있습니다.
+
+### 일정 생성과 재개
+
+1. 권역·날짜·하루 시간·동행·이동수단·여행 속도를 고르고 고정 예약과 제외 장소를 입력합니다.
+2. **AI로 여행 만들기** 또는 **AI 없이 데이터로 초안 만들기**를 실행합니다. 두 폼 버튼은 같은 그래프와 규칙 검증을 사용합니다.
+3. 같은 날짜의 날씨·도보 제약으로 방문 수가 부족하면 현재 조건 유지·방문 수 줄이기·명시적 대중교통 허용 중 가능한 선택을 확인합니다.
+4. 출처와 미확인 조건을 검토하고 방문을 수정하거나 저장된 일정의 PDF를 받습니다. 같은 탭에서 새로고침하면 2시간·용량 제한 안에서 복구합니다. 브라우저 복구 정보를 잃으면 계정 로그인으로 되찾는 기능은 없습니다.
+
+<details>
+<summary><strong>이전 릴리스 · v0.8.2~v0.3</strong></summary>
 
 ## v0.8.2 날씨·이동·동행 시나리오 규칙
 
@@ -82,7 +103,9 @@ Cytoscape.js로 실제 단계·모델·도구 호출을 여행 팝업과 결과�
 ```mermaid
 flowchart LR
     User[여행객] --> API[FastAPI]
-    API --> Model[Qwen / Ollama]
+    API --> Graph[LangGraph 일정 흐름]
+    Graph --> Model[Qwen / Ollama]
+    Graph --> Checkpoints[(체크포인트: 2시간)]
     Model --> Tools[허용된 도구]
     Tools --> Plan[일정 검증]
     Plan --> Result[지도 · 사진 · PDF]
@@ -151,17 +174,19 @@ flowchart LR
 
 **대중교통은 Playwright로 네이버 지도 화면을 조회하며 별도 대중교통 API 키가 필요하지 않습니다.** 조회 시점의 참고 경로이며 여행일 시간표 검증은 미지원입니다. `python -m playwright install chromium`으로 브라우저를 설치하세요. [설치·동작·제한](docs/BROWSER_TRANSIT.md)을 참고하세요. 별도 검증 왕복편 명세는 아직 활성화하지 않았으며 섬 내 관광 초안은 위 범위에서 제공합니다.
 
+</details>
+
 ## Preview · 화면
 
 <table>
 <tr>
 <td width="68%" valign="top">
-<img src="docs/transport-api-bus.jpg" alt="v0.6 공식 버스 노선과 현재 위치 참고 정보">
-<p><strong>조건과 경로를 함께.</strong> 공식 버스 노선·경유 정류소와 현재 차량 위치 참고 정보를 살펴봅니다.</p>
+<img src="docs/langgraph-v09-live.png" alt="v0.9 실제 Qwen 일정의 서버 재시작 후 복원 화면">
+<p><strong>저장한 여행을 다시 검토.</strong> 앱 재시작 후 진행과 일정을 복원하고 저장된 PDF를 다운로드합니다.</p>
 </td>
 <td width="32%" valign="top">
-<img src="docs/transport-api-mobile.jpg" alt="v0.6 모바일 교통 API 조회 화면">
-<p><strong>이동 중에도 검토.</strong> 모바일에서 주변 정류소를 조회하고 현재 관측과 미래 일정의 차이를 확인합니다.</p>
+<img src="docs/langgraph-v09-mobile.png" alt="v0.9 합성 우천 시나리오의 모바일 선택 화면">
+<p><strong>이동 중에도 선택.</strong> 날씨·도보 제약으로 방문 수가 줄면 가능한 선택을 보여줍니다. 이 캡처는 합성 자료를 사용합니다.</p>
 </td>
 </tr>
 </table>
@@ -177,7 +202,7 @@ flowchart LR
 
 </details>
 
-<sub>대표 화면은 2026년 10월 16일 촬영한 v0.6 교통 API 화면이며, 펼침 영역에는 v0.2 개발 화면을 보관했습니다. 캡처는 당시 기록이며 현재 서비스 상태를 뜻하지 않습니다.</sub>
+<sub>대표 화면은 2026년 11월 2일 기록한 v0.9 복구·선택 화면이며 모바일 시나리오는 합성 자료입니다. 펼침 영역에는 v0.2 개발 화면을 보관했습니다. 캡처는 당시 기록이며 현재 서비스 상태를 뜻하지 않습니다.</sub>
 
 ## Highlights · 주요 기능
 
@@ -321,16 +346,20 @@ Linux/macOS에서는 `.venv/bin/python`을 사용하고 다음 명령으로 실�
 
 Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python .venv/Scripts/python.exe install -r requirements.txt`를 사용할 수 있습니다.
 
+### 선택 사항: 로컬 운영 스택
+
+Docker Compose, 자동 수집, 운영 화면과 로컬 Langfuse는 [배포·독립 토큰 설정](docs/WORKFLOWS.md)과 [관측 설정](docs/OBSERVABILITY.md)을 따릅니다. 컨테이너 앱 실행 전에 네이티브 서버를 중지하고 같은 자료 디렉터리에는 백엔드 하나만 실행합니다. n8n은 수집 일정을, LangGraph는 여행 진행을 담당합니다. 위 네이티브 실행 명령만으로 n8n·Langfuse가 시작되지는 않습니다.
+
 ## Validation · 검증
 
 **2026년 11월 2일 한국시간 기준 재실행: Python 195개, 프런트엔드 28개 테스트 통과.** 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |
-| Python 회귀 테스트 | 예보 시간, 누락·오래된 자료·폐장, 고정 일정, 페이지 수집, 원자적 갱신, 모델 실패 전환, HTTP 검증, 사진·경로 및 일정 교체. |
-| Node.js 테스트 | 날씨 표시 규칙, 한국시간, 한글 UTF-8 분할 NDJSON 파싱, 불완전 스트림 오류. |
+| Python 회귀 테스트 | 계획 시나리오, 페이지 수집·원자적 갱신, 모델 실패 전환, HTTP 계약, 체크포인트 대기·재개, 접근 토큰 인증, 리비전·되돌리기 보관, 중단·재시도·만료. |
+| Node.js 테스트 | 날씨·이동 표시, 한국시간, NDJSON/SSE 파싱, 그래프 이벤트 순서, 재연결·인증 처리, 브라우저 진행 복구 참조. |
 | 기존 개발 기록 | 원천 API·Ollama·사진·도로 경로·브라우저 관찰은 [VALIDATION.md](VALIDATION.md)에 과거 근거로 구분해 보존. |
-| 로컬 문서·데이터 검사 | 기존 카탈로그 집계 및 README 1280px 로컬 렌더링. 이미지 누락·가로 넘침 없음. |
+| 과거 문서·데이터 검사 | 기존 카탈로그 집계와 1280px README 렌더링 기록을 당시 관찰로 보존. 현재 제공기관 상태를 뜻하지 않음. |
 | CI 설정 | [GitHub Actions](.github/workflows/ci.yml)에 Python 3.11·Node.js 22 설정. 오프라인 CI는 실제 제공기관 조회나 Chromium 실행을 포함하지 않습니다. 원격 실행 상태는 연결된 워크플로에서 확인합니다. |
 
 ```powershell
@@ -345,6 +374,10 @@ node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-sessi
 
 | 메서드 | 경로 | 용도 |
 | --- | --- | --- |
+| POST | `/api/journeys/stream` | `{trip, use_ai}`로 폼 워크플로우 시작. NDJSON 복구 참조·진행·결과. |
+| GET | `/api/journeys/{id}` | `X-Journey-Token`으로 상태·결과 복구. |
+| POST | `/api/journeys/{id}/resume/stream` | 토큰과 `{revision, choice}`로 재개. `keep`, `fewer`, `transit`, 실패 시 `retry`. |
+| GET | `/api/regions` | 예보 비교와 현재 관광 초안 지원 권역. |
 | GET | `/api/health` | 카탈로그 유무·수집 시각·건수. |
 | GET | `/api/places` | 권역별 관광 후보. |
 | POST | `/api/plan` | Python 규칙 기반 초안. |
@@ -357,7 +390,7 @@ node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-sessi
 | GET | `/api/plans/{plan_id}/pdf?revision=N` | 저장된 버전의 한글 PDF; 충돌·만료 검사. |
 | GET | `/api/ferries/live?office=인천&date=YYYY-MM-DD` | 공식 화면의 오늘 출항·운항정보; 도착 미확인은 null. |
 
-[v0.5 PDF·배편 계약](docs/API-v05.md)과 [v0.2 리비전·스트림 계약](docs/API-v02.md)을 참고하세요.
+입력 폼은 journey API를 사용하며 기존 plan/chat API도 직접 호출할 수 있습니다. 복구 토큰은 URL에 넣지 않습니다. [진행 인증·리비전](docs/LANGGRAPH.md), [운영·SSE](docs/OBSERVABILITY.md), [공식 교통 API](docs/TRANSPORT_API.md), [v0.5 PDF·배편 계약](docs/API-v05.md)과 [v0.2 리비전·스트림 계약](docs/API-v02.md)을 참고하세요.
 
 ## Notes · 참고
 
@@ -373,6 +406,8 @@ node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-sessi
 
 | 경로 | 역할 |
 | --- | --- |
+| [`marine_agent/journey_graph.py`](marine_agent/journey_graph.py) / [`journeys.py`](marine_agent/journeys.py) | 그래프·선택·체크포인트·접근 토큰 기반 복구. |
+| [`marine_agent/rules.py`](marine_agent/rules.py) | 날씨·장소 조건, 여행 속도·도보 규칙. |
 | [`marine_agent/agent.py`](marine_agent/agent.py) | 도구 스키마·호출 제한·모델 실패 전환. |
 | [`marine_agent/pdf_export.py`](marine_agent/pdf_export.py) / [`browser_ferries.py`](marine_agent/browser_ferries.py) | 저장 일정 PDF와 공식 당일 배편 관측. |
 | [`marine_agent/planner.py`](marine_agent/planner.py) | 여행 제약과 규칙 기반 일정 생성. |
@@ -385,7 +420,7 @@ node --test tests/web.test.mjs tests/live-stability.test.mjs tests/journey-sessi
 
 ## Roadmap · 개발 계획
 
-다음 우선순위는 운영·자녀 연령 확인, 특보·출입 통제 연계, 주차·교통을 포함한 이동 가능성 검증, 한국어 도구 호출 평가 확대입니다. 공유 저장소·인증·배포 모니터링은 후속 과제입니다. [전체 로드맵](docs/ROADMAP.md)을 참고하세요.
+다음 우선순위는 운영·자녀 연령 확인, 특보·출입 통제 연계, 주차·교통을 포함한 이동 가능성 검증, 한국어 도구 호출 평가 확대입니다. 로컬 SQLite 보관·진행별 접근 토큰·운영 모니터링은 구현했으며, 다중 워커용 공유 저장소와 외부 공개용 계정 인증은 후속 과제입니다. [전체 로드맵](docs/ROADMAP.md)을 참고하세요.
 
 ## Sources · 출처와 이용조건
 
