@@ -120,7 +120,7 @@ def tracked(kind):
     result=fn(*a,**kw)
     progress.emit('result','요청 처리 완료',state='completed')
     if hasattr(result,'status_code') and result.status_code>=400:state='failed'
-    else:state='success'
+    else:state='warning' if isinstance(result,dict) and result.get('status') in ('degraded','limited') else 'success'
     summary=run.finish(state)
     if isinstance(result,dict):result['execution']=summary
     return result

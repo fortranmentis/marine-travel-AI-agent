@@ -114,7 +114,7 @@ def test_cli_and_service_share_catalog_lock(monkeypatch,tmp_path):
   with pytest.raises(Timeout):providers.sync_component('seatrip_sync')
 
 
-def test_recorded_api_execution_survives_client_reload(monkeypatch):
+def test_recorded_api_execution_survives_client_reload(monkeypatch,tmp_path):
  monkeypatch.setenv('OPS_TOKEN','operator')
  from marine_agent import plans
  monkeypatch.setattr(planner,'build_plan',lambda trip:{'days':[]})
@@ -125,6 +125,16 @@ def test_recorded_api_execution_survives_client_reload(monkeypatch):
  run_id=result.json()['execution']['run_id']
  detail=TestClient(app).get('/api/ops/runs/'+run_id,headers={'Authorization':'Bearer operator'})
  assert detail.status_code==200 and detail.json()['status']=='success'
+ # The legacy non-stream endpoint must also distinguish degraded model results.
+ import importlib
+ app_module=importlib.import_module('marine_agent.app')
+ from marine_agent import agent
+ marker=tmp_path/'present.json';marker.write_text('{}')
+ monkeypatch.setattr(app_module,'CATALOG',marker)
+ monkeypatch.setattr(agent,'chat',lambda *a,**kw:dict(status='degraded',answer='fallback',plan=None,trace=[]))
+ degraded=TestClient(app).post('/api/chat',json={'message':'hello'})
+ assert degraded.status_code==200 and degraded.json()['execution']['status']=='warning'
+
 
 
 def test_missing_catalog_bootstrap_and_recent_failure_cooldown(monkeypatch,tmp_path):
