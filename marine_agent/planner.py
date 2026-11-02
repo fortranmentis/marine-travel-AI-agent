@@ -207,9 +207,9 @@ def build_plan(trip):
     locked_titles = {lock.title for lock in trip.locked}
     used = {p['id'] for p in candidates if p['title'] in locked_titles or p['id'] in {l.id for l in trip.locked}}
     days, marine_used = [], False
-    source_age = dt.datetime.now(providers.KST) - dt.datetime.fromisoformat(c['collected_at'])
-    if source_age > dt.timedelta(days=1):
-        raise ValueError('데이터가 24시간 이상 지났습니다. 데이터 수집을 다시 실행하세요.')
+    source_age = dt.datetime.now(providers.KST) - dt.datetime.fromisoformat(c.get('tourism_collected_at',c['collected_at']))
+    if source_age > dt.timedelta(days=8 if c.get('tourism_collected_at') else 1):
+        raise ValueError('관광정보 유효기간이 지났습니다. 관광정보 수집을 다시 실행하세요.' if c.get('tourism_collected_at') else '데이터가 24시간 이상 지났습니다. 데이터 수집을 다시 실행하세요.')
     prepared = {}
     for offset in range(trip.days):
         date = trip.start_date + dt.timedelta(days=offset)
@@ -352,6 +352,7 @@ def build_plan(trip):
                          warnings=[], search_reference=gateway,
                          alternative_note='같은 권역의 대체 후보입니다. 실내 여부·운영시간·가족 적합성은 개별 확인 필요'))
     for day in days:
+        if source_age > dt.timedelta(days=7):day['warnings'].append('관광정보 수집 후 7일이 지났습니다. 운영정보와 최신 관광정보 갱신을 확인하세요.')
         if not island:
             travel.add_food(day, trip)
         if day['actual_visits'] < day['requested_visits']:

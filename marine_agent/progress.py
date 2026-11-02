@@ -15,6 +15,8 @@ def reporting(callback):
 
 
 def emit(stage, message, state='started', event='stage', **extra):
+    from .runs import capture
+    event_value = capture(dict(type=event, stage=stage, state=state, message=message, **extra))
     callback = _reporter.get()
     if callback:
-        callback(dict(type=event, stage=stage, state=state, message=message, **extra))
+        callback(event_value)

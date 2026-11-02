@@ -183,5 +183,7 @@ def enrich(plan):
                 media[item['id']] = photo_for(item['id'])
         routes[day['date']] = day_route(day)
     plan['media'], plan['routes'] = media, routes
+    for provider,missing,total in [('photos',sum(v.get('status')!='available' for v in media.values()),len(media)),('OSRM',sum(not v.get('complete') for v in routes.values()),len(routes))]:
+        progress.emit('enrich','자료 보강 결과',event='provider',provider=provider,state='warning' if missing else 'completed',count=total-missing)
     progress.emit('enrich', '사진과 경로 조회를 마쳤어요. 확보하지 못한 자료는 따로 표시해요.', state='completed')
     return plan

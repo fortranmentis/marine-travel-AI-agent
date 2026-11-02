@@ -1,0 +1,15 @@
+{
+  "checked_date": "2026-11-02",
+  "n8n_version": "2.45.7",
+  "manual_execution": "success",
+  "internal_job": "seatrip_sync",
+  "poll_node_observed": true,
+  "success_branch_observed": true,
+  "schedule_published_after_manual_success": true,
+  "timezone": "Asia/Seoul",
+  "check_interval_minutes": 5,
+  "ports": {
+    "app": "127.0.0.1:8001",
+    "n8n": "127.0.0.1:5678"
+  }
+}

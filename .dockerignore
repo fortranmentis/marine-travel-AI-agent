@@ -1,0 +1,10 @@
+*
+!requirements.txt
+!marine_agent/
+!marine_agent/**
+!scripts/
+!scripts/**
+!web/
+!web/**
+**/__pycache__
+**/*.pyc

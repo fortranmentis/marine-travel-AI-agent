@@ -74,3 +74,11 @@ test('transit display preserves missing values and links only to the source map'
  assert.equal(transitSourceUrl('https://map.naver.com/p/directions/a/b/-/transit'),'https://map.naver.com/p/directions/a/b/-/transit');
 });
 test('daily dates cross month and year without local timezone drift',()=>{assert.deepEqual(datesFor('2026-12-31',3),['2026-12-31','2027-01-01','2027-01-02']);assert.deepEqual(datesFor('',2),[]);});
+
+
+test('execution metadata survives NDJSON without changing existing result shape',async()=>{
+ const events=[];
+ const payload=[{type:'stage',stage:'data',state:'started',run_id:'run1',step_id:'step1',at:'2026-11-02T12:00:00+09:00'},{type:'tool',stage:'data',state:'completed',run_id:'run1',step_id:'tool1',duration_seconds:1.2},{type:'result',result:{status:'ok',execution:{run_id:'run1',steps:[]}}}].map(v=>JSON.stringify(v)).join('\n')+'\n';
+ const result=await readNDJSON(new Response(payload),e=>events.push(e));
+ assert.equal(events[0].step_id,'step1');assert.equal(events[1].duration_seconds,1.2);assert.equal(result.execution.run_id,'run1');
+});

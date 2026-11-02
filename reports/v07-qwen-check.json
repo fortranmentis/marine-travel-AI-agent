@@ -1,0 +1,172 @@
+{
+  "first_event_seconds": 0.127,
+  "total_seconds": 18.286,
+  "model": "qwen3.8:27b-mtp-q8_0",
+  "status": "ok",
+  "steps": 10,
+  "events": [
+    {
+      "type": "stage",
+      "stage": "input",
+      "state": "completed",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "c3de659e505e455185afe28b834e9c87",
+      "duration_seconds": 0.0
+    },
+    {
+      "type": "stage",
+      "stage": "data",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "abb44dae62d64bcf996cbce2540ab46e",
+      "duration_seconds": null
+    },
+    {
+      "type": "activity",
+      "stage": "data",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f"
+    },
+    {
+      "type": "provider",
+      "stage": "data",
+      "state": "started",
+      "provider": "Ollama",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "439d8928ad6e4c299296a1af016d3a22",
+      "duration_seconds": null
+    },
+    {
+      "type": "provider",
+      "stage": "data",
+      "state": "completed",
+      "provider": "Ollama",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "439d8928ad6e4c299296a1af016d3a22",
+      "duration_seconds": 3.772
+    },
+    {
+      "type": "tool",
+      "stage": "data",
+      "state": "started",
+      "tool": "build_itinerary",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "2c27450801dc4f6a8b17ee34f9eb1e65",
+      "duration_seconds": null
+    },
+    {
+      "type": "stage",
+      "stage": "data",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "abb44dae62d64bcf996cbce2540ab46e",
+      "duration_seconds": null
+    },
+    {
+      "type": "activity",
+      "stage": "data",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f"
+    },
+    {
+      "type": "stage",
+      "stage": "data",
+      "state": "completed",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "abb44dae62d64bcf996cbce2540ab46e",
+      "duration_seconds": 4.805
+    },
+    {
+      "type": "stage",
+      "stage": "schedule",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "851d65fcbcc848219af08e0be3d8d29e",
+      "duration_seconds": null
+    },
+    {
+      "type": "stage",
+      "stage": "schedule",
+      "state": "completed",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "851d65fcbcc848219af08e0be3d8d29e",
+      "duration_seconds": 1.678
+    },
+    {
+      "type": "tool",
+      "stage": "schedule",
+      "state": "completed",
+      "tool": "build_itinerary",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "2c27450801dc4f6a8b17ee34f9eb1e65",
+      "duration_seconds": 2.679
+    },
+    {
+      "type": "activity",
+      "stage": "schedule",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f"
+    },
+    {
+      "type": "provider",
+      "stage": "data",
+      "state": "started",
+      "provider": "Ollama",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "5857be49e98f45918538b7f432b3c2f0",
+      "duration_seconds": null
+    },
+    {
+      "type": "provider",
+      "stage": "data",
+      "state": "completed",
+      "provider": "Ollama",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "5857be49e98f45918538b7f432b3c2f0",
+      "duration_seconds": 9.475
+    },
+    {
+      "type": "stage",
+      "stage": "enrich",
+      "state": "started",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "5aa69d88734e40948715dcabab2067f8",
+      "duration_seconds": null
+    },
+    {
+      "type": "provider",
+      "stage": "enrich",
+      "state": "warning",
+      "provider": "photos",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "a9c920d3a075444fb68d99bb1b0cb64b",
+      "duration_seconds": 0.0
+    },
+    {
+      "type": "provider",
+      "stage": "enrich",
+      "state": "completed",
+      "provider": "OSRM",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "24a854cf1f9048c0b5941a0ff149be1b",
+      "duration_seconds": 0.0
+    },
+    {
+      "type": "stage",
+      "stage": "enrich",
+      "state": "completed",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "5aa69d88734e40948715dcabab2067f8",
+      "duration_seconds": 0.747
+    },
+    {
+      "type": "stage",
+      "stage": "result",
+      "state": "completed",
+      "run_id": "3716e2718458428bb322a5c2fb6b907f",
+      "step_id": "42c73ef1350c4d6f8459808effffb2a1",
+      "duration_seconds": 0.0
+    }
+  ],
+  "run_id": "3716e2718458428bb322a5c2fb6b907f"
+}

@@ -15,5 +15,5 @@ def load_env():
 
 
 load_env()
-DATA = ROOT / 'data'
+DATA = Path(os.environ.get('MARINE_DATA_DIR', str(ROOT / 'data')))
 CATALOG = DATA / 'catalog.json'

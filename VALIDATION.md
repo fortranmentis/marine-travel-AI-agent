@@ -1,5 +1,16 @@
 # Validation record — updated 2026-10-16 (Asia/Seoul)
 
+## v0.7 workflows — 2026-11-02
+
+- **Offline:** 135 Python and 13 Node tests pass, including component atomicity/preservation, shared lock, bootstrap, retry cooldown/cap, job deduplication, auth separation, secret omission, interrupted-run recovery, seven-day cleanup and fail-soft traveler summaries. One existing Starlette/httpx deprecation warning remains.
+- **Docker:** app built with Playwright Chromium and Nanum Gothic; app and n8n 2.45.7 run on loopback-only ports 8001/5678. Compose syntax and app health checked. A simultaneous native validation server caused SQLite cross-OS access failure; it was stopped before successful container validation. The documented deployment requires one backend against the shared data directory.
+- **Live collection:** independent tourism job collected 7,644 rows; sea-travel job collected 290 rows. Both validated and atomically saved; [sanitized evidence](reports/v07-sync-check.json).
+- **n8n:** manual branch requested the internal job, polled through completion and reached the success node. Only after that success, the five-minute schedule was published and n8n restarted. The scheduled policy avoids provider calls when current data is already present. See [workflow](workflows/marine-refresh.json) and [operational guide](docs/WORKFLOWS.md).
+- **Qwen:** actual `qwen3.8:27b-mtp-q8_0` request returned its first public progress event in 0.127 seconds, then completed in 18.286 seconds with model status `ok` and ten execution steps. Missing photo evidence made its execution summary warning-bearing. This is a smoke observation, not a model-quality benchmark; [stream evidence](reports/v07-qwen-check.json).
+- **Source boundary:** the first Gangneung request failed because its fixed tourism gateway was absent from the latest upstream catalog. Its failure remained visible; the successful check used an enabled Incheon region. No guessed replacement gateway or falsely verified travel conditions were introduced.
+- **UI:** Desktop and 390px mobile checks passed; mobile ops document width was 390px, and the travel page was 375px. [Operator records](docs/ops-v07-runs.png), [mobile ops](docs/ops-v07-mobile.png), [progress dialog](docs/progress-v07.png). Mermaid structure and pipeline render locally; operator auth, run details, persisted records after reload and published n8n editor were checked. Captures are dated evidence, not live service guarantees.
+
+
 ## v0.6 official transport APIs — 2026-10-16
 
 - **Offline regression:** 123 Python and 12 Node.js tests passed. Python emits one existing Starlette/httpx deprecation warning. Tests isolate external transport credentials and use mocks; these are not live-provider evidence.

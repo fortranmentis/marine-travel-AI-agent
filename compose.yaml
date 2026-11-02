@@ -1,0 +1,60 @@
+services:
+  app:
+    build: .
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.8:27b-mtp-q8_0}
+      OLLAMA_NUM_CTX: ${OLLAMA_NUM_CTX:-16384}
+      MARINE_CREDENTIALS_FILE: /run/credentials/marine.txt
+      TRANSPORT_CREDENTIALS_FILE: /run/credentials/transport.txt
+      OPS_TOKEN: ${OPS_TOKEN:?Set OPS_TOKEN in .env}
+      SYNC_TOKEN: ${SYNC_TOKEN:?Set SYNC_TOKEN in .env}
+      TRANSIT_PROVIDER: playwright
+      OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
+      OSRM_FOOT_BASE_URL: ${OSRM_FOOT_BASE_URL:-https://routing.openstreetmap.de/routed-foot}
+      TZ: Asia/Seoul
+    volumes:
+      - ./data:/app/data
+      - type: bind
+        source: ${MARINE_CREDENTIALS_FILE:?Set external credential path}
+        target: /run/credentials/marine.txt
+        read_only: true
+      - type: bind
+        source: ${TRANSPORT_CREDENTIALS_FILE:?Set external credential path}
+        target: /run/credentials/transport.txt
+        read_only: true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/api/health',timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 4
+    restart: unless-stopped
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.45.7
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      GENERIC_TIMEZONE: Asia/Seoul
+      TZ: Asia/Seoul
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      # Local loopback HTTP only; use TLS + secure cookies for any remote deployment.
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_VERSION_NOTIFICATIONS_ENABLED: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: "168"
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: "10000"
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: all
+      EXECUTIONS_DATA_SAVE_ON_PROGRESS: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows:ro
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  n8n_data:

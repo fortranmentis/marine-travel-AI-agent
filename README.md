@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.6.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.7.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent
 
@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.6.0](docs/assets/version.svg)
+![Version: 0.7.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 135 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 148 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,7 +27,41 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.6.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.7.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## New in v0.7 — Workflows you can inspect
+
+**Docker Compose + n8n**, independent daily sea-travel / weekly tourism collection, real AI progress, and seven-day SQLite execution summaries. Travelers see their current request; operators use the separate `/ops` page for diagrams, freshness, step timings, errors and collection retries. Only summaries are retained, never prompts, reasoning tokens or provider credentials.
+
+[Deployment, authentication and recovery](docs/WORKFLOWS.md) · [Operations UI](http://127.0.0.1:8001/ops) · [n8n](http://127.0.0.1:5678)
+
+![Published n8n refresh pipeline](docs/n8n-v07.png)
+
+<details><summary>Operator records and mobile freshness view</summary>
+
+![Operator execution records](docs/ops-v07-runs.png)
+
+![Mobile data freshness](docs/ops-v07-mobile.png)
+
+</details>
+
+```mermaid
+flowchart LR
+    User[Traveler] --> API[FastAPI]
+    API --> Model[Qwen / Ollama]
+    Model --> Tools[Typed tools]
+    Tools --> Plan[Schedule validation]
+    Plan --> Result[Maps, photos, PDF]
+    Scheduler[n8n: five-minute policy check] --> Jobs[Collection jobs]
+    Jobs --> Check[Validate and atomically save]
+    Check --> Catalog[Tourism / marine catalog]
+    Catalog --> Tools
+    API --> Ledger[(Seven-day SQLite summaries)]
+    Jobs --> Ledger
+    Ledger --> Ops[Operator UI]
+```
+
+**Verified integration snapshot, November 2, 2026:** 7,644 tourism records and 290 sea-travel rows across 29 forecast regions. Fresh source data can remove an exact tourism gateway ID; affected draft regions remain unavailable. Forecast coverage is not a guarantee that every region has a usable tourism draft.
 
 ## New in v0.6 — Official transport API evidence
 
@@ -183,7 +217,7 @@ The pipeline preserves **source grain, collection time and unknowns**. Tourism r
 | Weather | KMA grid forecast elements by date and hour. | Coordinate-to-grid conversion; issue time and reference point retained. Warning bulletins are not queried. |
 | Enrichment | Tourism-ID photo metadata and coordinate-pair road routes. | Matching IDs and accepted licenses; unavailable photos/routes stay unavailable. |
 
-**Current collection:** October 16, 2026, 00:16 KST — **10,102 tourism records / 10,102 distinct IDs**, **29 sea-travel forecast regions**. See the [national aggregate profile](docs/national-profile.json). Non-sea-travel feeds retain their earlier collection timestamps.
+**Historical v0.6 collection:** October 16, 2026, 00:16 KST — **10,102 tourism records / 10,102 distinct IDs**, **29 sea-travel forecast regions**. See the [national aggregate profile](docs/national-profile.json). Non-sea-travel feeds retain their earlier collection timestamps.
 
 **Historical v0.3 snapshot:** October 15, 2026, 16:42:01 KST — **513 tourism records**, **513 distinct IDs**, **511 coordinate pairs within a basic Korea bounding box**, and **3,827 national marine forecast rows**. Two tourism records failed that coordinate screen. These are dated file observations, not a new API collection or a positional-accuracy assessment.
 
@@ -258,7 +292,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on October 16, 2026 (Asia/Seoul): 123 Python tests and 12 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on November 2, 2026 (Asia/Seoul): 135 Python tests and 13 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

@@ -67,7 +67,7 @@ def atomic_json(path, value):
     temp.replace(path)
 
 
-def sync_catalog(scope='incheon', all_marine=False):
+def _sync_catalog(scope='incheon', all_marine=False):
     from . import regions
     if scope not in ('incheon','coastal'):
         raise ValueError('Unknown collection scope')
@@ -109,7 +109,7 @@ def sync_catalog(scope='incheon', all_marine=False):
         # Do not replace a complete existing snapshot with a partial marine refresh.
         atomic_json(DATA / 'sync_failure.json', dict(checked_at=dt.datetime.now(KST).isoformat(), errors=errors))
         raise RuntimeError('Marine collection incomplete; previous catalog preserved (see data/sync_failure.json)')
-    result = dict(collected_at=dt.datetime.now(KST).isoformat(), tourism_source='https://www.data.go.kr/data/15101578/openapi.do',
+    result = dict(collected_at=dt.datetime.now(KST).isoformat(), tourism_collected_at=dt.datetime.now(KST).isoformat(), tourism_source='https://www.data.go.kr/data/15101578/openapi.do',
                   scope=scope, area_code=area, area_codes=selected, administrative=administrative, places=rows, marine=marine)
     atomic_json(CATALOG, result)
     return dict(places=len(rows), marine={k: len(v['rows']) for k, v in marine.items()}, collected_at=result['collected_at'])
@@ -183,3 +183,57 @@ def weather_for_place(content_id, date):
                 issue_at=issue.isoformat(), checked_at=now.isoformat(), forecasts=by_time,
                 source='KMA short-term forecast', warnings_checked=False,
                 reference_place=dict(id=str(content_id), title=row['title'], lat=lat, lon=lon))
+
+
+# All writers (CLI and HTTP) share this cross-process catalog lock.
+def sync_catalog(scope='incheon', all_marine=False):
+    from filelock import FileLock
+    DATA.mkdir(parents=True,exist_ok=True)
+    with FileLock(str(DATA/'catalog.lock'),timeout=1):
+        return _sync_catalog(scope,all_marine)
+
+
+def sync_component(kind):
+    from filelock import FileLock
+    from . import progress, regions
+    if kind not in ('tourism_sync','seatrip_sync'):raise ValueError('Unsupported sync kind')
+    DATA.mkdir(parents=True,exist_ok=True)
+    with FileLock(str(DATA/'catalog.lock'),timeout=1):
+        previous=catalog() if CATALOG.exists() else dict(places=[],marine={},scope='coastal')
+        result=dict(previous);result['marine']=dict(previous.get('marine',{}))
+        progress.emit('collect','공공자료를 수집하고 있어요.')
+        if kind=='tourism_sync':
+            entry=service('KorService2');params=dict(serviceKey=entry['key'],MobileOS='ETC',MobileApp='MarineTravelAgent',_type='json',numOfRows=100)
+            codes=fetch_pages(entry['endpoint']+'/areaCode2',params)
+            selected=list(regions.AREA_NAMES)
+            if not set(selected)<={str(r['code']) for r in codes}:raise RuntimeError('Tourism metadata incomplete')
+            rows=[];administrative={}
+            progress.emit('collect','관광정보를 조회하고 있어요.',event='provider',provider='TourAPI')
+            for code in selected:
+                administrative[code]=fetch_pages(entry['endpoint']+'/areaCode2',dict(params,areaCode=code))
+                batch=fetch_pages(entry['endpoint']+'/areaBasedList2',dict(params,areaCode=code,arrange='A'))
+                if not batch:raise RuntimeError('Empty tourism area')
+                rows.extend(batch)
+            progress.emit('collect','관광정보 조회 완료',event='provider',provider='TourAPI',state='completed',count=len(rows))
+            progress.emit('validate','관광정보 식별자와 필수 필드를 검증하고 있어요.')
+            ids=[str(r.get('contentid','')) for r in rows]
+            if len(set(ids))!=len(ids) or any(not r.get('contentid') or not r.get('title') or not r.get('contenttypeid') for r in rows):raise RuntimeError('Invalid tourism records')
+            result.update(places=rows,administrative=administrative,area_codes=selected,area_code='2',scope='coastal',tourism_source='https://www.data.go.kr/data/15101578/openapi.do',tourism_collected_at=dt.datetime.now(KST).isoformat())
+        else:
+            today=dt.datetime.now(KST).strftime('%Y%m%d');schema,source=marine_schema(MARINE['seatrip'][0]);operation=next(iter(schema['paths']));entry=service(MARINE['seatrip'][1])
+            progress.emit('collect','바다여행지수를 조회하고 있어요.',event='provider',provider='KHOA')
+            rows=fetch_pages('https://'+schema['host']+operation,dict(serviceKey=entry['key'],type='json',reqDate=today,numOfRows=300))
+            progress.emit('collect','예보 조회 완료',event='provider',provider='KHOA',state='completed',count=len(rows))
+            progress.emit('validate','예보 날짜와 권역·등급을 검증하고 있어요.')
+            if not rows or not any(str(r.get('predcYmd','')).replace('-','')==today for r in rows):raise RuntimeError('Current forecast absent')
+            if any(not r.get('sareaDtlNm') or not r.get('totalIndex') or len(str(r.get('predcYmd','')).replace('-',''))!=8 for r in rows):raise RuntimeError('Invalid forecast fields')
+            expected={v.get('forecast_area') for k,v in regions.SPECS.items() if k not in regions.LEGACY}
+            if not expected<={r.get('sareaDtlNm') for r in rows}:raise RuntimeError('Forecast areas incomplete')
+            if 'tourism_collected_at' not in result:result['tourism_collected_at']=previous.get('collected_at') if previous.get('places') else None
+            result['marine']['seatrip']=dict(rows=rows,source=source,requested_date=today,collected_at=dt.datetime.now(KST).isoformat())
+        progress.emit('collect','수집 완료',state='completed',count=len(rows))
+        progress.emit('validate','자료 검증 완료',state='completed',count=len(rows))
+        progress.emit('save','검증한 자료를 교체하고 있어요.')
+        result['collected_at']=dt.datetime.now(KST).isoformat();atomic_json(CATALOG,result)
+        progress.emit('save','자료 저장 완료',state='completed',count=len(rows))
+        return dict(count=len(rows))

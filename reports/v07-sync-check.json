@@ -1,0 +1,140 @@
+[
+  {
+    "id": "3471b7b4ae1e4b2094f87485d1a24111",
+    "kind": "seatrip_sync",
+    "status": "success",
+    "started_at": "2026-11-02T14:13:26.704910+09:00",
+    "finished_at": "2026-11-02T14:13:27.559559+09:00",
+    "duration_s": 0.859,
+    "attempt": 1,
+    "parent_run_id": null,
+    "scheduled": 0,
+    "steps": [
+      {
+        "id": "0a8da908a6c245f09f5b196c78c3bcbe",
+        "run_id": "3471b7b4ae1e4b2094f87485d1a24111",
+        "parent_id": null,
+        "stage": "collect",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:26.819358+09:00",
+        "finished_at": "2026-11-02T14:13:27.394196+09:00",
+        "duration_s": 0.575,
+        "count": 290,
+        "error_code": null
+      },
+      {
+        "id": "f8e29ce2867e4262a2402e9564ebad9a",
+        "run_id": "3471b7b4ae1e4b2094f87485d1a24111",
+        "parent_id": "0a8da908a6c245f09f5b196c78c3bcbe",
+        "stage": "collect",
+        "tool": null,
+        "provider": "KHOA",
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:27.221672+09:00",
+        "finished_at": "2026-11-02T14:13:27.376884+09:00",
+        "duration_s": 0.155,
+        "count": 290,
+        "error_code": null
+      },
+      {
+        "id": "70d69d7e470c4650abd47b784a568058",
+        "run_id": "3471b7b4ae1e4b2094f87485d1a24111",
+        "parent_id": null,
+        "stage": "validate",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:27.385829+09:00",
+        "finished_at": "2026-11-02T14:13:27.407908+09:00",
+        "duration_s": 0.022,
+        "count": 290,
+        "error_code": null
+      },
+      {
+        "id": "5f7ff0fa5f4847b094982b63e64c65fd",
+        "run_id": "3471b7b4ae1e4b2094f87485d1a24111",
+        "parent_id": null,
+        "stage": "save",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:27.423254+09:00",
+        "finished_at": "2026-11-02T14:13:27.547685+09:00",
+        "duration_s": 0.124,
+        "count": 290,
+        "error_code": null
+      }
+    ]
+  },
+  {
+    "id": "6d5976246b1a43c49ba039797ec7d5fc",
+    "kind": "tourism_sync",
+    "status": "success",
+    "started_at": "2026-11-02T14:12:53.577195+09:00",
+    "finished_at": "2026-11-02T14:13:24.291830+09:00",
+    "duration_s": 30.719,
+    "attempt": 1,
+    "parent_run_id": null,
+    "scheduled": 0,
+    "steps": [
+      {
+        "id": "70fefea59eba46f69a783b6958697e48",
+        "run_id": "6d5976246b1a43c49ba039797ec7d5fc",
+        "parent_id": null,
+        "stage": "collect",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:12:53.766707+09:00",
+        "finished_at": "2026-11-02T14:13:24.140190+09:00",
+        "duration_s": 30.373,
+        "count": 7644,
+        "error_code": null
+      },
+      {
+        "id": "e699db2fd77743a4b323b03ad45735a2",
+        "run_id": "6d5976246b1a43c49ba039797ec7d5fc",
+        "parent_id": "70fefea59eba46f69a783b6958697e48",
+        "stage": "collect",
+        "tool": null,
+        "provider": "TourAPI",
+        "state": "completed",
+        "started_at": "2026-11-02T14:12:53.985654+09:00",
+        "finished_at": "2026-11-02T14:13:24.120720+09:00",
+        "duration_s": 30.135,
+        "count": 7644,
+        "error_code": null
+      },
+      {
+        "id": "a591a745e6a94df284fcf39719692103",
+        "run_id": "6d5976246b1a43c49ba039797ec7d5fc",
+        "parent_id": null,
+        "stage": "validate",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:24.126581+09:00",
+        "finished_at": "2026-11-02T14:13:24.144884+09:00",
+        "duration_s": 0.018,
+        "count": 7644,
+        "error_code": null
+      },
+      {
+        "id": "72aed317fa124d4897d8d22e9e588f62",
+        "run_id": "6d5976246b1a43c49ba039797ec7d5fc",
+        "parent_id": null,
+        "stage": "save",
+        "tool": null,
+        "provider": null,
+        "state": "completed",
+        "started_at": "2026-11-02T14:13:24.149235+09:00",
+        "finished_at": "2026-11-02T14:13:24.274852+09:00",
+        "duration_s": 0.126,
+        "count": 7644,
+        "error_code": null
+      }
+    ]
+  }
+]

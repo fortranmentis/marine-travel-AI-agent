@@ -10,3 +10,7 @@ reports/*live*.json
 .tmp/
 output/
 tmp/
+
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm

@@ -1,14 +1,14 @@
-import {initializeNational} from './national.js?v=0.6.0';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.6.0';
-import {initializeTripForm} from './trip-form.js?v=0.6.0';
-import {$,el,button,plainText} from './ui.js?v=0.6.0';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,update as updateProgress} from './progress.js?v=0.6.0';
-import {weatherCard} from './weather.js?v=0.6.0';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.6.0';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.6.0';
-import {initializeFerries} from './ferries.js?v=0.6.0';
-import {initializeTransport} from './public-transport.js?v=0.6.0';
-import {initializeTimetable} from './ferry-timetable.js?v=0.6.0';
+import {initializeNational} from './national.js?v=0.7.0';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.7.0';
+import {initializeTripForm} from './trip-form.js?v=0.7.0';
+import {$,el,button,plainText} from './ui.js?v=0.7.0';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.7.0';
+import {weatherCard} from './weather.js?v=0.7.0';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.7.0';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.7.0';
+import {initializeFerries} from './ferries.js?v=0.7.0';
+import {initializeTransport} from './public-transport.js?v=0.7.0';
+import {initializeTimetable} from './ferry-timetable.js?v=0.7.0';
 
 const form=$('#trip-form');
 let ferryPanel=null;
@@ -128,7 +128,7 @@ async function aiRequest(request){
 function displayResult(data){if(data.plan){syncForm(data.plan);render(data.plan);}$('#messages').append(el('div',data.answer,'answer'));$('#chat-panel').hidden=false;$('#trace').textContent=data.trace.map(t=>`${t.tool}: ${t.status}`).join(' → ');status(data.status==='ok'?'초안을 만들었습니다. 미확인 항목을 확인해 주세요.':'AI 처리 상태: '+data.status+' · 데이터 기반 초안을 확인해 주세요.');}
 async function generate(useAI){
   if(state.busy||!form.reportValidity())return;busy(true);status(useAI?'AI가 여행 자료를 확인하고 있습니다.':'데이터와 규칙으로 초안을 만드는 중입니다.');
-  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 선택한 권역의 바다여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
+  try{const input=trip();if(useAI){const message='입력한 동행·교통·식사·일별 시간 조건으로 선택한 권역의 바다여행 일정을 만들어 주세요.';const data=await aiRequest({message,trip:input});state.history=[{role:'user',content:message+' '+JSON.stringify(input)},{role:'assistant',content:data.answer}];$('#messages').replaceChildren();displayResult(data);}else{const plan=await api('/api/plan',input);syncForm(plan);render(plan);executionSummary(plan.execution);$('#chat-panel').hidden=false;state.history=[];$('#messages').replaceChildren();$('#trace').textContent='Python 일정 엔진';status('규칙 기반 초안을 만들었습니다.');}}
   catch(error){status(error.message,true);}finally{busy(false);}
 }
 form.onsubmit=e=>{e.preventDefault();generate(true);};$('#rules').onclick=()=>generate(false);

@@ -11,10 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import AwareDatetime, BaseModel, Field
 
 from .config import ROOT, CATALOG
-from . import agent, planner, providers, progress, plans, islands, regions
+from . import agent, planner, providers, progress, plans, islands, regions, runs
 from .browser_transit import budgeted
 
-app = FastAPI(title='Marine Travel AI Agent', version='0.6.0')
+app = FastAPI(title='Marine Travel AI Agent', version='0.7.0')
 app.mount('/static', StaticFiles(directory=ROOT / 'web'), name='static')
 generation_lock = threading.Lock()
 
@@ -94,7 +94,7 @@ def public_config():
                 ferry_status='live_operations_only_roundtrip_review_required',ferry_offices=list(OFFICES),
                 today=dt.datetime.now(providers.KST).date().isoformat(),
                 tile_url=os.environ.get('OSM_TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.6.0',transport_api=availability())
+                tile_attribution='© OpenStreetMap contributors', routing='OSRM', version='0.7.0',transport_api=availability())
 
 
 @app.get('/api/transport/nearby')
@@ -190,6 +190,7 @@ def region_outlooks(date: dt.date | None = None):
 
 @app.post('/api/plan')
 @budgeted
+@runs.tracked('rules_plan')
 def plan(trip: planner.Trip):
     try:
         return plans.store.register(planner.build_plan(trip))
@@ -201,6 +202,7 @@ def plan(trip: planner.Trip):
 
 @app.post('/api/chat')
 @budgeted
+@runs.tracked('ai_plan')
 def chat(request: ChatRequest):
     if not CATALOG.exists():
         raise HTTPException(503, 'python -m marine_agent.sync를 먼저 실행하세요.')
@@ -233,7 +235,7 @@ def chat_stream(request: ChatRequest):
     @budgeted
     def work():
         try:
-            with progress.reporting(send):
+            with runs.execution('ai_plan') as execution, progress.reporting(send):
                 progress.emit('input', '여행 조건을 확인했어요.', state='completed')
                 progress.emit('data', '여행에 필요한 자료와 도구를 선택하고 있어요.')
                 result = agent.chat(request.message, [m.model_dump() for m in request.history], request.trip,
@@ -243,7 +245,8 @@ def chat_stream(request: ChatRequest):
                 else:
                     progress.emit('enrich', '일정 생성 전에 필요한 추가 질문을 준비했어요.', state='skipped')
                 progress.emit('result', '결과를 화면에 준비했어요.', state='completed')
-                send(dict(type='result', result=result))
+                result['execution']=execution.finish('success' if result.get('status')=='ok' else 'warning')
+                send(dict(type='result', result=result,run_id=execution.id))
         except islands.IslandUnavailable as error:
             send(dict(type='error', message=str(error)))
         except Exception:
@@ -290,3 +293,6 @@ def lock_slot(plan_id: str, request: LockUpdate):
         return plans.store.set_lock(plan_id, request.revision, request.slot_id, request.locked)
     except plans.PlanError as error:
         raise HTTPException(error.status, error.message) from None
+
+from .operations import router as operations_router
+app.include_router(operations_router)

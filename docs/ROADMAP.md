@@ -1,5 +1,15 @@
 # Implementation roadmap
 
+## v0.7 — inspectable workflows
+
+- [x] Local Docker Compose app + n8n, read-only provider credentials
+- [x] Independent daily sea-travel / weekly tourism jobs with bounded catch-up
+- [x] Seven-day sanitized SQLite execution records and operator authentication
+- [x] Live traveler task/tool flow and per-request summaries
+- [x] Actual n8n manual run, published schedule and Qwen streaming validation
+- [ ] External deployment, multi-worker jobs, user accounts and persistent itineraries
+
+
 ## v0.6 — official transport APIs
 
 - [x] Seven server-side authenticated services, bounded pagination, caches and sanitized errors

@@ -1,0 +1,28 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>바다결 · 운영 워크플로우</title><link rel="stylesheet" href="/static/ops.css"></head><body><header><a href="/">≈ 바다결</a><span>OPERATIONS / v0.7</span></header><main><h1>워크플로우와 실행 기록</h1><p>자료 갱신과 여행 생성의 실제 작업을 확인합니다. 최근 7일의 요약만 보관합니다.</p><form id="ops-login"><label>운영자 토큰<input id="ops-token" type="password" autocomplete="off" required></label><button>연결</button><button type="button" id="ops-logout">연결 해제</button></form><p id="ops-message" role="status">운영자 토큰으로 연결하세요. 토큰은 이 화면 메모리에만 유지됩니다.</p><section><h2>전체 시스템 구조</h2><div class="mermaid">flowchart LR
+ U[여행객] --> A[FastAPI]
+ A --> Q[Qwen / Ollama]
+ Q --> T[허용된 도구 8종]
+ T --> P[Python 일정 검증]
+ P --> E[지도 · 사진 · PDF]
+ E --> U
+ N[n8n 예약 · 수동 실행] --> J[수집 작업]
+ J --> V[검증 · 원자적 저장]
+ V --> C[지역 관광 · 해양 자료]
+ C --> T
+ A --> R[(실행 요약 / SQLite)]
+ J --> R
+ R --> O[운영자 화면]
+</div><details><summary>수집·여행 생성 흐름</summary><div class="mermaid">flowchart LR
+ S[5분마다 확인] --> D{갱신 필요?}
+ D -->|예| C[수집 요청]
+ D -->|아니오| X[호출 없이 종료]
+ C --> F[자료 수집]
+ F --> V[검증]
+ V -->|성공| W[원자적 저장]
+ V -->|실패| K[기존 자료 보존]
+ I[여행 조건] --> B[예보 · 관광 조회]
+ B --> Q[Qwen 도구 호출]
+ Q --> P[일정 검증]
+ P --> E[경로 · 사진 보강]
+ E --> Z[검토용 일정]
+</div></details></section><div id="ops-private" hidden><section><h2>자료 갱신 상태</h2><p id="recording-health"></p><div id="sync-status" class="cards"></div><p>n8n은 Docker가 켜져 있을 때만 예약 실행됩니다. 다음 시각은 자료 정책 기준이며 실제 확인은 5분 간격입니다.</p><a href="http://127.0.0.1:5678" target="_blank" rel="noopener">n8n 워크플로우 열기 ↗</a></section><section><h2>실행 기록</h2><form id="ops-filters"><label>종류<select id="filter-kind"><option value="">전체</option><option value="ai_plan">AI 일정</option><option value="rules_plan">규칙 일정</option><option value="seatrip_sync">바다여행지수 갱신</option><option value="tourism_sync">관광정보 갱신</option></select></label><label>상태<select id="filter-state"><option value="">전체</option><option value="running">실행 중</option><option value="success">성공</option><option value="warning">경고 포함 완료</option><option value="failed">실패</option><option value="interrupted">중단</option></select></label><label>시작일<input id="filter-since" type="date"></label><button>조회</button></form><div id="run-list" class="run-list"></div></section><section id="run-detail" hidden><h2>실행 상세</h2><div id="run-summary"></div><ol id="run-steps" class="flow"></ol></section></div></main><script src="/static/vendor/mermaid/mermaid.min.js"></script><script type="module" src="/static/ops.js?v=0.7.0"></script></body></html>
