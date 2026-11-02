@@ -4,7 +4,7 @@ import datetime as dt
 import hmac
 import os
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi import Response
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
@@ -14,7 +14,10 @@ from .config import ROOT
 @asynccontextmanager
 async def lifespan(app):
  runs.maintenance(recover=True)
+ from .observability import start_retention,stop_retention
+ start_retention()
  yield
+ stop_retention()
 def no_store(response:Response):response.headers['Cache-Control']='no-store'
 router=APIRouter(lifespan=lifespan,dependencies=[Depends(no_store)])
 def check(name,authorization):
@@ -47,7 +50,8 @@ def internal_detail(job_id:str):
 @router.get('/api/ops/status',dependencies=[Depends(admin)])
 def status():
  runs.maintenance()
- return dict(jobs=jobs.snapshot_status(),recording=runs.health(),retention_days=7)
+ from .observability import status as trace_status, public_url
+ return dict(jobs=jobs.snapshot_status(),recording=runs.health(),retention_days=7,langfuse=dict(trace_status(),url=public_url()))
 @router.get('/api/ops/runs',dependencies=[Depends(admin)])
 def listing(kind:Literal['ai_plan','rules_plan','seatrip_sync','tourism_sync','full_sync']|None=None,status:Literal['queued','running','success','warning','failed','interrupted']|None=None,since:dt.date|None=None,limit:int=Query(100,ge=1,le=500)):
  return dict(runs=runs.listing(kind,status,dt.datetime.combine(since,dt.time(),runs.KST).isoformat() if since else None,limit))
@@ -58,3 +62,25 @@ def detail(run_id:str):
  return value
 @router.post('/api/ops/jobs',dependencies=[Depends(admin)],status_code=202)
 def manual(request:Job):return submit(request)
+
+
+@router.get('/api/ops/events',dependencies=[Depends(admin)])
+def live_events():
+ from .live import feed
+ if not feed.acquire():raise HTTPException(429,'실시간 연결 수 제한에 도달했습니다.')
+ def snapshot():
+  recent=runs.listing(limit=20)
+  return dict(runs=[runs.detail(r['id']) for r in recent if r],epoch=feed.epoch)
+ def stream():
+  try:
+   cursor=feed.cursor()
+   yield feed.encode('snapshot',snapshot(),cursor)
+   while True:
+    current,events,gap=feed.read(cursor,timeout=2)
+    if gap:yield feed.encode('snapshot',snapshot(),current)
+    else:
+     for seq,value in events:yield feed.encode('update',value,seq)
+    cursor=current
+    yield ': heartbeat\n\n'
+  finally:feed.release()
+ return StreamingResponse(stream(),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})

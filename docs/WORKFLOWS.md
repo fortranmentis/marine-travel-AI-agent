@@ -1,5 +1,7 @@
 # v0.7 — Workflows and execution summaries / 워크플로우·실행 기록
 
+> v0.8 adds [live Cytoscape graphs and local Langfuse](OBSERVABILITY.md). Run `python -m scripts.setup_observability` before Compose to configure its additional services and independent secrets.
+
 ## Local deployment
 
 Keep `.env` and both public API credential documents outside Git. Set independent random `OPS_TOKEN` and `SYNC_TOKEN` values (at least 32 random bytes recommended). Keep the existing Windows credential file paths in `.env`; Compose mounts these files read-only and supplies Linux paths inside the application. No provider key/document is mounted into n8n. The Ollama URL remains the configured LAN endpoint.

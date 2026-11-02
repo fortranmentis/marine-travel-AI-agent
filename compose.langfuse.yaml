@@ -1,0 +1,117 @@
+# Optional standalone overlay; included by compose.yaml for the local observability stack.
+x-lf-env: &lf-env
+  NEXTAUTH_URL: http://127.0.0.1:3000
+  DATABASE_URL: postgresql://langfuse:${LF_DB_PASSWORD:?Set LF_DB_PASSWORD}@lf-postgres:5432/langfuse
+  SALT: ${LF_SALT:?Set LF_SALT}
+  ENCRYPTION_KEY: ${LF_ENCRYPTION_KEY:?Set LF_ENCRYPTION_KEY}
+  TELEMETRY_ENABLED: "false"
+  CLICKHOUSE_MIGRATION_URL: clickhouse://lf-clickhouse:9000
+  CLICKHOUSE_URL: http://lf-clickhouse:8123
+  CLICKHOUSE_USER: langfuse
+  CLICKHOUSE_PASSWORD: ${LF_CLICKHOUSE_PASSWORD:?Set LF_CLICKHOUSE_PASSWORD}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  REDIS_HOST: lf-redis
+  REDIS_PORT: "6379"
+  REDIS_AUTH: ${LF_REDIS_PASSWORD:?Set LF_REDIS_PASSWORD}
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://lf-minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LF_MINIO_PASSWORD:?Set LF_MINIO_PASSWORD}
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://lf-minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LF_MINIO_PASSWORD:?Set LF_MINIO_PASSWORD}
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+x-lf-deps: &lf-deps
+  lf-postgres: {condition: service_healthy}
+  lf-clickhouse: {condition: service_healthy}
+  lf-redis: {condition: service_healthy}
+  lf-minio: {condition: service_healthy}
+services:
+  langfuse-web:
+    image: docker.langfuse.com/langfuse/langfuse:4.72.0
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      <<: *lf-env
+      NEXTAUTH_SECRET: ${LF_NEXTAUTH_SECRET:?Set LF_NEXTAUTH_SECRET}
+      LANGFUSE_INIT_ORG_ID: marine-local
+      LANGFUSE_INIT_ORG_NAME: Marine Local
+      LANGFUSE_INIT_PROJECT_ID: marine-travel
+      LANGFUSE_INIT_PROJECT_NAME: Marine Travel Agent
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: marine.operator@localhost.invalid
+      LANGFUSE_INIT_USER_NAME: Marine Operator
+      LANGFUSE_INIT_USER_PASSWORD: ${LF_USER_PASSWORD:?Set LF_USER_PASSWORD}
+      # OSS automatic retention requires a separate API cleanup job; do not claim EE retention.
+    depends_on: *lf-deps
+    restart: unless-stopped
+  langfuse-worker:
+    image: docker.langfuse.com/langfuse/langfuse-worker:4.72.0
+    environment: *lf-env
+    depends_on: *lf-deps
+    restart: unless-stopped
+  lf-postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LF_DB_PASSWORD:?Set LF_DB_PASSWORD}
+      POSTGRES_DB: langfuse
+    volumes: [lf_postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  lf-clickhouse:
+    image: clickhouse/clickhouse-server:26.3.62.3
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: langfuse
+      CLICKHOUSE_PASSWORD: ${LF_CLICKHOUSE_PASSWORD:?Set LF_CLICKHOUSE_PASSWORD}
+    volumes: [lf_clickhouse:/var/lib/clickhouse, lf_clickhouse_logs:/var/log/clickhouse-server]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+  lf-redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--requirepass", "${LF_REDIS_PASSWORD:?Set LF_REDIS_PASSWORD}", "--maxmemory-policy", "noeviction"]
+    volumes: [lf_redis:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$REDIS_AUTH redis-cli ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    environment:
+      REDIS_AUTH: ${LF_REDIS_PASSWORD:?Set LF_REDIS_PASSWORD}
+    restart: unless-stopped
+  lf-minio:
+    image: cgr.dev/chainguard/minio@sha256:0a01100085e30fb08d2f39e39c9f5c9d83a95707f220b007d813b690cd41622d
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: langfuse
+      MINIO_ROOT_PASSWORD: ${LF_MINIO_PASSWORD:?Set LF_MINIO_PASSWORD}
+    volumes: [lf_minio:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+volumes:
+  lf_postgres:
+  lf_clickhouse:
+  lf_clickhouse_logs:
+  lf_redis:
+  lf_minio:

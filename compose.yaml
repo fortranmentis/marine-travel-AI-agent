@@ -1,3 +1,5 @@
+include:
+  - compose.langfuse.yaml
 services:
   app:
     build: .
@@ -15,6 +17,11 @@ services:
       OSRM_BASE_URL: ${OSRM_BASE_URL:-https://router.project-osrm.org}
       OSRM_FOOT_BASE_URL: ${OSRM_FOOT_BASE_URL:-https://routing.openstreetmap.de/routed-foot}
       TZ: Asia/Seoul
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
+      LANGFUSE_BASE_URL: http://langfuse-web:3000
+      LANGFUSE_PUBLIC_URL: http://127.0.0.1:3000
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
     volumes:
       - ./data:/app/data
       - type: bind

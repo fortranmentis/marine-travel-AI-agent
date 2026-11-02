@@ -25,7 +25,8 @@ def _connect():
  c.execute('PRAGMA journal_mode=WAL');c.execute('PRAGMA foreign_keys=ON')
  c.executescript("""CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY,kind TEXT,status TEXT,started_at TEXT,finished_at TEXT,duration_s REAL,attempt INTEGER,parent_run_id TEXT,scheduled INTEGER DEFAULT 0);
  CREATE TABLE IF NOT EXISTS steps(id TEXT PRIMARY KEY,run_id TEXT REFERENCES runs(id) ON DELETE CASCADE,parent_id TEXT,stage TEXT,tool TEXT,provider TEXT,state TEXT,started_at TEXT,finished_at TEXT,duration_s REAL,count INTEGER,error_code TEXT);
- CREATE INDEX IF NOT EXISTS steps_run ON steps(run_id);""")
+ CREATE INDEX IF NOT EXISTS steps_run ON steps(run_id);
+ CREATE TABLE IF NOT EXISTS telemetry_expiry(trace_id TEXT PRIMARY KEY,expires_at TEXT);""")
  return c
 @contextmanager
 def db():
@@ -61,6 +62,11 @@ class Execution:
   def work():
    with db() as c:c.execute("UPDATE runs SET status='running',started_at=? WHERE id=?",(stamp(),self.id))
   safe(work)
+  from .observability import Trace
+  self.trace=Trace(self.id,kind)
+  self.kind=kind;self.finished=False
+  from .live import feed
+  feed.publish(dict(type='run',run=dict(id=self.id,kind=kind,status='running',started_at=stamp(),langfuse_trace_id=self.id if self.trace.root else None,steps=[])))
  def event(self,event):
   e=dict(event);stage=e.get('stage');typ=e.get('type');state=e.get('state','started');key=None;tool=None;provider=None
   if typ=='fallback':stage='fallback';state='completed';self.warning=True
@@ -90,6 +96,10 @@ class Execution:
    row={k:v for k,v in existing.items() if not k.startswith('_')}
    with db() as c:c.execute('INSERT OR REPLACE INTO steps VALUES('+','.join('?' for _ in row)+')',tuple(row.values()))
   safe(work)
+  row={k:v for k,v in existing.items() if not k.startswith('_')}
+  self.trace.step(row,e)
+  from .live import feed
+  feed.publish(dict(type='step',run_id=self.id,step=row))
   return dict(e,run_id=self.id,step_id=step_id,parent_step_id=parent,at=stamp(),duration_seconds=existing['duration_s'])
  def finish(self,status):
   for s in list(self.steps):
@@ -101,7 +111,11 @@ class Execution:
   def work():
    with db() as c:c.execute('UPDATE runs SET status=?,finished_at=?,duration_s=? WHERE id=?',(state,stamp(),round(time.monotonic()-self.started,3),self.id))
   safe(work)
-  return dict(run_id=self.id,status=state,duration_s=round(time.monotonic()-self.started,3),steps=[{k:v for k,v in s.items() if not k.startswith('_')} for s in self.steps])
+  self.trace.finish(state)
+  from .live import feed
+  if not self.finished:feed.publish(dict(type='finished',run=dict(id=self.id,kind=self.kind,status=state,langfuse_trace_id=self.id if self.trace.root else None,finished_at=stamp(),duration_s=round(time.monotonic()-self.started,3),steps=[{k:v for k,v in s.items() if not k.startswith('_')} for s in self.steps])))
+  self.finished=True
+  return dict(run_id=self.id,kind=self.kind,status=state,duration_s=round(time.monotonic()-self.started,3),steps=[{k:v for k,v in s.items() if not k.startswith('_')} for s in self.steps])
 @contextmanager
 def execution(kind,run_id=None):
  value=Execution(kind,run_id);token=_current.set(value)
@@ -140,5 +154,5 @@ def detail(run_id):
   with db() as c:
    r=c.execute('SELECT * FROM runs WHERE id=?',(run_id,)).fetchone()
    if not r:return None
-   return dict(dict(r),steps=[dict(s) for s in c.execute('SELECT * FROM steps WHERE run_id=? ORDER BY started_at,rowid',(run_id,))])
+   return dict(dict(r),langfuse_trace_id=run_id if c.execute('SELECT 1 FROM telemetry_expiry WHERE trace_id=?',(run_id,)).fetchone() else None,steps=[dict(s) for s in c.execute('SELECT * FROM steps WHERE run_id=? ORDER BY started_at,rowid',(run_id,))])
  return safe(work)

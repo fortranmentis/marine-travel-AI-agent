@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.7.0" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.8.0" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent · 바다결
 
@@ -12,14 +12,14 @@
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.7.0](docs/assets/version.svg)
+![Version: 0.8.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 8개 도구, 8종 보관 피드, 148개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 8개 도구, 8종 보관 피드, 161개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,9 +27,25 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.7.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.8.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
+
+## v0.8 AI 실시간 그래프 + 로컬 Langfuse
+
+Cytoscape.js로 실제 단계·모델·도구 호출을 여행 팝업과 결과에 표시합니다. 운영 화면은 인증된 SSE로 다른 여행 요청의 실행도 실시간 수신합니다. 동일 실행 ID로 로컬 Langfuse 추적을 열고 시간·토큰 수를 확인하며, 대화 원문·사고 토큰·출력은 저장하지 않습니다.
+
+[설정·개인정보·장애 처리](docs/OBSERVABILITY.md) · [실제 검증 기록](reports/v08-observability-check.json) · [Langfuse](http://127.0.0.1:3000)
+
+![실제 AI 실행 그래프](docs/graph-v08-ops.png)
+
+<details><summary>Langfuse 추적과 여행객 진행 그래프 보기</summary>
+
+![원문 미저장 Langfuse 추적](docs/langfuse-v08.png)
+
+![여행객 실시간 진행 그래프](docs/graph-v08-progress.png)
+
+</details>
 
 ## v0.7 워크플로우·자동 갱신·실행 기록
 
@@ -287,7 +303,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 11월 2일 한국시간 기준 재실행: Python 135개, 프런트엔드 13개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 11월 2일 한국시간 기준 재실행: Python 143개, 프런트엔드 18개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |

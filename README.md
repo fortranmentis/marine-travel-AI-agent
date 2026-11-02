@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.7.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.8.0" alt="바다결 — Read the coast. Plan the day. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent
 
@@ -12,14 +12,14 @@
 
 [Explore the interface](#preview) · [Quick start](#quick-start) · [Data foundation](#data-foundation) · [Validation](#validation) · [한국어](README.ko.md)
 
-![Version: 0.7.0](docs/assets/version.svg)
+![Version: 0.8.0](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 148 offline tests](docs/assets/at-a-glance.svg)
+![29 sea-travel forecast regions, eight typed tools, eight retained marine feeds, 161 offline tests](docs/assets/at-a-glance.svg)
 
 ## About
 
@@ -27,7 +27,23 @@
 
 The engineering focus is **a traceable path from source records to a structured itinerary**. Ollama selects typed tools and explains results. Python applies time-window and reservation rules. The interface exposes routes, source links, forecast timestamps and unresolved checks so a user can review the result.
 
-> **v0.7.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+> **v0.8.0 · Local prototype · Korean UI.** Operator availability, age restrictions, warning bulletins and on-site access require separate verification. Every generated trip is provisional.
+
+## New in v0.8 — Live AI graphs + local Langfuse
+
+Cytoscape.js now visualizes actual stage/model/tool events in the travel popup and result. The authenticated operator page follows AI executions over SSE. The same execution ID links to local Langfuse traces, with model timing and reported token counts; prompts, reasoning and outputs remain unrecorded.
+
+[Setup, privacy and failure behavior](docs/OBSERVABILITY.md) · [Live validation](reports/v08-observability-check.json) · [Langfuse](http://127.0.0.1:3000)
+
+![Actual AI execution graph](docs/graph-v08-ops.png)
+
+<details><summary>Langfuse trace and traveler progress graph</summary>
+
+![Langfuse trace with empty raw input/output](docs/langfuse-v08.png)
+
+![Live traveler progress graph](docs/graph-v08-progress.png)
+
+</details>
 
 ## New in v0.7 — Workflows you can inspect
 
@@ -292,7 +308,7 @@ Each attraction, restaurant and cafe is connected by an inline travel card with 
 
 ## Validation
 
-**Re-run on November 2, 2026 (Asia/Seoul): 135 Python tests and 13 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
+**Re-run on November 2, 2026 (Asia/Seoul): 143 Python tests and 18 frontend tests passed.** One Starlette/httpx deprecation warning was reported. These offline checks use synthetic data and mocks; they do not establish live-provider availability or model quality. Separate live browser, route and Qwen observations are in [VALIDATION.md](VALIDATION.md).
 
 | Evidence | Scope |
 | --- | --- |

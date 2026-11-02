@@ -1,5 +1,15 @@
 # Validation record — updated 2026-10-16 (Asia/Seoul)
 
+## v0.8 live graphs and Langfuse — 2026-11-02
+
+- **Offline:** 143 Python and 18 Node tests passed. New coverage includes graph repeats/bounds/parent edges/idempotence, SSE Korean chunks/heartbeats/auth, bounded feed clients/gaps, trace parentage, input/output omission, token counters, fail-soft Langfuse and expiry retry after local pruning. Existing Starlette/httpx deprecation warning remains.
+- **Local Langfuse:** 4.72.0 OSS web/worker with dedicated PostgreSQL, ClickHouse, Redis and MinIO. Public health and authenticated project query returned 200. Only its UI port 3000 is published on loopback; storage/cache ports remain internal. Images are pinned, including MinIO by digest.
+- **Real Qwen + SSE:** model status `ok`, warning-bearing execution due to missing photo evidence, 17 step updates, ten execution steps, first public event at 1.428 seconds. A matching operator SSE connection observed the same run before completion.
+- **Real ingestion:** 11 Observations v2 rows included two generations under the same trace ID as the local run ID. Explicit `core,basic,usage,metadata,io` fields confirmed empty raw input/output and two generations with token usage. [Sanitized evidence](reports/v08-observability-check.json).
+- **UI:** desktop graph rendering, real in-progress blue nodes, completion colors, node duration selection and same-run Langfuse navigation were checked. On a 390px mobile viewport, travel/ops page scroll width was 375px after the selector-width fix. [Desktop](docs/graph-v08-ops.png), [mobile](docs/graph-v08-mobile.png), [Langfuse](docs/langfuse-v08.png).
+- **Limits:** Langfuse export is asynchronous and best-effort; pre-integration history is not backfilled. OSS built-in retention is not claimed; the app queues its own expired trace IDs for official batch deletion. Seven-day physical deletion timing has not been measured. Model pricing is not configured.
+
+
 ## v0.7 workflows — 2026-11-02
 
 - **Offline:** 135 Python and 13 Node tests pass, including component atomicity/preservation, shared lock, bootstrap, retry cooldown/cap, job deduplication, auth separation, secret omission, interrupted-run recovery, seven-day cleanup and fail-soft traveler summaries. One existing Starlette/httpx deprecation warning remains.

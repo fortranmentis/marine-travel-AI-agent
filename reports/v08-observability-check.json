@@ -1,0 +1,15 @@
+{
+  "version": "0.8.0",
+  "run_id": "a726c6aa3ffb4c0690caa0c77cad1cf4",
+  "model_status": "ok",
+  "execution_status": "warning",
+  "first_event_seconds": 1.428,
+  "sse_step_updates": 17,
+  "langfuse_observations": 11,
+  "langfuse_generations": 2,
+  "all_trace_ids_match": true,
+  "raw_input_output_absent": true,
+  "steps": 10,
+  "observation_fields_checked": "core,basic,usage,metadata,io",
+  "generations_with_usage": 2
+}

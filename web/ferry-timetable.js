@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.7.0';
+import {el,button} from './ui.js?v=0.8.0';
 
 export function dateClock(value){if(!value)return '미확인';const date=new Date(value);return Number.isNaN(date.getTime())?'미확인':new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(date);}
 export function renderTimetable(data){

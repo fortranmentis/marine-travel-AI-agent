@@ -1,4 +1,4 @@
-import {el,button} from './ui.js?v=0.7.0';
+import {el,button} from './ui.js?v=0.8.0';
 
 export function minutesLabel(value){return typeof value==='number'&&Number.isFinite(value)&&value>=0?`${Math.ceil(value/60)}분`:'미확인';}
 export function clockLabel(value){const s=String(value??'').padStart(4,'0');return value!=null&&value!==''&&/^(?:[01]\d|2[0-9])[0-5]\d$/.test(s)?s.slice(0,2)+':'+s.slice(2):'미확인';}

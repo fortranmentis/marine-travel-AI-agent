@@ -82,3 +82,30 @@ test('execution metadata survives NDJSON without changing existing result shape'
  const result=await readNDJSON(new Response(payload),e=>events.push(e));
  assert.equal(events[0].step_id,'step1');assert.equal(events[1].duration_seconds,1.2);assert.equal(result.execution.run_id,'run1');
 });
+
+
+import {graphModel,putStep,putEvent,graphElements} from '../web/execution-graph.js';
+import {readSSE} from '../web/live-events.js';
+test('graph preserves repeated calls, parents and start-order edges',()=>{
+ const m=graphModel({id:'run'});putStep(m,{id:'phase',stage:'data',state:'started'});
+ for(const id of ['tool1','tool2'])putStep(m,{id,parent_id:'phase',stage:'data',tool:'get_weather',state:'completed'});
+ const elements=graphElements(m);assert.equal(elements.filter(e=>e.data.label?.includes('get_weather')).length,2);
+ assert.equal(elements.find(e=>e.data.id==='parent-tool1').data.source,'phase');
+ assert.ok(elements.some(e=>e.data.kind==='order'));
+});
+test('graph updates terminal nodes idempotently and ignores another run',()=>{
+ const m=graphModel({id:'run'});putEvent(m,{run_id:'run',step_id:'a',stage:'data',state:'started'});putEvent(m,{run_id:'run',step_id:'a',stage:'data',state:'completed',duration_seconds:0});putEvent(m,{run_id:'other',step_id:'b',state:'started'});
+ assert.equal(m.steps.size,1);assert.equal(m.steps.get('a').duration_s,0);assert.equal(m.steps.get('a').state,'completed');
+});
+test('graph has a bounded node count and drops unapproved content',()=>{
+ const m=graphModel({id:'run'});for(let i=0;i<400;i++)putStep(m,{id:''+i,stage:'data',state:'completed',prompt:'SECRET'});
+ assert.equal(m.steps.size,299);assert.equal(m.truncated,true);assert.ok(!JSON.stringify([...m.steps]).includes('SECRET'));
+});
+test('SSE handles Korean byte splits, CRLF and heartbeat comments',async()=>{
+ const bytes=new TextEncoder().encode(': heartbeat\r\n\r\nevent: update\r\ndata: {"state":"완료"}\r\n\r\n');const events=[];
+ const body=new ReadableStream({start(c){for(let i=0;i<bytes.length;i+=3)c.enqueue(bytes.slice(i,i+3));c.close();}});
+ await readSSE(new Response(body),e=>events.push(e));assert.deepEqual(events,[{type:'update',data:{state:'완료'}}]);
+});
+test('SSE reports authenticated HTTP failures without exposing request headers',async()=>{
+ await assert.rejects(()=>readSSE(new Response('{"detail":"운영 인증이 필요합니다."}',{status:401}),()=>{}),/운영 인증/);
+});

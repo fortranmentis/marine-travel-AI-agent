@@ -1,5 +1,14 @@
 # Implementation roadmap
 
+## v0.8 — live graphs and Langfuse
+
+- [x] Cytoscape graph in traveler progress/results and authenticated operator view
+- [x] Bounded SSE feed, safe snapshots, reconnect and visibility lifecycle
+- [x] Local Langfuse 4.72.0 with run-ID trace correlation and token counters
+- [x] Allowlisted export without prompt/output content and retryable seven-day cleanup
+- [x] Offline regression and actual Qwen/SSE/Langfuse ingestion check
+
+
 ## v0.7 — inspectable workflows
 
 - [x] Local Docker Compose app + n8n, read-only provider credentials

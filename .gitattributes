@@ -1,2 +1,3 @@
 # Preserve upstream browser bundle bytes and keep minified dependency out of source diffs.
 web/vendor/mermaid/*.js -text -diff -whitespace linguist-vendored=true
+web/vendor/cytoscape/*.js -text -diff -whitespace linguist-vendored=true

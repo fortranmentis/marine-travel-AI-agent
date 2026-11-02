@@ -1,0 +1,9 @@
+export async function readSSE(response,onEvent,signal){
+ if(!response.ok){const d=await response.json();throw Error(typeof d.detail==='string'?d.detail:'실시간 연결 실패');}
+ const reader=response.body.getReader(),decoder=new TextDecoder();let pending='';
+ try{while(!signal?.aborted){const {value,done}=await reader.read();pending+=decoder.decode(value,{stream:!done});pending=pending.replace(/\r\n/g,'\n');let i;while((i=pending.indexOf('\n\n'))>=0){const block=pending.slice(0,i);pending=pending.slice(i+2);const lines=block.split('\n');const data=lines.filter(s=>s.startsWith('data:')).map(s=>s.slice(5).trimStart()).join('\n');if(data)onEvent({type:lines.find(s=>s.startsWith('event:'))?.slice(6).trim()||'message',data:JSON.parse(data)});}if(done)return;}}finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+}
+export function connectLive(getToken,onEvent,onStatus){let stopped=false,controller=null,timer=null,delay=1000,generation=0;
+ async function open(){if(stopped||document.hidden||!getToken())return;const mine=++generation;controller=new AbortController();const active=controller;onStatus('실시간 연결 중');try{await readSSE(await fetch('/api/ops/events',{headers:{Authorization:'Bearer '+getToken()},signal:active.signal,cache:'no-store'}),e=>{delay=1000;onStatus('실시간 연결됨');onEvent(e);},active.signal);if(!active.signal.aborted)onStatus('연결 종료 · 재연결 대기');}catch(e){if(e.name!=='AbortError')onStatus(e.message+' · 재연결 대기');}finally{if(mine===generation&&!stopped&&!document.hidden){timer=setTimeout(open,delay);delay=Math.min(delay*2,15000);}}}
+ function visibility(){if(document.hidden){generation++;clearTimeout(timer);controller?.abort();}else{clearTimeout(timer);open();}}
+ document.addEventListener('visibilitychange',visibility);open();return ()=>{stopped=true;generation++;clearTimeout(timer);controller?.abort();document.removeEventListener('visibilitychange',visibility);};}
