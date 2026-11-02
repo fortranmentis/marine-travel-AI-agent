@@ -120,3 +120,62 @@ def test_local_setup_preserves_existing_secrets_and_explicit_disable(monkeypatch
  login=json.loads((tmp_path/'data/langfuse-local-login.json').read_text())
  assert login['password']=='KEEP_LOCAL_PASSWORD'
  assert 'KEEP_' not in capsys.readouterr().out
+
+
+def test_live_snapshot_keeps_old_active_run_ahead_of_twenty_new_completions():
+ active=runs.create('ai_plan',status='running')
+ with runs.db() as db:db.execute('UPDATE runs SET started_at=? WHERE id=?',('2000-01-01T00:00:00+09:00',active))
+ for _ in range(25):runs.create('rules_plan',status='success')
+ value=runs.live_snapshot()
+ assert value['runs'][0]['id']==active
+ assert len(value['runs'])==21 and not value['active_truncated']
+
+
+def test_live_snapshot_marks_active_and_step_truncation():
+ for _ in range(18):runs.create('rules_plan',status='running')
+ value=runs.live_snapshot(active_limit=2)
+ assert value['active_truncated'] and len(value['runs'])==2
+ with runs.execution('ai_plan') as execution:
+  for _ in range(3):
+   progress.emit('data','work',event='tool',tool='get_weather')
+   progress.emit('data','done',event='tool',tool='get_weather',state='completed')
+  value=runs.live_snapshot(active_limit=30,step_limit=2)
+  row=next(r for r in value['runs'] if r['id']==execution.id)
+  assert row['steps_truncated'] and len(row['steps'])==2
+  execution.finish('success')
+
+
+def test_stream_lease_release_is_idempotent_and_cannot_release_another_client():
+ f=LiveFeed(max_clients=2)
+ first=f.reserve();second=f.reserve();assert f.clients==2
+ first.release();first.release();assert f.clients==1
+ third=f.reserve();assert third is not None
+ first.release();assert f.reserve() is None
+ second.release();third.release();assert f.clients==0
+
+
+def test_async_stream_releases_slot_on_close_and_before_first_read(monkeypatch):
+ import asyncio
+ monkeypatch.setattr(runs,'live_snapshot',lambda:dict(runs=[],active_truncated=False))
+ async def scenario():
+  base=feed.clients
+  response=await operations.live_events(SimpleNamespace(is_disconnected=lambda:None))
+  assert feed.clients==base+1
+  first=await anext(response.body_iterator);assert 'event: snapshot' in first
+  await response.body_iterator.aclose();assert feed.clients==base
+  await response.background();assert feed.clients==base
+  never_read=await operations.live_events(SimpleNamespace(is_disconnected=lambda:None))
+  await never_read.background();assert feed.clients==base
+ asyncio.run(scenario())
+
+
+def test_langfuse_step_completion_is_exported_once_and_boolean_usage_rejected(monkeypatch):
+ c=Client();monkeypatch.setattr(observability,'get_client',lambda:c)
+ with runs.execution('ai_plan') as execution:
+  progress.emit('data','model',event='provider',provider='Ollama')
+  progress.emit('data','done',event='provider',provider='Ollama',state='completed',usage={'input':True,'output':0})
+  step=next(s for s in execution.steps if s['provider']=='Ollama')
+  execution.trace.step(step,{'usage':{'input':999,'output':999}})
+  execution.finish('success')
+ child=next(o for o in c.rows if o.kwargs.get('as_type')=='generation')
+ assert child.ended==1 and child.updates[-1]['usage_details']=={'output':0}

@@ -19,14 +19,14 @@ def client(base,public,secret):
  from langfuse import Langfuse
  from opentelemetry.sdk.trace import TracerProvider
  # Dedicated provider: unrelated instrumentations cannot leak through this adapter.
- return Langfuse(base_url=base,public_key=public,secret_key=secret,timeout=2,flush_at=20,flush_interval=1,environment='local',release='v0.8.0',tracer_provider=TracerProvider())
+ return Langfuse(base_url=base,public_key=public,secret_key=secret,timeout=2,flush_at=20,flush_interval=1,environment='local',release='v0.8.1',tracer_provider=TracerProvider())
 def get_client():
  if not enabled() or not all(config()):return None
  try:return client(*config())
  except Exception:_health['last_error_code']='langfuse_initialization_failed';return None
 class Trace:
  def __init__(self,run_id,kind):
-  self.run_id=run_id;self.client=get_client();self.root=None;self.spans={};self.finished=False
+  self.run_id=run_id;self.client=get_client();self.root=None;self.spans={};self.ended_spans=set();self.finished=False
   if self.client:
    from . import runs
    def remember():
@@ -39,7 +39,9 @@ class Trace:
  def step(self,row,event):
   if not self.root:return
   try:
-   identity=row['id'];span=self.spans.get(identity)
+   identity=row['id']
+   if identity in self.ended_spans:return
+   span=self.spans.get(identity)
    if span is None:
     parent=self.spans.get(row.get('parent_id')) or self.root
     typ='generation' if row.get('provider')=='Ollama' else 'tool' if row.get('tool') else 'span'
@@ -48,12 +50,13 @@ class Trace:
    meta={k:row[k] for k in ('stage','state','count','duration_s','error_code') if row.get(k) is not None}
    args=dict(metadata=meta,level='ERROR' if row['state']=='failed' else 'WARNING' if row['state']=='warning' else 'DEFAULT')
    if row.get('provider')=='Ollama':
-    usage=event.get('usage') or {};usage={k:v for k,v in usage.items() if k in ('input','output') and isinstance(v,int) and v>=0}
+    usage=event.get('usage') or {};usage={k:v for k,v in usage.items() if k in ('input','output') and type(v) is int and v>=0}
     if usage:args['usage_details']=usage
     model=os.environ.get('OLLAMA_MODEL','qwen3.8:27b-mtp-q8_0')
     args['model']=model[:100]
    span.update(**args)
-   if row['state']!='started':span.end()
+   if row['state']!='started':
+    span.end();self.ended_spans.add(identity)
   except Exception:_health['last_error_code']='langfuse_span_failed'
  def finish(self,state):
   if not self.root or self.finished:return

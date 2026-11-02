@@ -156,3 +156,21 @@ def detail(run_id):
    if not r:return None
    return dict(dict(r),langfuse_trace_id=run_id if c.execute('SELECT 1 FROM telemetry_expiry WHERE trace_id=?',(run_id,)).fetchone() else None,steps=[dict(s) for s in c.execute('SELECT * FROM steps WHERE run_id=? ORDER BY started_at,rowid',(run_id,))])
  return safe(work)
+
+
+def live_snapshot(recent_limit=20,active_limit=16,step_limit=300):
+ """One consistent read; active work cannot be displaced by newer completed runs."""
+ def work():
+  with db() as c:
+   c.execute('BEGIN')
+   active=c.execute("SELECT * FROM runs WHERE status IN ('queued','running') ORDER BY started_at DESC,id LIMIT ?",(active_limit+1,)).fetchall()
+   recent=c.execute("SELECT * FROM runs WHERE status NOT IN ('queued','running') ORDER BY started_at DESC,id LIMIT ?",(recent_limit,)).fetchall()
+   values=[]
+   for row in [*active[:active_limit],*recent]:
+    run=dict(row)
+    steps=c.execute('SELECT * FROM steps WHERE run_id=? ORDER BY started_at,rowid LIMIT ?',(run['id'],step_limit+1)).fetchall()
+    run.update(steps=[dict(s) for s in steps[:step_limit]],steps_truncated=len(steps)>step_limit,
+               langfuse_trace_id=run['id'] if c.execute('SELECT 1 FROM telemetry_expiry WHERE trace_id=?',(run['id'],)).fetchone() else None)
+    values.append(run)
+   return dict(runs=values,active_truncated=len(active)>active_limit,active_limit=active_limit,recent_limit=recent_limit)
+ return safe(work,dict(runs=[],active_truncated=False,active_limit=active_limit,recent_limit=recent_limit))

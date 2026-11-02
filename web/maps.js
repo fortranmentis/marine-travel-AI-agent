@@ -1,5 +1,5 @@
-import {el,button} from './ui.js?v=0.8.0';
-import {transitSummary,transitSourceUrl} from './transit.js?v=0.8.0';
+import {el,button} from './ui.js?v=0.8.1';
+import {transitSummary,transitSourceUrl} from './transit.js?v=0.8.1';
 let map, markerLayer, routeLayer, selectedDate, activePlan, config;
 let selectedSegment;
 const markerBySlot=new Map();

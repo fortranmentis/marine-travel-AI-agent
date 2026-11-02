@@ -1,0 +1,19 @@
+{
+  "version": "0.8.1",
+  "completed_stream_cycles": 8,
+  "baseline_connections": 0,
+  "final_connections": 0,
+  "post_close_counts": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "invalid_auth_status": 401,
+  "snapshot_limits_present": true,
+  "recording_available": true
+}

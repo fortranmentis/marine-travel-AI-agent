@@ -51,7 +51,7 @@ Only allowlisted run kinds, stage/tool/provider names, IDs, states, timestamps, 
 
 The SDK has a dedicated tracer provider and no automatic HTTP/framework/model instrumentation. The adapter is fail-soft; initialization/span failures cannot stop itinerary generation. Export is best-effort, without a historical backfill queue. SQLite remains the local source of truth even when Langfuse is unavailable. `LANGFUSE_ENABLED=false` disables export, not local graphs or execution records.
 
-SSE allows 16 simultaneous operator clients and retains a 1,024-event in-process ring. It begins with at most 20 recent safe execution snapshots; a ring gap sends a fresh snapshot. Reconnection uses a new snapshot, not an exactly-once replay promise. Event reduction is idempotent by step ID. The frontend aborts on logout, page hide or hidden tab and reconnects with capped backoff when visible. API keys are never embedded in URLs. Reloading requires operator authentication again.
+SSE allows 16 simultaneous operator clients and retains a 1,024-event in-process ring. It begins with up to 16 active executions plus 20 recent terminal summaries, reading at most 300 steps per run from a consistent database snapshot; overflow is explicitly marked. Active requests cannot be displaced by newer completed work. a ring gap sends a fresh snapshot. Reconnection uses a new snapshot, not an exactly-once replay promise. Event reduction is idempotent by step ID; terminal steps and executions cannot regress from late start events. The frontend aborts on logout, page hide or hidden tab and reconnects with capped backoff when visible. API keys are never embedded in URLs. Reloading requires operator authentication again.
 
 ### Seven-day trace cleanup
 
@@ -74,3 +74,13 @@ Sources: [Cytoscape.js](https://js.cytoscape.org/), [Langfuse local deployment](
 - 로컬 Langfuse는 별도 로그인 파일을 사용합니다. 운영 화면의 같은 실행에서 추적을 열 수 있으며, 모델·도구 시간과 토큰 수를 확인합니다.
 - 입력·출력 원문이 비어 있는 것은 의도된 설정입니다. Langfuse 장애 시에도 일정 생성과 로컬 기록·그래프는 계속 동작합니다.
 - SQLite 요약은 7일 보관합니다. 앱이 만든 Langfuse 추적은 별도 만료 큐를 통해 7일 후 삭제를 요청하며, 실제 삭제는 비동기입니다. 유료 자체 보관기간 기능을 사용하는 구성은 아닙니다.
+
+
+## v0.8.1 reliability
+
+- Server SSE uses an async generator with an idempotent connection lease. Both normal cancellation and the response cleanup path return the slot; a second release cannot consume another client's slot.
+- Snapshots prioritize up to 16 active executions plus 20 completed executions, with a 300-step-per-run cap and explicit truncation flags. The frontend keeps at most 40 runs, prioritizing the selected run and active work. Manual history selections survive reconnects; follow mode picks active AI work first.
+- Visibility changes, logout and new login invalidate the previous connection generation. Stale responses cannot publish events, clear a newer connection or schedule another retry. A hidden tab aborts its connection. Temporary failures use 1–15 second backoff; 401/403 stop reconnecting and require a new token, including non-JSON error responses.
+- The operator page clears selected execution, detail data and graphs on authentication loss. Generation checks prevent an old request's authentication failure from logging out a newer session.
+- Replay cannot turn terminal nodes back into running nodes. Completed provider/tool spans are ended once; boolean values are rejected as token counters while a valid zero remains zero.
+- `/api/ops/status` includes safe live connection counts. This is local process state, not a distributed client count. The prototype remains single-worker.

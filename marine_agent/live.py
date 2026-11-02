@@ -2,8 +2,14 @@
 from collections import deque
 import json
 import threading
-import time
 from uuid import uuid4
+
+class FeedLease:
+ def __init__(self,feed):self.feed=feed;self.released=False
+ def release(self):
+  with self.feed.condition:
+   if not self.released:
+    self.released=True;self.feed.clients=max(0,self.feed.clients-1)
 
 class LiveFeed:
  def __init__(self,capacity=1024,max_clients=16):
@@ -15,8 +21,14 @@ class LiveFeed:
   with self.condition:
    if self.clients>=self.max_clients:return False
    self.clients+=1;return True
+ def reserve(self):
+  with self.condition:
+   if not self.acquire():return None
+   return FeedLease(self)
  def release(self):
   with self.condition:self.clients=max(0,self.clients-1)
+ def status(self):
+  with self.condition:return dict(connections=self.clients,limit=self.max_clients,buffered_events=len(self.events))
  def cursor(self):
   with self.condition:return self.sequence
  def read(self,cursor,timeout=10):

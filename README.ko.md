@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg?v=0.8.0" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
+<img src="docs/assets/banner.svg?v=0.8.1" alt="바다결 — 바다를 읽고, 여행을 그리다. Marine Travel AI Agent." width="100%">
 
 # Marine Travel AI Agent · 바다결
 
@@ -12,14 +12,14 @@
 
 [화면 살펴보기](#preview--화면) · [바로 실행](#quick-start--실행) · [데이터 기반](#data-foundation--데이터-기반) · [검증](#validation--검증) · [English](README.md)
 
-![Version: 0.8.0](docs/assets/version.svg)
+![Version: 0.8.1](docs/assets/version.svg)
 ![Python: 3.11+](docs/assets/python.svg)
 ![Backend: FastAPI](docs/assets/fastapi.svg)
 ![LLM runtime: Ollama](docs/assets/ollama.svg)
 
 </div>
 
-![29개 예보 권역, 8개 도구, 8종 보관 피드, 161개 오프라인 테스트](docs/assets/at-a-glance.svg)
+![29개 예보 권역, 8개 도구, 8종 보관 피드, 174개 오프라인 테스트](docs/assets/at-a-glance.svg)
 
 ## About · 소개
 
@@ -27,9 +27,13 @@
 
 설계의 중심은 **원천 레코드에서 구조화된 일정까지 추적 가능한 흐름**입니다. Ollama는 형식이 정해진 도구를 선택하고 결과를 설명합니다. Python은 시간·고정 방문 조건을 적용합니다. 화면은 경로·출처·예보 시각·미확인 항목을 함께 보여주어 사용자가 결과를 검토할 수 있게 합니다.
 
-> **v0.8.0 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
+> **v0.8.1 · 로컬 프로토타입 · 한국어 UI.** 운영 여부·자녀 이용 연령·특보·현장 통제는 별도 확인이 필요하며, 모든 일정은 검토용 초안입니다.
 
 최신 v0.4 캡처: [전국 비교](docs/national-desktop.jpg) · [모바일](docs/national-mobile.jpg) · [강릉 초안](docs/national-plan.jpg). 이전 v0.3 캡처: [전체 화면](docs/interface-v03.jpg) · [날씨 좌우 탐색](docs/weather-v03.jpg) · [390px 모바일](docs/mobile-v03.jpg). 기존 갤러리의 v0.2 화면도 참고용으로 유지합니다.
+
+## v0.8.1 실시간 연결 안정화
+
+재연결 시 진행 중인 실행을 우선 복원하며, 늦게 도착한 시작 이벤트가 완료 노드를 되돌리지 않게 했습니다. 인증 실패 시 재연결을 멈추고 운영 화면의 비공개 상태를 지웁니다. 연결 종료·첫 이벤트 이전 취소에서도 연결 슬롯을 반환하며 Langfuse 단계 종료는 한 번만 처리합니다. [동작과 제한](docs/OBSERVABILITY.md#v081-reliability).
 
 ## v0.8 AI 실시간 그래프 + 로컬 Langfuse
 
@@ -303,7 +307,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 
 ## Validation · 검증
 
-**2026년 11월 2일 한국시간 기준 재실행: Python 143개, 프런트엔드 18개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
+**2026년 11월 2일 한국시간 기준 재실행: Python 148개, 프런트엔드 26개 테스트 통과.** Starlette/httpx 사용 중단 예정 경고 1건이 발생했습니다. 합성 데이터·모의 응답을 쓰는 오프라인 검사이므로 실제 API 연결이나 모델 품질을 보장하는 결과는 아닙니다.
 
 | 근거 | 확인 범위 |
 | --- | --- |
@@ -316,7 +320,7 @@ Windows 가상환경에서 pip 초기화가 실패하면 `python -m pip --python
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .\.venv\Scripts\python.exe -m pytest -q --basetemp=.tmp/pytest
-node --test tests/web.test.mjs
+node --test tests/web.test.mjs tests/live-stability.test.mjs
 ```
 
 프런트엔드 테스트에는 **Node.js 18 이상**이 필요하며 npm 패키지 설치는 필요하지 않습니다. 상세 근거와 미검증 항목은 [검증 기록](VALIDATION.md)을 참고하세요.

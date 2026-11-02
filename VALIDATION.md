@@ -1,4 +1,14 @@
-# Validation record — updated 2026-10-16 (Asia/Seoul)
+# Validation record — updated 2026-11-02 (Asia/Seoul)
+
+## v0.8.1 reliability — 2026-11-02
+
+- **Offline:** 148 Python and 26 Node tests pass. New scenarios exercise old active runs amid newer completions, active/step snapshot limits, idempotent connection release, cancellation before first read, replay regression, stale responses after logout, rapid visibility changes, invalid-auth retry termination, temporary-error backoff, bounded active-priority cache and exactly-once observation closure.
+- CI and documented Node commands now execute both test files; the added lifecycle tests are not omitted from CI.
+- These tests use deterministic fakes and isolated SQLite files. They do not by themselves prove live network recovery or provider availability.
+- **Live HTTP:** eight sequential connections to the deployed SSE endpoint received snapshots and returned the connection count to zero after every close. Invalid authentication returned 401 without allocating a connection. [Sanitized results](reports/v081-stream-check.json).
+- **Browser recovery:** invalid-token submission closed the private operator view; authenticating again restored the graph. After restarting the local app container, the already-open operator page reconnected and restored its graph without a page reload. [Recovery screenshot](docs/reliability-v081.png). This exercises a local restart, not every possible network failure.
+- **Scope:** no new model-quality or provider-availability benchmark was performed for this patch. Langfuse duplicate-completion and usage validation are covered by isolated SDK fakes; the preceding v0.8 section records actual ingestion evidence.
+
 
 ## v0.8 live graphs and Langfuse — 2026-11-02
 

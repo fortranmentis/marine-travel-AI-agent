@@ -2,10 +2,12 @@
 from contextlib import asynccontextmanager
 import datetime as dt
 import hmac
+import asyncio
 import os
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi import Response
+from starlette.background import BackgroundTask
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 from . import jobs, runs, progress
@@ -51,7 +53,8 @@ def internal_detail(job_id:str):
 def status():
  runs.maintenance()
  from .observability import status as trace_status, public_url
- return dict(jobs=jobs.snapshot_status(),recording=runs.health(),retention_days=7,langfuse=dict(trace_status(),url=public_url()))
+ from .live import feed
+ return dict(jobs=jobs.snapshot_status(),recording=runs.health(),retention_days=7,live=feed.status(),langfuse=dict(trace_status(),url=public_url()))
 @router.get('/api/ops/runs',dependencies=[Depends(admin)])
 def listing(kind:Literal['ai_plan','rules_plan','seatrip_sync','tourism_sync','full_sync']|None=None,status:Literal['queued','running','success','warning','failed','interrupted']|None=None,since:dt.date|None=None,limit:int=Query(100,ge=1,le=500)):
  return dict(runs=runs.listing(kind,status,dt.datetime.combine(since,dt.time(),runs.KST).isoformat() if since else None,limit))
@@ -65,22 +68,25 @@ def manual(request:Job):return submit(request)
 
 
 @router.get('/api/ops/events',dependencies=[Depends(admin)])
-def live_events():
+async def live_events(request:Request):
  from .live import feed
- if not feed.acquire():raise HTTPException(429,'실시간 연결 수 제한에 도달했습니다.')
- def snapshot():
-  recent=runs.listing(limit=20)
-  return dict(runs=[runs.detail(r['id']) for r in recent if r],epoch=feed.epoch)
- def stream():
+ lease=feed.reserve()
+ if not lease:raise HTTPException(429,'실시간 연결 수 제한에 도달했습니다.')
+ async def snapshot():
+  value=await asyncio.to_thread(runs.live_snapshot)
+  return dict(value,epoch=feed.epoch,recording_available=runs.health()['available'])
+ async def stream():
   try:
    cursor=feed.cursor()
-   yield feed.encode('snapshot',snapshot(),cursor)
-   while True:
-    current,events,gap=feed.read(cursor,timeout=2)
-    if gap:yield feed.encode('snapshot',snapshot(),current)
+   yield feed.encode('snapshot',await snapshot(),cursor)
+   while not await request.is_disconnected():
+    current,events,gap=await asyncio.to_thread(feed.read,cursor,1)
+    if gap:yield feed.encode('snapshot',await snapshot(),current)
     else:
      for seq,value in events:yield feed.encode('update',value,seq)
     cursor=current
     yield ': heartbeat\n\n'
-  finally:feed.release()
- return StreamingResponse(stream(),media_type='text/event-stream',headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'})
+  finally:lease.release()
+ return StreamingResponse(stream(),media_type='text/event-stream',
+                          headers={'Cache-Control':'no-store','X-Accel-Buffering':'no'},
+                          background=BackgroundTask(lease.release))

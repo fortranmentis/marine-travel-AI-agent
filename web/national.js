@@ -1,5 +1,5 @@
-import {el,button} from './ui.js?v=0.8.0';
-import {indexBadge} from './marine-index.js?v=0.8.0';
+import {el,button} from './ui.js?v=0.8.1';
+import {indexBadge} from './marine-index.js?v=0.8.1';
 
 const legacy=['영종·용유','강화','송도·도심'];
 export function initializeNational(form){

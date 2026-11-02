@@ -1,14 +1,14 @@
-import {initializeNational} from './national.js?v=0.8.0';
-import {marineIndexCard,indexBadge} from './marine-index.js?v=0.8.0';
-import {initializeTripForm} from './trip-form.js?v=0.8.0';
-import {$,el,button,plainText} from './ui.js?v=0.8.0';
-import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.8.0';
-import {weatherCard} from './weather.js?v=0.8.0';
-import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.8.0';
-import {transfersFor,transferCard} from './journey-transfers.js?v=0.8.0';
-import {initializeFerries} from './ferries.js?v=0.8.0';
-import {initializeTransport} from './public-transport.js?v=0.8.0';
-import {initializeTimetable} from './ferry-timetable.js?v=0.8.0';
+import {initializeNational} from './national.js?v=0.8.1';
+import {marineIndexCard,indexBadge} from './marine-index.js?v=0.8.1';
+import {initializeTripForm} from './trip-form.js?v=0.8.1';
+import {$,el,button,plainText} from './ui.js?v=0.8.1';
+import {beginProgress,finishProgress,initializeProgress,readNDJSON,executionSummary,update as updateProgress} from './progress.js?v=0.8.1';
+import {weatherCard} from './weather.js?v=0.8.1';
+import {initializeMap,setMapPlan,showOnMap,showRouteSegment,highlightSlot} from './maps.js?v=0.8.1';
+import {transfersFor,transferCard} from './journey-transfers.js?v=0.8.1';
+import {initializeFerries} from './ferries.js?v=0.8.1';
+import {initializeTransport} from './public-transport.js?v=0.8.1';
+import {initializeTimetable} from './ferry-timetable.js?v=0.8.1';
 
 const form=$('#trip-form');
 let ferryPanel=null;
